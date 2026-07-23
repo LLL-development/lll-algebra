@@ -1,0 +1,161 @@
+/* ============================================================
+   LLL Algebra — brand styles
+   Own visual direction (not copied from lll-chem): a chalkboard/
+   chalk-dust theme — equations feel handwritten and worked out,
+   not clinical. Balance-beam is the signature motif: algebra IS
+   balance, so the equation visually tilts until it's solved.
+   Variable *names* match the org's shared/theme.js contract.
+   ============================================================ */
+:root {
+  --bg: #f6f3ee;
+  --surface: #ffffff;
+  --ink: #1c2027;
+  --muted: #6b6459;
+  --border: #e3ddd0;
+  --accent: #b5461c;       /* chalk-rust — the "active/selected" color */
+  --accent-tint: #f4e3d8;
+  --correct: #3f7a5c;      /* chalk-green — balanced/correct */
+  --correct-tint: #e2efe8;
+  --wrong: #b5461c;
+  --on-accent: #ffffff;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --display: "Space Grotesk", -apple-system, "Segoe UI", "Noto Sans JP", sans-serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+          "Hiragino Sans", "Noto Sans CJK JP", "Noto Sans KR", "Microsoft YaHei", sans-serif;
+  --logo-invert: 0;
+}
+
+:root[data-theme="dark"] {
+  --bg: #14181d;
+  --surface: #1c2128;
+  --ink: #eee9df;
+  --muted: #8d9199;
+  --border: #2b313a;
+  --accent: #e2a06b;       /* warm chalk-gold on dark */
+  --accent-tint: #35281d;
+  --correct: #7fc9a3;
+  --correct-tint: #1c2e26;
+  --wrong: #e2a06b;
+  --on-accent: #14181d;
+  --logo-invert: 1;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; padding-top: max(14px, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-logo img { height: 24px; width: auto; display: block; filter: invert(var(--logo-invert, 0)); }
+.brand-name { font-family: var(--display); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; }
+.topbar-controls { display: flex; align-items: center; gap: 8px; }
+
+.theme-btn {
+  width: 36px; height: 36px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+}
+.theme-btn:hover { color: var(--ink); background: var(--accent-tint); }
+.theme-btn .moon { display: none; }
+:root[data-theme="dark"] .theme-btn .sun { display: none; }
+:root[data-theme="dark"] .theme-btn .moon { display: block; }
+
+.lang-switch {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 6px 8px 6px 10px;
+}
+.lang-switch svg { color: var(--muted); flex: none; }
+.lang-switch select { border: none; background: transparent; font-family: var(--sans); font-size: 14px; color: var(--ink); cursor: pointer; }
+
+/* ---------- Game stage ---------- */
+.stage {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 28px; padding: 32px 20px; max-width: 640px; margin: 0 auto; width: 100%;
+}
+
+.hud { display: flex; gap: 18px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.hud strong { color: var(--ink); }
+
+/* ---------- Signature: staircase climb ---------- */
+.staircase-wrap { width: 100%; max-width: 220px; }
+.staircase-svg { width: 100%; height: auto; overflow: visible; }
+.stair-ground { stroke: var(--border); stroke-width: 2; }
+.stair-block { fill: var(--border); }
+.stair-summit { font-family: var(--display); font-weight: 700; font-size: 16px; fill: var(--muted); transition: fill .3s ease; }
+.stair-summit.solved { fill: var(--correct); }
+.stair-marker {
+  fill: var(--accent);
+  transition: cx .45s cubic-bezier(.34,1.56,.64,1), cy .45s cubic-bezier(.34,1.56,.64,1), fill .3s ease;
+}
+.stair-marker.solved { fill: var(--correct); }
+.stair-marker.shake { animation: stairShake .4s ease; }
+@keyframes stairShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ---------- Equation display ---------- */
+.equation-card {
+  width: 100%;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+  padding: 28px 24px; text-align: center;
+}
+.equation {
+  font-family: var(--mono); font-size: clamp(26px, 6vw, 38px); font-weight: 600;
+  letter-spacing: -0.01em; margin: 0;
+}
+.equation .op-highlight { color: var(--accent); }
+
+/* ---------- Operation choice buttons ---------- */
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.choice-btn {
+  font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ink);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 14px 12px; min-height: 52px; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, transform .1s ease;
+}
+.choice-btn:hover { border-color: var(--accent); }
+.choice-btn:active { transform: scale(.97); }
+.choice-btn.correct { border-color: var(--correct); background: var(--correct-tint); color: var(--correct); }
+.choice-btn.wrong { border-color: var(--wrong); background: var(--accent-tint); color: var(--wrong); }
+.choice-btn:disabled { cursor: default; }
+
+/* ---------- Hint / feedback row ---------- */
+.controls-row { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; }
+.hint-btn {
+  font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--muted);
+  background: transparent; border: 1px dashed var(--border); border-radius: 10px;
+  padding: 10px 16px; cursor: pointer;
+}
+.hint-btn:hover { color: var(--accent); border-color: var(--accent); }
+.hint-text { font-size: 14px; color: var(--muted); text-align: center; min-height: 20px; }
+
+.next-btn {
+  font-family: var(--sans); font-size: 15px; font-weight: 700; color: var(--on-accent);
+  background: var(--accent); border: none; border-radius: 12px;
+  padding: 13px 26px; min-height: 48px; cursor: pointer;
+  opacity: 0; pointer-events: none; transition: opacity .2s ease;
+}
+.next-btn.visible { opacity: 1; pointer-events: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stair-marker, .next-btn { transition: none !important; }
+  .stair-marker.shake { animation: none !important; }
+}
