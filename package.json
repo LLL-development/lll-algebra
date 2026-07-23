@@ -1,0 +1,7 @@
+{
+  "name": "lll-algebra",
+  "private": true,
+  "scripts": {
+    "dev": "serve ."
+  }
+}
