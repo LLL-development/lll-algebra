@@ -8,7 +8,7 @@
 <title>LLL Algebra</title>
 <script src="core/theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="core/brand.css">
 </head>
 <body>
@@ -18,6 +18,8 @@
     <span></span><span></span><span></span>
   </div>
 </div>
+
+<div id="floatingSymbolsLayer" class="floating-symbols-layer"></div>
 
 <div id="grandConfettiLayer" class="grand-confetti-layer"></div>
 
@@ -98,11 +100,9 @@
     <span data-i18n="levelLabel">Level</span>&nbsp;<strong id="hudLevel">1 / 1</strong>
   </div>
 
-  <div class="staircase-wrap">
-    <svg id="staircase" class="staircase-svg" viewBox="0 0 240 140" xmlns="http://www.w3.org/2000/svg"></svg>
-  </div>
+  <div class="step-progress" id="stepProgress"></div>
 
-  <div class="equation-card">
+  <div class="equation-card pixel-card" id="equationCard">
     <p class="equation" id="equationText">x + 5 = 12</p>
   </div>
 
@@ -205,7 +205,6 @@
   const $hintText = document.getElementById("hintText");
   const $hintBtn = document.getElementById("hintBtn");
   const $nextBtn = document.getElementById("nextBtn");
-  const $staircase = document.getElementById("staircase");
   const $hudScore = document.getElementById("hudScore");
   const $hudLevel = document.getElementById("hudLevel");
   const $tierSelector = document.getElementById("tierSelector");
@@ -228,6 +227,8 @@
   const $introFade1 = document.getElementById("introFade1");
   const $introFade2 = document.getElementById("introFade2");
   const $introFade3 = document.getElementById("introFade3");
+  const $equationCard = document.getElementById("equationCard");
+  const $floatingSymbolsLayer = document.getElementById("floatingSymbolsLayer");
 
   let streakFlashTimeout;
   let achievementToastTimeout;
@@ -313,51 +314,83 @@
   function currentLevel() { return inDailyMode ? dailyLevel : activeLevels[levelIndex]; }
   function currentStep() { return currentLevel().steps[stepIndex]; }
 
-  // ---------- staircase signature element ----------
-  const STAIR_GROUND_Y = 115, STAIR_STEP_H = 32, STAIR_STEP_W = 60, STAIR_START_X = 30;
-
-  function buildStaircase(numSteps) {
-    const totalWidth = STAIR_START_X + numSteps * STAIR_STEP_W + 30;
-    $staircase.setAttribute("viewBox", `0 0 ${totalWidth} 140`);
-    let blocks = "";
-    for (let i = 1; i <= numSteps; i++) {
-      const bx = STAIR_START_X + (i - 1) * STAIR_STEP_W;
-      const by = STAIR_GROUND_Y - i * STAIR_STEP_H;
-      const bh = i * STAIR_STEP_H;
-      blocks += `<rect class="stair-block" x="${bx}" y="${by}" width="${STAIR_STEP_W - 4}" height="${bh}" rx="4"/>`;
+  // ---------- chalk-erase signature element ----------
+  function buildStepDots(numSteps) {
+    const $sp = document.getElementById("stepProgress");
+    $sp.innerHTML = "";
+    for (let i = 0; i < numSteps; i++) {
+      const dot = document.createElement("span");
+      dot.className = "step-dot";
+      $sp.appendChild(dot);
     }
-    const summitX = STAIR_START_X + (numSteps - 1) * STAIR_STEP_W + (STAIR_STEP_W - 4) / 2;
-    const summitY = STAIR_GROUND_Y - numSteps * STAIR_STEP_H - 28;
-    $staircase.innerHTML =
-      `<line class="stair-ground" x1="0" y1="${STAIR_GROUND_Y}" x2="${totalWidth}" y2="${STAIR_GROUND_Y}"/>` +
-      blocks +
-      `<text class="stair-summit" id="stairSummit" x="${summitX}" y="${summitY}" text-anchor="middle">x</text>` +
-      `<circle class="stair-marker" id="stairMarker" r="10"/>`;
   }
 
-  function positionMarker(stepIdx, numSteps, solved) {
-    const marker = document.getElementById("stairMarker");
-    const summit = document.getElementById("stairSummit");
-    if (!marker) return;
-    let x, y;
-    if (stepIdx <= 0) {
-      x = STAIR_START_X - 15; y = STAIR_GROUND_Y - 9;
-    } else {
-      x = STAIR_START_X + (stepIdx - 1) * STAIR_STEP_W + (STAIR_STEP_W - 4) / 2;
-      y = STAIR_GROUND_Y - stepIdx * STAIR_STEP_H - 9;
-    }
-    marker.setAttribute("cx", x);
-    marker.setAttribute("cy", y);
-    marker.classList.toggle("solved", !!solved);
-    if (summit) summit.classList.toggle("solved", !!solved);
+  function updateStepDots(stepIdx, numSteps, solved) {
+    const $sp = document.getElementById("stepProgress");
+    [...$sp.children].forEach((dot, i) => {
+      dot.classList.toggle("filled", i < stepIdx);
+      dot.classList.toggle("solved", solved && i === numSteps - 1);
+    });
   }
 
-  function shakeMarker() {
-    const marker = document.getElementById("stairMarker");
-    if (!marker) return;
-    marker.classList.remove("shake");
-    void marker.getBBox(); // restart animation
-    marker.classList.add("shake");
+  function burstChalkDust() {
+    const rect = $eq.getBoundingClientRect();
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement("span");
+      p.className = "chalk-dust-piece";
+      p.style.left = `${rect.left + Math.random() * rect.width}px`;
+      p.style.top = `${rect.top + rect.height / 2 + (Math.random() * 20 - 10)}px`;
+      p.style.setProperty("--dx", `${Math.random() * 60 - 30}px`);
+      p.style.setProperty("--dy", `${-(20 + Math.random() * 40)}px`);
+      p.style.animationDuration = `${0.5 + Math.random() * 0.3}s`;
+      document.body.appendChild(p);
+      p.addEventListener("animationend", () => p.remove());
+    }
+  }
+
+  const FLOATING_SYMBOLS = ["+", "−", "×", "÷", "=", "x", "y", "(", ")", "√", "%", "π", "∞", "<", ">", "≤", "≥", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+
+  function randomSymbolValue() {
+    return FLOATING_SYMBOLS[Math.floor(Math.random() * FLOATING_SYMBOLS.length)];
+  }
+
+  function applySymbolProps(el) {
+    el.textContent = randomSymbolValue();
+    el.style.left = `${Math.random() * 100}vw`;
+    el.style.top = `${Math.random() * 100}vh`;
+    el.style.fontSize = `${14 + Math.random() * 18}px`;
+    const rand = () => Math.random() * 200 - 100; // −100px to +100px per axis
+    el.style.setProperty("--p1x", `${rand()}px`);
+    el.style.setProperty("--p1y", `${rand()}px`);
+    el.style.setProperty("--p2x", `${rand()}px`);
+    el.style.setProperty("--p2y", `${rand()}px`);
+    el.style.setProperty("--p3x", `${rand()}px`);
+    el.style.setProperty("--p3y", `${rand()}px`);
+    el.style.animationDuration = `${10 + Math.random() * 6}s`;
+  }
+
+  function scheduleRespawn(el) {
+    const lifetime = 5000 + Math.random() * 5000; // 5–10s visible
+    setTimeout(() => {
+      el.classList.add("fading");
+      setTimeout(() => {
+        applySymbolProps(el);
+        el.classList.remove("fading");
+        scheduleRespawn(el);
+      }, 1000); // matches the CSS opacity transition duration
+    }, lifetime);
+  }
+
+  function initFloatingSymbols() {
+    const count = 10;
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement("span");
+      s.className = "floating-symbol";
+      applySymbolProps(s);
+      s.style.animationDelay = `${Math.random() * 3}s`;
+      $floatingSymbolsLayer.appendChild(s);
+      scheduleRespawn(s);
+    }
   }
 
   function showStreakFlash(count) {
@@ -472,9 +505,23 @@
     }
     $eq.classList.add("updating");
     setTimeout(() => {
-      $eq.textContent = text;
       $eq.classList.remove("updating");
+      typewriterReveal(text);
     }, 220);
+  }
+
+  function typewriterReveal(text) {
+    $eq.textContent = "";
+    let i = 0;
+    const speed = 28; // ms per character
+    function typeChar() {
+      if (i < text.length) {
+        $eq.textContent += text[i];
+        i++;
+        setTimeout(typeChar, speed);
+      }
+    }
+    typeChar();
   }
 
   function makeDistractors(correctStep) {
@@ -510,8 +557,9 @@
     $hudScore.textContent = score;
     $hintText.textContent = "";
     $nextBtn.classList.remove("visible");
-    buildStaircase(level.steps.length);
-    positionMarker(stepIndex, level.steps.length, false);
+    buildStepDots(level.steps.length);
+    updateStepDots(stepIndex, level.steps.length, false);
+    if (stepIndex === 0) $equationCard.classList.remove("solved");
 
     const step = currentStep();
     const choices = [{ action: step.action, value: step.value }, ...makeDistractors(step)];
@@ -540,11 +588,13 @@
       btn.classList.add("correct");
       currentEquationText = correctStep.result;
       setEquationText(currentEquationText);
+      burstChalkDust();
 
       stepIndex++;
       const totalSteps = currentLevel().steps.length;
       const justSolved = stepIndex >= totalSteps;
-      positionMarker(stepIndex, totalSteps, justSolved);
+      updateStepDots(stepIndex, totalSteps, justSolved);
+      if (justSolved) $equationCard.classList.add("solved");
       saveProgress();
 
       if (justSolved) {
@@ -580,7 +630,9 @@
       }
     } else {
       btn.classList.add("wrong");
-      shakeMarker();
+      $eq.classList.remove("wrong-shake");
+      void $eq.offsetWidth; // restart animation
+      $eq.classList.add("wrong-shake");
       $hintText.textContent = LLL_I18N.t("wrongMsg") || "Not quite — try again.";
       setTimeout(() => {
         [...$choices.children].forEach(b => { b.disabled = false; b.classList.remove("wrong"); });
@@ -697,6 +749,7 @@
   $introStartBtn.addEventListener("click", closeIntro);
   $howtoBtn.addEventListener("click", openIntro);
 
+  initFloatingSymbols();
   setActiveTier(activeDifficulty, false);
   loadProgress();
   updateDailyCard();
