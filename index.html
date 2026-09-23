@@ -89,6 +89,11 @@
     </div>
   </button>
 
+  <div class="tier-selector topic-selector" id="topicSelector">
+    <button class="tier-btn" data-topic="equation" data-i18n="topicEquation">Equations</button>
+    <button class="tier-btn" data-topic="inequality" data-i18n="topicInequality">Inequalities</button>
+  </div>
+
   <div class="tier-selector" id="tierSelector">
     <button class="tier-btn" data-tier="easy" data-i18n="tierEasy">Easy</button>
     <button class="tier-btn" data-tier="medium" data-i18n="tierMedium">Medium</button>
@@ -112,13 +117,13 @@
 
   <div class="controls-row">
     <button class="hint-btn" id="hintBtn" data-i18n="hintBtn">Hint (−2 pts)</button>
-    <button class="next-btn" id="nextBtn" data-i18n="nextBtn">Next equation →</button>
+    <button class="next-btn" id="nextBtn" data-i18n="nextBtn">Next problem →</button>
   </div>
 </main>
 
 <script src="core/i18n.js"></script>
 <script type="module">
-  import { LEVELS, LEVELS_BY_DIFFICULTY, ACHIEVEMENTS } from "./levels.js";
+  import { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS } from "./levels.js";
 
   // ---------- i18n ----------
   const STRINGS = {
@@ -126,12 +131,13 @@
       brand: "LLL Algebra",
       gameTitle: "LLL Algebra",
       scoreLabel: "Score", levelLabel: "Level",
-      hintBtn: "Hint (−2 pts)", nextBtn: "Next equation →",
+      hintBtn: "Hint (−2 pts)", nextBtn: "Next problem →",
       bothSidesLabel: "both sides",
       correctMsg: "Nice — that's the right move.",
       wrongMsg: "Not quite — try again.",
       solvedMsg: "Solved! x is isolated.",
       tierEasy: "Easy", tierMedium: "Medium", tierHard: "Hard",
+      topicEquation: "Equations", topicInequality: "Inequalities",
       achievementsTitle: "Achievements",
       dailyTitle: "Today's Challenge",
       dailyCompleted: "✓ Completed — come back tomorrow",
@@ -146,12 +152,13 @@
       brand: "LLL 代数",
       gameTitle: "LLL 代数",
       scoreLabel: "スコア", levelLabel: "レベル",
-      hintBtn: "ヒント (−2 pt)", nextBtn: "次の方程式 →",
+      hintBtn: "ヒント (−2 pt)", nextBtn: "次の問題 →",
       bothSidesLabel: "両辺で" ,
       correctMsg: "正解です！",
       wrongMsg: "違います、もう一度。",
       solvedMsg: "解けました！x が求まりました。",
       tierEasy: "やさしい", tierMedium: "ふつう", tierHard: "むずかしい",
+      topicEquation: "方程式", topicInequality: "不等式",
       achievementsTitle: "実績",
       dailyTitle: "今日のチャレンジ",
       dailyCompleted: "✓ 完了 — また明日",
@@ -189,8 +196,9 @@
   let firstRender = true;
   let displayedEquationText = null;
   let completedLoops = 0;
+  let activeTopic = "equation";
   let activeDifficulty = "easy";
-  let activeLevels = LEVELS_BY_DIFFICULTY[activeDifficulty] || LEVELS;
+  let activeLevels = levelsFor(activeTopic, activeDifficulty);
   let streak = 0;
   let hintUsedThisLevel = false;
   let unlockedAchievements = new Set();
@@ -208,6 +216,7 @@
   const $hudScore = document.getElementById("hudScore");
   const $hudLevel = document.getElementById("hudLevel");
   const $tierSelector = document.getElementById("tierSelector");
+  const $topicSelector = document.getElementById("topicSelector");
   const $streakFlash = document.getElementById("streakFlash");
   const $grandConfettiLayer = document.getElementById("grandConfettiLayer");
   const $achievementToast = document.getElementById("achievementToast");
@@ -240,7 +249,7 @@
   function saveProgress() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        activeDifficulty, levelIndex, stepIndex, score, completedLoops, streak,
+        activeTopic, activeDifficulty, levelIndex, stepIndex, score, completedLoops, streak,
         unlockedAchievements: [...unlockedAchievements], totalSolves,
         dailyStreak, lastDailySolvedDate
       }));
@@ -252,8 +261,9 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const saved = JSON.parse(raw);
-      const tier = LEVELS_BY_DIFFICULTY[saved.activeDifficulty] ? saved.activeDifficulty : "easy";
-      setActiveTier(tier, false);
+      const topic = LEVELS_BY_TOPIC_AND_DIFFICULTY[saved.activeTopic] ? saved.activeTopic : "equation";
+      activeDifficulty = levelsFor(topic, saved.activeDifficulty).length ? saved.activeDifficulty : "easy";
+      setActiveTopic(topic, false);
       if (typeof saved.levelIndex === "number" && saved.levelIndex < activeLevels.length) {
         levelIndex = saved.levelIndex;
         const totalSteps = activeLevels[levelIndex].steps.length;
@@ -281,8 +291,8 @@
   }
 
   function getTodaysLevel() {
-    const idx = getDayOfYear() % LEVELS.length;
-    return LEVELS[idx];
+    const pool = LEVELS.filter(l => l.topic === "equation");
+    return pool[getDayOfYear() % pool.length];
   }
 
   function isDailyCompletedToday() {
@@ -491,7 +501,27 @@
       const xTerm = value === 1 ? "x" : `${value}x`;
       return `${verbs[action]} ${xTerm} ${suffix}`;
     }
-    return `${verbs[action]} ${value} ${suffix}`;
+    const shown = value < 0 ? `(−${Math.abs(value)})` : `${value}`;
+    return `${verbs[action]} ${shown} ${suffix}`;
+  }
+
+  // Press Start 2P has no ≤ / ≥ glyphs, so draw them as the pixel < / > with an underline bar.
+  const PIXEL_INEQ = { "≤": "<", "≥": ">" };
+
+  function appendEqChar(ch) {
+    if (PIXEL_INEQ[ch]) {
+      const s = document.createElement("span");
+      s.className = "pixel-ineq";
+      s.textContent = PIXEL_INEQ[ch];
+      $eq.appendChild(s);
+    } else {
+      $eq.appendChild(document.createTextNode(ch));
+    }
+  }
+
+  function renderEqText(text) {
+    $eq.textContent = "";
+    for (const ch of text) appendEqChar(ch);
   }
 
   function setEquationText(text) {
@@ -499,7 +529,7 @@
     displayedEquationText = text;
 
     if (firstRender) {
-      $eq.textContent = text;
+      renderEqText(text);
       firstRender = false;
       return;
     }
@@ -512,11 +542,12 @@
 
   function typewriterReveal(text) {
     $eq.textContent = "";
+    const chars = [...text];
     let i = 0;
     const speed = 28; // ms per character
     function typeChar() {
-      if (i < text.length) {
-        $eq.textContent += text[i];
+      if (i < chars.length) {
+        appendEqChar(chars[i]);
         i++;
         setTimeout(typeChar, speed);
       }
@@ -529,16 +560,29 @@
     const actions = isXAction ? ["add_x", "subtract_x"] : ["add", "subtract", "multiply", "divide"];
     const pool = [];
     actions.forEach(a => {
-      [correctStep.value, correctStep.value + 1, correctStep.value - 1].forEach(v => {
-        if (v > 0 && !(a === correctStep.action && v === correctStep.value)) {
-          pool.push({ action: a, value: v });
-        }
+      // Only multiply/divide may use negative values. "+ (−3)" is the same move as "− 3",
+      // so a negative add/subtract distractor could duplicate the correct answer under another label.
+      const allowNegative = a === "multiply" || a === "divide";
+      const center = allowNegative ? correctStep.value : Math.abs(correctStep.value);
+      [center, center + 1, center - 1].forEach(v => {
+        if (v === 0) return;
+        if (!allowNegative && v < 0) return;
+        if (a === correctStep.action && v === correctStep.value) return;
+        pool.push({ action: a, value: v });
       });
     });
     // shuffle + take 3
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    // Guaranteed sign-flip distractor: when the correct move is multiply/divide by a
+    // negative, always offer the positive counterpart (the classic "forgot the sign" mistake).
+    const isNegativeMulDiv =
+      (correctStep.action === "multiply" || correctStep.action === "divide") && correctStep.value < 0;
+    if (isNegativeMulDiv) {
+      const signFlip = { action: correctStep.action, value: Math.abs(correctStep.value) };
+      return [signFlip, ...pool.slice(0, 2)];
     }
     return pool.slice(0, 3);
   }
@@ -553,7 +597,7 @@
     $hudLevel.textContent = inDailyMode
       ? (LLL_I18N.t("dailyTitle") || "Today's Challenge")
       : `${levelIndex + 1} / ${activeLevels.length}`;
-    $tierSelector.style.display = inDailyMode ? "none" : "flex";
+    $topicSelector.style.display = inDailyMode ? "none" : "flex";
     $hudScore.textContent = score;
     $hintText.textContent = "";
     $nextBtn.classList.remove("visible");
@@ -640,22 +684,42 @@
     }
   }
 
+  function levelsFor(topic, tier) {
+    return (LEVELS_BY_TOPIC_AND_DIFFICULTY[topic] || {})[tier] || [];
+  }
+
   function setActiveTier(tier, resetPosition = true) {
-    activeDifficulty = tier;
-    activeLevels = LEVELS_BY_DIFFICULTY[tier] || LEVELS;
+    activeDifficulty = levelsFor(activeTopic, tier).length ? tier : "easy";
+    activeLevels = levelsFor(activeTopic, activeDifficulty);
     if (resetPosition) {
       levelIndex = 0;
       stepIndex = 0;
     }
     [...$tierSelector.children].forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.tier === tier);
+      btn.classList.toggle("active", btn.dataset.tier === activeDifficulty);
     });
+  }
+
+  function setActiveTopic(topic, resetPosition = true) {
+    activeTopic = LEVELS_BY_TOPIC_AND_DIFFICULTY[topic] ? topic : "equation";
+    [...$topicSelector.children].forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.topic === activeTopic);
+    });
+    setActiveTier(activeDifficulty, resetPosition); // keep the current difficulty, swap its level list
   }
 
   $tierSelector.addEventListener("click", (e) => {
     const btn = e.target.closest(".tier-btn");
     if (!btn || btn.dataset.tier === activeDifficulty) return;
     setActiveTier(btn.dataset.tier);
+    saveProgress();
+    render();
+  });
+
+  $topicSelector.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tier-btn");
+    if (!btn || btn.dataset.topic === activeTopic) return;
+    setActiveTopic(btn.dataset.topic);
     saveProgress();
     render();
   });
@@ -750,7 +814,7 @@
   $howtoBtn.addEventListener("click", openIntro);
 
   initFloatingSymbols();
-  setActiveTier(activeDifficulty, false);
+  setActiveTopic(activeTopic, false);
   loadProgress();
   updateDailyCard();
   render();
