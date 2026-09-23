@@ -545,6 +545,15 @@ body {
 }
 .intro-start-btn:hover { opacity: 0.9; }
 
+/* ≤ / ≥ in the pixel equation card: pixel < / > plus a one-pixel-thick bar.
+   Press Start 2P is drawn on an 8×8 grid, so 0.125em = one font pixel. */
+.pixel-ineq {
+  display: inline-block;
+  line-height: 1;
+  padding-bottom: 0.125em;
+  border-bottom: 0.25em solid currentColor;
+}
+
 /* ---------- Reduced motion (single consolidated block) ---------- */
 @media (prefers-reduced-motion: reduce) {
   .stair-marker, .next-btn { transition: none !important; }
