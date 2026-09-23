@@ -133,36 +133,6 @@ body {
 }
 .daily-card.completed .daily-card-status { color: var(--correct); }
 
-/* ---------- Difficulty tier selector ---------- */
-.tier-selector { display: flex; gap: 8px; }
-.tier-btn {
-  font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--muted);
-  background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
-  padding: 6px 16px; cursor: pointer;
-  transition: border-color .15s ease, color .15s ease, background .15s ease;
-}
-.tier-btn:hover { color: var(--ink); border-color: var(--accent); }
-.tier-btn.active { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
-
-/* ---------- Streak flash (center-pop) ---------- */
-.streak-flash {
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%) scale(0.7);
-  font-family: var(--display); font-size: 22px; font-weight: 700;
-  color: var(--accent);
-  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-  padding: 16px 28px;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 500;
-  transition: opacity .25s ease, transform .25s ease;
-}
-.streak-flash.show {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
 /* ---------- Achievement toast (bottom-right, slide up) ---------- */
 .achievement-toast {
   position: fixed;
@@ -398,14 +368,6 @@ body {
 .hint-btn:hover { color: var(--accent); border-color: var(--accent); }
 .hint-text { font-size: 14px; color: var(--muted); text-align: center; min-height: 20px; }
 
-.next-btn {
-  font-family: var(--sans); font-size: 15px; font-weight: 700; color: var(--on-accent);
-  background: var(--accent); border: none; border-radius: 12px;
-  padding: 13px 26px; min-height: 48px; cursor: pointer;
-  opacity: 0; pointer-events: none; transition: opacity .2s ease;
-}
-.next-btn.visible { opacity: 1; pointer-events: auto; }
-
 /* ---------- Loading overlay ---------- */
 .loading-overlay {
   position: fixed;
@@ -556,12 +518,11 @@ body {
 
 /* ---------- Reduced motion (single consolidated block) ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .stair-marker, .next-btn { transition: none !important; }
+  .stair-marker { transition: none !important; }
   .stair-marker.shake { animation: none !important; }
   .equation { transition: none !important; }
   .loading-dots span { animation: none !important; }
   .loading-overlay { transition: none !important; }
-  .streak-flash { transition: none !important; }
   .grand-confetti-piece { animation: none !important; opacity: 0 !important; }
   .achievement-toast { transition: none !important; }
   .achievements-modal, .achievements-modal-card { transition: none !important; }
@@ -572,4 +533,182 @@ body {
   .pixel-card.solved { animation: none !important; }
   .chalk-dust-piece { animation: none !important; opacity: 0 !important; }
   .floating-symbol { animation: none !important; }
+}
+/* ---------- Screens (Home / Play) ---------- */
+.screen {
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 28px;
+}
+.screen[hidden] { display: none; }
+
+.play-header { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.play-level-label { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--muted); }
+.back-btn {
+  font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--muted);
+  background: transparent; border: 1px solid var(--border); border-radius: 10px;
+  padding: 7px 14px; cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+}
+.back-btn:hover { color: var(--ink); border-color: var(--accent); }
+
+/* ---------- Home screen ---------- */
+#screenHome .daily-card { max-width: 520px; }
+.home-kicker {
+  font-family: var(--display); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 -14px;
+}
+.topic-cards {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  width: 100%; max-width: 520px;
+}
+.topic-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  text-align: left; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 20px 18px; cursor: pointer;
+  transition: border-color .15s ease, transform .1s ease;
+}
+.topic-card:hover { border-color: var(--accent); }
+.topic-card:active { transform: scale(.98); }
+.topic-card-sample {
+  font-family: "Press Start 2P", var(--mono); font-size: 13px; line-height: 1.6;
+  color: var(--accent);
+}
+.topic-card-title { font-family: var(--display); font-weight: 700; font-size: 18px; }
+.topic-card-desc { font-family: var(--sans); font-size: 13px; line-height: 1.5; color: var(--muted); }
+@media (max-width: 420px) {
+  .topic-cards { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .topic-card, .back-btn { transition: none !important; }
+}
+/* Keep page content above the floating background symbols */
+.topbar,
+.stage { position: relative; z-index: 1; }
+
+/* ---------- Topic card progress ---------- */
+.topic-card-progress {
+  display: flex; flex-direction: column; gap: 6px;
+  width: 100%; margin-top: auto; padding-top: 4px;
+}
+.topic-card-bar {
+  display: block; height: 6px; width: 100%;
+  background: var(--border); border-radius: 999px; overflow: hidden;
+}
+.topic-card-bar-fill {
+  display: block; height: 100%; width: 0;
+  background: var(--correct); border-radius: inherit;
+  transition: width .4s ease;
+}
+.topic-card-count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) {
+  .topic-card-bar-fill { transition: none !important; }
+}
+
+/* ---------- Level select screen ---------- */
+.levels-head {
+  width: 100%; max-width: 520px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+}
+.levels-title { font-family: var(--display); font-size: 24px; font-weight: 700; margin: 0; }
+.levels-summary { font-family: var(--mono); font-size: 12px; color: var(--muted); margin: 0; }
+.levels-tiers {
+  width: 100%; max-width: 520px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+.tier-block-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 10px;
+}
+.tier-block-name { font-family: var(--sans); font-size: 14px; font-weight: 700; }
+.tier-block-meta { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.level-tile {
+  aspect-ratio: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 0; color: var(--ink);
+  background: var(--surface); border: 2px solid var(--border); border-radius: 12px;
+  cursor: pointer;
+  transition: border-color .15s ease, transform .1s ease;
+}
+.level-tile:hover:not(:disabled) { border-color: var(--accent); }
+.level-tile:active:not(:disabled) { transform: scale(.96); }
+.level-tile-num { font-family: "Press Start 2P", var(--mono); font-size: 14px; }
+.level-tile-stars { font-size: 12px; letter-spacing: 1px; line-height: 1; }
+.level-tile .star { color: var(--border); }
+.level-tile .star.on { color: var(--accent); }
+.level-tile.cleared { border-color: var(--correct); }
+.level-tile.next { border-color: var(--accent); background: var(--accent-tint); }
+.level-tile.locked { opacity: .45; cursor: default; }
+@media (max-width: 420px) {
+  .level-grid { gap: 8px; }
+  .level-tile-num { font-size: 12px; }
+  .level-tile-stars { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .level-tile { transition: none !important; }
+}
+
+/* ---------- Level-complete overlay ---------- */
+.complete-overlay {
+  position: fixed; inset: 0; z-index: 550; /* below confetti (600) + achievement toast (700) */
+  display: grid; place-items: center; padding: 20px;
+}
+.complete-overlay[hidden] { display: none; }
+.complete-backdrop {
+  position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55);
+  animation: completeFade .2s ease;
+}
+.complete-card {
+  position: relative; width: min(380px, 100%);
+  background: var(--surface);
+  padding: 30px 24px 22px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  animation: completePop .32s cubic-bezier(.34,1.56,.64,1);
+}
+.complete-card p { margin: 0; }
+.complete-kicker {
+  font-family: var(--display); font-size: 24px; font-weight: 700; line-height: 1.4;
+  color: var(--correct);
+}
+.complete-kicker.pixel { font-family: "Press Start 2P", var(--mono); font-size: 16px; font-weight: 400; line-height: 1.6; }
+.complete-sub { font-family: var(--sans); font-size: 13px; color: var(--muted); }
+.complete-stars { display: flex; gap: 12px; font-size: 42px; line-height: 1; margin: 8px 0 2px; }
+.complete-stars[hidden] { display: none; }
+.complete-stars .big-star {
+  color: var(--border); display: inline-block;
+  transform: scale(0);
+  animation: starPop .45s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+.complete-stars .big-star.on { color: var(--accent); }
+.complete-best { font-family: var(--display); font-size: 13px; font-weight: 700; color: var(--accent); }
+.complete-points { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ink); }
+.complete-bonus { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+.complete-best[hidden], .complete-bonus[hidden] { display: none; }
+.complete-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 10px; }
+.complete-secondary { display: flex; gap: 10px; }
+.complete-secondary[hidden] { display: none; }
+.complete-secondary .complete-btn { flex: 1; }
+.complete-btn {
+  font-family: var(--sans); font-size: 14px; font-weight: 700;
+  border-radius: 12px; padding: 12px 16px; min-height: 46px; cursor: pointer;
+}
+.complete-btn[hidden] { display: none; }
+.complete-btn.primary { color: var(--on-accent); background: var(--accent); border: none; }
+.complete-btn.primary:hover { opacity: .9; }
+.complete-btn.secondary { color: var(--ink); background: transparent; border: 1px solid var(--border); }
+.complete-btn.secondary:hover { border-color: var(--accent); }
+@keyframes completeFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes completePop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
+@keyframes starPop {
+  0%   { transform: scale(0) rotate(-30deg); }
+  70%  { transform: scale(1.25) rotate(8deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .complete-backdrop, .complete-card { animation: none !important; }
+  .complete-stars .big-star { animation: none !important; transform: none !important; }
 }

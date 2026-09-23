@@ -23,6 +23,26 @@
 
 <div id="grandConfettiLayer" class="grand-confetti-layer"></div>
 
+<!-- Level-complete overlay -->
+<div class="complete-overlay" id="completeOverlay" hidden>
+  <div class="complete-backdrop"></div>
+  <div class="complete-card pixel-card" role="dialog" aria-modal="true" aria-labelledby="completeKicker">
+    <p class="complete-kicker" id="completeKicker"></p>
+    <p class="complete-sub" id="completeSub"></p>
+    <div class="complete-stars" id="completeStars"></div>
+    <p class="complete-best" id="completeBest" hidden></p>
+    <p class="complete-points" id="completePoints"></p>
+    <p class="complete-bonus" id="completeBonus" hidden></p>
+    <div class="complete-actions">
+      <button class="complete-btn primary" id="completePrimaryBtn"></button>
+      <div class="complete-secondary">
+        <button class="complete-btn secondary" id="completeRetryBtn"></button>
+        <button class="complete-btn secondary" id="completeLevelsBtn"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="achievementToast" class="achievement-toast">
   <span class="achievement-toast-icon">🏆</span>
   <span class="achievement-toast-text" id="achievementToastText"></span>
@@ -58,7 +78,7 @@
     </div>
 
     <div class="intro-fade" id="introFade3">
-      <p data-i18n="introBody2">Pick the right move each round to isolate x. Equations get trickier in Medium and Hard — Hard even has x on both sides!</p>
+      <p data-i18n="introBody2">Pick the right move each round to isolate x. Start with equations, then try inequalities — where multiplying or dividing by a negative flips the sign!</p>
       <button class="intro-start-btn" id="introStartBtn" data-i18n="introStartBtn">Let's start</button>
     </div>
   </div>
@@ -79,46 +99,80 @@
 
 <main class="stage">
 
-  <div id="streakFlash" class="streak-flash"></div>
 
-  <button class="daily-card" id="dailyCard">
-    <span class="daily-card-icon">📅</span>
-    <div class="daily-card-text">
-      <div class="daily-card-title" data-i18n="dailyTitle">Today's Challenge</div>
-      <div class="daily-card-status" id="dailyCardStatus"></div>
+  <!-- ===== Home screen ===== -->
+  <section class="screen" id="screenHome" hidden>
+    <button class="daily-card" id="dailyCard">
+      <span class="daily-card-icon">📅</span>
+      <div class="daily-card-text">
+        <div class="daily-card-title" data-i18n="dailyTitle">Today's Challenge</div>
+        <div class="daily-card-status" id="dailyCardStatus"></div>
+      </div>
+    </button>
+
+    <p class="home-kicker" data-i18n="homeKicker">Choose a topic</p>
+
+    <div class="topic-cards" id="topicCards">
+      <button class="topic-card" data-topic="equation">
+        <span class="topic-card-sample">x + 5 = 12</span>
+        <span class="topic-card-title" data-i18n="topicEquation">Equations</span>
+        <span class="topic-card-desc" data-i18n="topicEquationDesc">Find the value of x</span>
+        <span class="topic-card-progress" data-progress="equation">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
+      <button class="topic-card" data-topic="inequality">
+        <span class="topic-card-sample">-3x &gt; 12</span>
+        <span class="topic-card-title" data-i18n="topicInequality">Inequalities</span>
+        <span class="topic-card-desc" data-i18n="topicInequalityDesc">Find the range of x — watch the sign!</span>
+        <span class="topic-card-progress" data-progress="inequality">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
-  </button>
+  </section>
 
-  <div class="tier-selector topic-selector" id="topicSelector">
-    <button class="tier-btn" data-topic="equation" data-i18n="topicEquation">Equations</button>
-    <button class="tier-btn" data-topic="inequality" data-i18n="topicInequality">Inequalities</button>
-  </div>
+  <!-- ===== Level select screen ===== -->
+  <section class="screen" id="screenLevels" hidden>
+    <div class="play-header">
+      <button class="back-btn" id="levelsBackBtn"><span aria-hidden="true">←</span> <span data-i18n="backHome">Home</span></button>
+    </div>
+    <div class="levels-head">
+      <span class="topic-card-sample" id="levelsSample"></span>
+      <h2 class="levels-title" id="levelsTitle"></h2>
+      <p class="levels-summary" id="levelsSummary"></p>
+    </div>
+    <div class="levels-tiers" id="levelsTiers"></div>
+  </section>
 
-  <div class="tier-selector" id="tierSelector">
-    <button class="tier-btn" data-tier="easy" data-i18n="tierEasy">Easy</button>
-    <button class="tier-btn" data-tier="medium" data-i18n="tierMedium">Medium</button>
-    <button class="tier-btn" data-tier="hard" data-i18n="tierHard">Hard</button>
-  </div>
+  <!-- ===== Play screen ===== -->
+  <section class="screen" id="screenPlay" hidden>
+    <div class="play-header">
+      <button class="back-btn" id="backBtn"><span aria-hidden="true">←</span> <span id="backBtnLabel" data-i18n="backLevels">Levels</span></button>
+      <span class="play-level-label" id="playLevelLabel"></span>
+    </div>
 
-  <div class="hud">
-    <span data-i18n="scoreLabel">Score</span>&nbsp;<strong id="hudScore">0</strong>
-    <span data-i18n="levelLabel">Level</span>&nbsp;<strong id="hudLevel">1 / 1</strong>
-  </div>
+    <div class="hud">
+      <span data-i18n="scoreLabel">Score</span>&nbsp;<strong id="hudScore">0</strong>
+      <span data-i18n="levelLabel">Level</span>&nbsp;<strong id="hudLevel">1 / 1</strong>
+    </div>
 
-  <div class="step-progress" id="stepProgress"></div>
+    <div class="step-progress" id="stepProgress"></div>
 
-  <div class="equation-card pixel-card" id="equationCard">
-    <p class="equation" id="equationText">x + 5 = 12</p>
-  </div>
+    <div class="equation-card pixel-card" id="equationCard">
+      <p class="equation" id="equationText">x + 5 = 12</p>
+    </div>
 
-  <div class="choices" id="choicesGrid"></div>
+    <div class="choices" id="choicesGrid"></div>
 
-  <div class="hint-text" id="hintText"></div>
+    <div class="hint-text" id="hintText"></div>
 
-  <div class="controls-row">
-    <button class="hint-btn" id="hintBtn" data-i18n="hintBtn">Hint (−2 pts)</button>
-    <button class="next-btn" id="nextBtn" data-i18n="nextBtn">Next problem →</button>
-  </div>
+    <div class="controls-row">
+      <button class="hint-btn" id="hintBtn" data-i18n="hintBtn">Hint (−2 pts)</button>
+    </div>
+  </section>
 </main>
 
 <script src="core/i18n.js"></script>
@@ -131,13 +185,20 @@
       brand: "LLL Algebra",
       gameTitle: "LLL Algebra",
       scoreLabel: "Score", levelLabel: "Level",
-      hintBtn: "Hint (−2 pts)", nextBtn: "Next problem →",
+      hintBtn: "Hint (−2 pts)",
       bothSidesLabel: "both sides",
       correctMsg: "Nice — that's the right move.",
       wrongMsg: "Not quite — try again.",
       solvedMsg: "Solved! x is isolated.",
       tierEasy: "Easy", tierMedium: "Medium", tierHard: "Hard",
       topicEquation: "Equations", topicInequality: "Inequalities",
+      topicEquationDesc: "Find the value of x",
+      topicInequalityDesc: "Find the range of x — watch the sign!",
+      homeKicker: "Choose a topic", backHome: "Home",
+      clearedLabel: "cleared", backLevels: "Levels", lockedLabel: "Locked",
+      levelClear: "Level clear!", tierComplete: "{tier} complete!", dailyClear: "Challenge complete!",
+      newBest: "New best!", ptsLabel: "pts", streakBonus: "{n} streak bonus",
+      nextLevelBtn: "Next level →", levelSelectBtn: "Level select", retryBtn: "Try again", homeBtn: "Home",
       achievementsTitle: "Achievements",
       dailyTitle: "Today's Challenge",
       dailyCompleted: "✓ Completed — come back tomorrow",
@@ -145,20 +206,27 @@
       introTitle: "How to Solve",
       introBody1: "Algebra is about balance. Whatever you do to one side of the equation, you must do to the other — so it stays true.",
       introExampleStep: "Subtract 5 from both sides →",
-      introBody2: "Pick the right move each round to isolate x. Equations get trickier in Medium and Hard — Hard even has x on both sides!",
+      introBody2: "Pick the right move each round to isolate x. Start with equations, then try inequalities — where multiplying or dividing by a negative flips the sign!",
       introStartBtn: "Let's start"
     },
     ja: {
       brand: "LLL 代数",
       gameTitle: "LLL 代数",
       scoreLabel: "スコア", levelLabel: "レベル",
-      hintBtn: "ヒント (−2 pt)", nextBtn: "次の問題 →",
+      hintBtn: "ヒント (−2 pt)",
       bothSidesLabel: "両辺で" ,
       correctMsg: "正解です！",
       wrongMsg: "違います、もう一度。",
       solvedMsg: "解けました！x が求まりました。",
       tierEasy: "やさしい", tierMedium: "ふつう", tierHard: "むずかしい",
       topicEquation: "方程式", topicInequality: "不等式",
+      topicEquationDesc: "xの値を求めよう",
+      topicInequalityDesc: "xの範囲を求めよう — 不等号の向きに注意！",
+      homeKicker: "トピックを選ぼう", backHome: "ホーム",
+      clearedLabel: "クリア", backLevels: "レベル選択", lockedLabel: "ロック中",
+      levelClear: "クリア！", tierComplete: "{tier} コンプリート！", dailyClear: "チャレンジ達成！",
+      newBest: "ベスト更新！", ptsLabel: "pt", streakBonus: "{n}連続ボーナス",
+      nextLevelBtn: "次のレベル →", levelSelectBtn: "レベル選択", retryBtn: "もう一度", homeBtn: "ホーム",
       achievementsTitle: "実績",
       dailyTitle: "今日のチャレンジ",
       dailyCompleted: "✓ 完了 — また明日",
@@ -166,14 +234,18 @@
       introTitle: "解き方",
       introBody1: "代数はバランスが大切です。方程式の片側に行った操作は、もう片方にも行う必要があります。",
       introExampleStep: "両辺から5を引く →",
-      introBody2: "各ラウンドで正しい操作を選び、xを求めましょう。ふつう・むずかしいではさらに難しくなります — むずかしいでは両辺にxが登場します！",
+      introBody2: "各ラウンドで正しい操作を選び、xを求めましょう。方程式に慣れたら不等式にも挑戦 — 負の数をかけたり負の数で割ったりすると、不等号の向きが逆になります！",
       introStartBtn: "はじめる"
     }
   };
   document.getElementById("langHost").addEventListener("change", () => {
     const hintWasShown = hintUsedThisStep;
     updateDailyCard();
+    updateHomeCards();
+    if (!$screenLevels.hidden) renderLevelSelect(location.hash.split("/")[1]);
     if ($achievementsModal.classList.contains("show")) renderAchievementsList();
+    // Only redraw the game when it's on screen mid-level (a solved level has no current step).
+    if ($screenPlay.hidden || !$completeOverlay.hidden || stepIndex >= currentLevel().steps.length) return;
     render();
     if (hintWasShown) {
       const level = currentLevel();
@@ -207,17 +279,17 @@
   let lastDailySolvedDate = null; // "YYYY-MM-DD" string
   let inDailyMode = false;
   let dailyLevel = null;
+  let wrongThisLevel = 0;   // wrong taps on the current level (for stars)
+  let levelProgress = {};   // { [level id]: { stars: 1–3 } } — best result per level
+  let regularLevelState = null; // regular level's step/hint/wrong state, parked during Today's Challenge
 
   const $eq = document.getElementById("equationText");
   const $choices = document.getElementById("choicesGrid");
   const $hintText = document.getElementById("hintText");
   const $hintBtn = document.getElementById("hintBtn");
-  const $nextBtn = document.getElementById("nextBtn");
   const $hudScore = document.getElementById("hudScore");
   const $hudLevel = document.getElementById("hudLevel");
-  const $tierSelector = document.getElementById("tierSelector");
-  const $topicSelector = document.getElementById("topicSelector");
-  const $streakFlash = document.getElementById("streakFlash");
+  const $playLevelLabel = document.getElementById("playLevelLabel");
   const $grandConfettiLayer = document.getElementById("grandConfettiLayer");
   const $achievementToast = document.getElementById("achievementToast");
   const $achievementToastText = document.getElementById("achievementToastText");
@@ -238,8 +310,28 @@
   const $introFade3 = document.getElementById("introFade3");
   const $equationCard = document.getElementById("equationCard");
   const $floatingSymbolsLayer = document.getElementById("floatingSymbolsLayer");
+  const $screenHome = document.getElementById("screenHome");
+  const $screenPlay = document.getElementById("screenPlay");
+  const $topicCards = document.getElementById("topicCards");
+  const $backBtn = document.getElementById("backBtn");
+  const $backBtnLabel = document.getElementById("backBtnLabel");
+  const $screenLevels = document.getElementById("screenLevels");
+  const $completeOverlay = document.getElementById("completeOverlay");
+  const $completeKicker = document.getElementById("completeKicker");
+  const $completeSub = document.getElementById("completeSub");
+  const $completeStars = document.getElementById("completeStars");
+  const $completeBest = document.getElementById("completeBest");
+  const $completePoints = document.getElementById("completePoints");
+  const $completeBonus = document.getElementById("completeBonus");
+  const $completePrimaryBtn = document.getElementById("completePrimaryBtn");
+  const $completeRetryBtn = document.getElementById("completeRetryBtn");
+  const $completeLevelsBtn = document.getElementById("completeLevelsBtn");
+  const $levelsBackBtn = document.getElementById("levelsBackBtn");
+  const $levelsSample = document.getElementById("levelsSample");
+  const $levelsTitle = document.getElementById("levelsTitle");
+  const $levelsSummary = document.getElementById("levelsSummary");
+  const $levelsTiers = document.getElementById("levelsTiers");
 
-  let streakFlashTimeout;
   let achievementToastTimeout;
   const loadStart = performance.now();
 
@@ -247,9 +339,15 @@
 
   // ---------- persistence ----------
   function saveProgress() {
+    // During Today's Challenge, save the parked regular-level state, not the challenge's.
+    const reg = inDailyMode && regularLevelState
+      ? regularLevelState
+      : { stepIndex, hintUsedThisLevel, wrongThisLevel };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        activeTopic, activeDifficulty, levelIndex, stepIndex, score, completedLoops, streak,
+        activeTopic, activeDifficulty, levelIndex, score, completedLoops, streak,
+        stepIndex: reg.stepIndex, hintUsedThisLevel: reg.hintUsedThisLevel, wrongThisLevel: reg.wrongThisLevel,
+        levelProgress,
         unlockedAchievements: [...unlockedAchievements], totalSolves,
         dailyStreak, lastDailySolvedDate
       }));
@@ -275,6 +373,9 @@
         totalSolves = saved.totalSolves || 0;
         dailyStreak = saved.dailyStreak || 0;
         lastDailySolvedDate = saved.lastDailySolvedDate || null;
+        hintUsedThisLevel = !!saved.hintUsedThisLevel;
+        wrongThisLevel = saved.wrongThisLevel || 0;
+        levelProgress = (saved.levelProgress && typeof saved.levelProgress === "object") ? saved.levelProgress : {};
       }
     } catch (e) { /* corrupted/unavailable — start fresh */ }
   }
@@ -315,10 +416,7 @@
 
   $dailyCard.addEventListener("click", () => {
     if (isDailyCompletedToday()) return;
-    inDailyMode = true;
-    dailyLevel = getTodaysLevel();
-    stepIndex = 0;
-    render();
+    go("#daily");
   });
 
   function currentLevel() { return inDailyMode ? dailyLevel : activeLevels[levelIndex]; }
@@ -401,15 +499,6 @@
       $floatingSymbolsLayer.appendChild(s);
       scheduleRespawn(s);
     }
-  }
-
-  function showStreakFlash(count) {
-    $streakFlash.textContent = `🔥 ${count} Streak!`;
-    $streakFlash.classList.add("show");
-    clearTimeout(streakFlashTimeout);
-    streakFlashTimeout = setTimeout(() => {
-      $streakFlash.classList.remove("show");
-    }, 1200);
   }
 
   function showAchievementToast(name) {
@@ -589,18 +678,18 @@
 
   function render() {
     const level = currentLevel();
-    if (stepIndex === 0) {
-      currentEquationText = level.equation;
-      hintUsedThisLevel = false;
-    }
+    if (stepIndex === 0) { hintUsedThisLevel = false; wrongThisLevel = 0; }
+    // Derive the text from the level + step, so resuming mid-level (after a refresh,
+    // Today's Challenge, or another screen) always shows the right intermediate step.
+    currentEquationText = stepIndex === 0 ? level.equation : level.steps[stepIndex - 1].result;
     setEquationText(currentEquationText);
     $hudLevel.textContent = inDailyMode
       ? (LLL_I18N.t("dailyTitle") || "Today's Challenge")
       : `${levelIndex + 1} / ${activeLevels.length}`;
-    $topicSelector.style.display = inDailyMode ? "none" : "flex";
+    $playLevelLabel.textContent = inDailyMode ? "" :
+      `${LLL_I18N.t(TOPIC_LABEL_KEYS[level.topic]) || level.topic} · ${LLL_I18N.t(TIER_LABEL_KEYS[level.difficulty]) || level.difficulty}`;
     $hudScore.textContent = score;
     $hintText.textContent = "";
-    $nextBtn.classList.remove("visible");
     buildStepDots(level.steps.length);
     updateStepDots(stepIndex, level.steps.length, false);
     if (stepIndex === 0) $equationCard.classList.remove("solved");
@@ -642,38 +731,53 @@
       saveProgress();
 
       if (justSolved) {
-        score += currentLevel().basePoints;
+        const level = currentLevel();
+        const wasDaily = inDailyMode;
+        score += level.basePoints;
         totalSolves++;
         const isFirstSolveEver = totalSolves === 1;
+        let streakBonus = 0;
         if (hintUsedThisLevel) {
           streak = 0;
         } else {
           streak++;
           if (streak % 3 === 0) {
-            score += 5;
-            showStreakFlash(streak);
+            streakBonus = 5;
+            score += streakBonus;
           }
         }
         $hudScore.textContent = score;
         $hintText.textContent = LLL_I18N.t("solvedMsg") || "Solved!";
 
-        if (inDailyMode) {
+        const result = {
+          hash: location.hash, daily: wasDaily, level,
+          basePoints: level.basePoints, streakBonus, streakCount: streak,
+          stars: 0, newBest: false, tierJustCompleted: false
+        };
+        if (wasDaily) {
           const today = getDateKey();
           const yesterday = getDateKey(new Date(Date.now() - 86400000));
           dailyStreak = (lastDailySolvedDate === yesterday) ? dailyStreak + 1 : 1;
           lastDailySolvedDate = today;
           updateDailyCard();
-          inDailyMode = false;
-          saveProgress();
+          leaveDaily();
         } else {
-          $nextBtn.classList.add("visible");
+          const prevBest = (levelProgress[level.id] || {}).stars || 0;
+          result.stars = recordLevelResult(level);
+          result.newBest = prevBest > 0 && result.stars > prevBest;
+          result.tierJustCompleted = !nextLevelInTier(level);
+          if (result.tierJustCompleted) completedLoops++;
         }
-        checkAchievements({ justSolved: true, isFirstSolveEver, tierJustCompleted: false });
+        saveProgress();
+        checkAchievements({ justSolved: true, isFirstSolveEver, tierJustCompleted: result.tierJustCompleted });
+        // Let the solved card + typewriter finish before the overlay appears.
+        setTimeout(() => showCompleteOverlay(result), 900);
       } else {
         setTimeout(render, 600);
       }
     } else {
       btn.classList.add("wrong");
+      wrongThisLevel++;
       $eq.classList.remove("wrong-shake");
       void $eq.offsetWidth; // restart animation
       $eq.classList.add("wrong-shake");
@@ -695,34 +799,12 @@
       levelIndex = 0;
       stepIndex = 0;
     }
-    [...$tierSelector.children].forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.tier === activeDifficulty);
-    });
   }
 
   function setActiveTopic(topic, resetPosition = true) {
     activeTopic = LEVELS_BY_TOPIC_AND_DIFFICULTY[topic] ? topic : "equation";
-    [...$topicSelector.children].forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.topic === activeTopic);
-    });
     setActiveTier(activeDifficulty, resetPosition); // keep the current difficulty, swap its level list
   }
-
-  $tierSelector.addEventListener("click", (e) => {
-    const btn = e.target.closest(".tier-btn");
-    if (!btn || btn.dataset.tier === activeDifficulty) return;
-    setActiveTier(btn.dataset.tier);
-    saveProgress();
-    render();
-  });
-
-  $topicSelector.addEventListener("click", (e) => {
-    const btn = e.target.closest(".tier-btn");
-    if (!btn || btn.dataset.topic === activeTopic) return;
-    setActiveTopic(btn.dataset.topic);
-    saveProgress();
-    render();
-  });
 
   $hintBtn.addEventListener("click", () => {
     const level = currentLevel();
@@ -738,17 +820,275 @@
     }
   });
 
-  $nextBtn.addEventListener("click", () => {
-    levelIndex = (levelIndex + 1) % activeLevels.length;
-    if (levelIndex === 0) {
-      completedLoops++;
-      burstGrandConfetti();
-      checkAchievements({ justSolved: false, isFirstSolveEver: false, tierJustCompleted: true });
+  // ---------- level-complete overlay ----------
+  function nextLevelInTier(level) {
+    const list = levelsFor(level.topic, level.difficulty);
+    return list[list.indexOf(level) + 1] || null;
+  }
+
+  // Next level to offer: the next one in this tier, else the first level of the next tier.
+  function nextLevelAfter(level) {
+    const inTier = nextLevelInTier(level);
+    if (inTier) return inTier;
+    const nextTier = TIERS[TIERS.indexOf(level.difficulty) + 1];
+    return nextTier ? (levelsFor(level.topic, nextTier)[0] || null) : null;
+  }
+
+  let completeActions = {};
+
+  function showCompleteOverlay(r) {
+    if (location.hash !== r.hash) return; // player already navigated away
+    const t = k => LLL_I18N.t(k) || "";
+    const tierName = t(TIER_LABEL_KEYS[r.level.difficulty]);
+
+    if (r.daily) {
+      $completeKicker.textContent = t("dailyClear") || "Challenge complete!";
+      $completeSub.textContent = t("dailyTitle");
+      $completeStars.hidden = true;
+      $completeBest.hidden = true;
+    } else {
+      const n = levelsFor(r.level.topic, r.level.difficulty).indexOf(r.level) + 1;
+      $completeKicker.textContent = r.tierJustCompleted
+        ? (t("tierComplete") || "{tier} complete!").split("{tier}").join(tierName)
+        : (t("levelClear") || "Level clear!");
+      $completeSub.textContent = `${t(TOPIC_LABEL_KEYS[r.level.topic])} · ${tierName} ${n}`;
+      $completeStars.hidden = false;
+      $completeStars.innerHTML = [1, 2, 3].map(i =>
+        `<span class="big-star${i <= r.stars ? " on" : ""}" style="animation-delay:${0.15 + i * 0.18}s">★</span>`).join("");
+      $completeBest.hidden = !r.newBest;
+      $completeBest.textContent = t("newBest") || "New best!";
     }
-    stepIndex = 0;
+
+    $completePoints.textContent = `+${r.basePoints} ${t("ptsLabel") || "pts"}`;
+    $completeBonus.hidden = !r.streakBonus;
+    $completeBonus.textContent = `🔥 ${(t("streakBonus") || "{n} streak bonus").split("{n}").join(r.streakCount)} +${r.streakBonus}`;
+
+    // Buttons: primary = Next level (or Level select / Home when there's nothing next)
+    const next = r.daily ? null : nextLevelAfter(r.level);
+    const toLevels = () => go(`#levels/${r.level.topic}`);
+    if (r.daily) {
+      completeActions = { primary: () => go("#home"), escape: () => go("#home") };
+      $completePrimaryBtn.textContent = t("homeBtn") || "Home";
+    } else if (next) {
+      completeActions = { primary: () => go(playHash(next)), escape: toLevels };
+      $completePrimaryBtn.textContent = t("nextLevelBtn") || "Next level →";
+    } else {
+      completeActions = { primary: toLevels, escape: toLevels };
+      $completePrimaryBtn.textContent = t("levelSelectBtn") || "Level select";
+    }
+    completeActions.retry = () => go(playHash(r.level));
+    completeActions.levels = toLevels;
+
+    $completeRetryBtn.textContent = t("retryBtn") || "Try again";
+    $completeLevelsBtn.textContent = t("levelSelectBtn") || "Level select";
+    $completeRetryBtn.hidden = r.daily || r.stars === 3;
+    $completeLevelsBtn.hidden = r.daily || !next;
+    $completeRetryBtn.parentElement.hidden = $completeRetryBtn.hidden && $completeLevelsBtn.hidden;
+
+    // Press Start 2P has no Japanese glyphs — use it only for ASCII titles.
+    $completeKicker.classList.toggle("pixel", /^[\x20-\x7E]*$/.test($completeKicker.textContent));
+    $completeOverlay.hidden = false;
+    $completePrimaryBtn.focus({ preventScroll: true });
+    if (r.tierJustCompleted) burstGrandConfetti();
+  }
+
+  function hideCompleteOverlay() { $completeOverlay.hidden = true; }
+
+  $completePrimaryBtn.addEventListener("click", () => completeActions.primary && completeActions.primary());
+  $completeRetryBtn.addEventListener("click", () => completeActions.retry && completeActions.retry());
+  $completeLevelsBtn.addEventListener("click", () => completeActions.levels && completeActions.levels());
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$completeOverlay.hidden && completeActions.escape) completeActions.escape();
+  });
+
+  // ---------- per-level progress + stars ----------
+  // 3★ = no hint and no wrong taps · 2★ = no hint · 1★ = solved
+  function starsForCurrentAttempt() {
+    if (hintUsedThisLevel) return 1;
+    return wrongThisLevel === 0 ? 3 : 2;
+  }
+
+  // Saves the best result for this level; returns the stars earned this time.
+  function recordLevelResult(level) {
+    const stars = starsForCurrentAttempt();
+    const prev = levelProgress[level.id];
+    if (!prev || stars > prev.stars) levelProgress[level.id] = { stars };
+    saveProgress();
+    return stars;
+  }
+
+  function topicStats(topic) {
+    const levels = LEVELS.filter(l => l.topic === topic);
+    let cleared = 0, stars = 0;
+    levels.forEach(l => {
+      const p = levelProgress[l.id];
+      if (p) { cleared++; stars += p.stars; }
+    });
+    return { total: levels.length, cleared, stars, maxStars: levels.length * 3 };
+  }
+
+  function statsText({ total, cleared, stars, maxStars }) {
+    const label = LLL_I18N.t("clearedLabel") || "cleared";
+    return `${cleared} / ${total} ${label} · ★ ${stars} / ${maxStars}`;
+  }
+
+  function updateHomeCards() {
+    document.querySelectorAll(".topic-card-progress").forEach(el => {
+      const stats = topicStats(el.dataset.progress);
+      el.querySelector(".topic-card-bar-fill").style.width = `${(stats.cleared / stats.total) * 100}%`;
+      el.querySelector(".topic-card-count").textContent = statsText(stats);
+    });
+  }
+
+  // ---------- level select ----------
+  const TIERS = ["easy", "medium", "hard"];
+  const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12" };
+
+  // Levels unlock in order within a tier; the first level of every tier is always open.
+  function isUnlocked(level) {
+    const list = levelsFor(level.topic, level.difficulty);
+    const i = list.indexOf(level);
+    return i <= 0 || !!levelProgress[list[i - 1].id];
+  }
+
+  function starSpans(stars) {
+    return [1, 2, 3].map(n => `<span class="star${n <= stars ? " on" : ""}">★</span>`).join("");
+  }
+
+  function renderLevelSelect(topic) {
+    const t = k => LLL_I18N.t(k);
+    $levelsSample.textContent = TOPIC_SAMPLES[topic];
+    $levelsTitle.textContent = t(TOPIC_LABEL_KEYS[topic]) || topic;
+    $levelsSummary.textContent = statsText(topicStats(topic));
+    $levelsTiers.innerHTML = "";
+
+    TIERS.forEach(tier => {
+      const list = levelsFor(topic, tier);
+      if (!list.length) return;
+      const tierStars = list.reduce((sum, l) => sum + ((levelProgress[l.id] || {}).stars || 0), 0);
+      const nextLevel = list.find(l => !levelProgress[l.id] && isUnlocked(l));
+
+      const block = document.createElement("div");
+      block.className = "tier-block";
+      block.innerHTML = `
+        <div class="tier-block-head">
+          <span class="tier-block-name">${t(TIER_LABEL_KEYS[tier]) || tier}</span>
+          <span class="tier-block-meta">★ ${tierStars} / ${list.length * 3}</span>
+        </div>
+        <div class="level-grid"></div>`;
+      const grid = block.querySelector(".level-grid");
+
+      list.forEach((level, i) => {
+        const result = levelProgress[level.id];
+        const unlocked = isUnlocked(level);
+        const tile = document.createElement("button");
+        tile.className = "level-tile" +
+          (result ? " cleared" : "") + (level === nextLevel ? " next" : "") + (unlocked ? "" : " locked");
+        tile.dataset.level = level.id;
+        tile.disabled = !unlocked;
+        tile.setAttribute("aria-label",
+          `${t("levelLabel") || "Level"} ${i + 1}` + (unlocked ? (result ? ` · ${result.stars}★` : "") : ` · ${t("lockedLabel") || "Locked"}`));
+        tile.innerHTML = `
+          <span class="level-tile-num">${i + 1}</span>
+          <span class="level-tile-stars">${unlocked ? starSpans(result ? result.stars : 0) : "🔒"}</span>`;
+        grid.appendChild(tile);
+      });
+      $levelsTiers.appendChild(block);
+    });
+  }
+
+  $levelsTiers.addEventListener("click", (e) => {
+    const tile = e.target.closest(".level-tile");
+    if (!tile || tile.disabled) return;
+    go(playHash(LEVELS_BY_ID[tile.dataset.level]));
+  });
+
+  $levelsBackBtn.addEventListener("click", () => go("#home"));
+
+  function setBackLabel(key, fallback) {
+    $backBtnLabel.dataset.i18n = key;
+    $backBtnLabel.textContent = LLL_I18N.t(key) || fallback;
+  }
+
+  // ---------- screens + hash routing ----------
+  // Routes: #home · #play/<level id> · #daily
+  const LEVELS_BY_ID = Object.fromEntries(LEVELS.map(l => [l.id, l]));
+  const SCREENS = { home: $screenHome, levels: $screenLevels, play: $screenPlay };
+
+  function showScreen(name) {
+    Object.entries(SCREENS).forEach(([key, el]) => { el.hidden = key !== name; });
+    window.scrollTo(0, 0);
+  }
+
+  function playHash(level) { return `#play/${level.id}`; }
+
+  function go(hash) {
+    if (location.hash === hash) onRoute();
+    else location.hash = hash; // triggers hashchange → onRoute
+  }
+
+  function leaveDaily() {
+    if (!inDailyMode) return;
+    inDailyMode = false;
+    if (regularLevelState) ({ stepIndex, hintUsedThisLevel, wrongThisLevel } = regularLevelState);
+    regularLevelState = null;
+  }
+
+  function openLevel(level) {
+    leaveDaily();
+    const sameLevel = currentLevel() === level; // resume mid-level if it's the one you left
+    activeDifficulty = level.difficulty;
+    setActiveTopic(level.topic, false);
+    levelIndex = activeLevels.indexOf(level);
+    if (!sameLevel || stepIndex >= level.steps.length) stepIndex = 0;
     saveProgress();
     render();
+  }
+
+  function onRoute() {
+    hideCompleteOverlay();
+    const [screen, arg] = location.hash.replace(/^#/, "").split("/");
+    if (screen === "play" && LEVELS_BY_ID[arg]) {
+      const level = LEVELS_BY_ID[arg];
+      if (!isUnlocked(level)) {               // locked via a typed/bookmarked URL → its level select
+        history.replaceState(null, "", `#levels/${level.topic}`);
+        return onRoute();
+      }
+      openLevel(level);
+      setBackLabel("backLevels", "Levels");
+      showScreen("play");
+    } else if (screen === "levels" && LEVELS_BY_TOPIC_AND_DIFFICULTY[arg]) {
+      leaveDaily();
+      renderLevelSelect(arg);
+      showScreen("levels");
+    } else if (screen === "daily" && !isDailyCompletedToday()) {
+      if (!inDailyMode) regularLevelState = { stepIndex, hintUsedThisLevel, wrongThisLevel };
+      inDailyMode = true;
+      dailyLevel = getTodaysLevel();
+      stepIndex = 0;
+      render();
+      setBackLabel("backHome", "Home");
+      showScreen("play");
+    } else {
+      if (location.hash !== "#home") history.replaceState(null, "", "#home");
+      leaveDaily();
+      updateDailyCard();
+      updateHomeCards();
+      showScreen("home");
+    }
+  }
+
+  window.addEventListener("hashchange", onRoute);
+
+  $topicCards.addEventListener("click", (e) => {
+    const card = e.target.closest(".topic-card");
+    if (!card) return;
+    go(`#levels/${card.dataset.topic}`);
   });
+
+  $backBtn.addEventListener("click", () => go(inDailyMode ? "#home" : `#levels/${activeTopic}`));
 
   // ---------- intro / onboarding (full-screen animated) ----------
   const INTRO_SEEN_KEY = "lll_algebra_intro_seen";
@@ -817,7 +1157,7 @@
   setActiveTopic(activeTopic, false);
   loadProgress();
   updateDailyCard();
-  render();
+  onRoute();
 
   let hasSeenIntro = false;
   try { hasSeenIntro = localStorage.getItem(INTRO_SEEN_KEY) === "1"; } catch (e) { /* fail silently */ }
