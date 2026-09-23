@@ -130,6 +130,106 @@ const LEVELS = [
       ja: "xに8が足されているので、両辺から8を引くと打ち消されます — 今回はxが負の数になります。"
     }
   },
+  {
+    id: "linear_one_step_06",
+    topic: "equation",
+    equation: "x - 7 = -2",
+    answer: 5,
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "add", value: 7, target: "both-sides", result: "x = 5" }
+    ],
+    hints: {
+      en: ["Get x alone — add 7 to both sides."],
+      ja: ["xを求める — 両辺に7を足す。"]
+    },
+    explanation: {
+      en: "Since 7 is subtracted from x, adding 7 to both sides cancels it out and leaves x by itself.",
+      ja: "xから7が引かれているので、両辺に7を足すと打ち消され、xだけが残ります。"
+    }
+  },
+  {
+    id: "linear_one_step_07",
+    topic: "equation",
+    equation: "5x = 45",
+    answer: 9,
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "divide", value: 5, target: "both-sides", result: "x = 9" }
+    ],
+    hints: {
+      en: ["Get x alone — divide both sides by 5."],
+      ja: ["xを求める — 両辺を5で割る。"]
+    },
+    explanation: {
+      en: "Since x is multiplied by 5, dividing both sides by 5 cancels it out and leaves x by itself.",
+      ja: "xに5がかけられているので、両辺を5で割ると打ち消され、xだけが残ります。"
+    }
+  },
+  {
+    id: "linear_one_step_08",
+    topic: "equation",
+    equation: "x / 3 = -4",
+    answer: -12,
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 3, target: "both-sides", result: "x = -12" }
+    ],
+    hints: {
+      en: ["Get x alone — multiply both sides by 3."],
+      ja: ["xを求める — 両辺に3をかける。"]
+    },
+    explanation: {
+      en: "Since x is divided by 3, multiplying both sides by 3 cancels it out — the answer comes out negative.",
+      ja: "xが3で割られているので、両辺に3をかけると打ち消されます。答えは負の数になります。"
+    }
+  },
+  {
+    id: "linear_one_step_09",
+    topic: "equation",
+    equation: "x + 12 = 20",
+    answer: 8,
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "subtract", value: 12, target: "both-sides", result: "x = 8" }
+    ],
+    hints: {
+      en: ["Get x alone — subtract 12 from both sides."],
+      ja: ["xを求める — 両辺から12を引く。"]
+    },
+    explanation: {
+      en: "Since 12 is added to x, subtracting 12 from both sides cancels it out and leaves x by itself.",
+      ja: "xに12が足されているので、両辺から12を引くと打ち消され、xだけが残ります。"
+    }
+  },
+  {
+    id: "linear_one_step_10",
+    topic: "equation",
+    equation: "7x = -28",
+    answer: -4,
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "divide", value: 7, target: "both-sides", result: "x = -4" }
+    ],
+    hints: {
+      en: ["Get x alone — divide both sides by 7."],
+      ja: ["xを求める — 両辺を7で割る。"]
+    },
+    explanation: {
+      en: "Since x is multiplied by 7, dividing both sides by 7 leaves x by itself — a negative divided by a positive is negative.",
+      ja: "xに7がかけられているので、両辺を7で割るとxだけが残ります。負の数÷正の数は負の数です。"
+    }
+  },
 
   // ---- Two-step equations ----
   {
@@ -294,6 +394,114 @@ const LEVELS = [
       ja: "まず-3を消してxの項だけにし、次に両辺に5をかけて割り算を打ち消し、xを求めます。"
     }
   },
+  {
+    id: "linear_two_step_07",
+    topic: "equation",
+    equation: "3x + 5 = 20",
+    answer: 5,
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: 5, target: "both-sides", result: "3x = 15" },
+      { action: "divide",   value: 3, target: "both-sides", result: "x = 5" }
+    ],
+    hints: {
+      en: [
+        "Start by removing the constant — subtract 5 from both sides.",
+        "Now divide both sides by 3 to finish isolating x."
+      ],
+      ja: [
+        "まず定数項を消す — 両辺から5を引く。",
+        "次に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "First isolate the term with x by removing the +5, then divide by x's coefficient to solve for x.",
+      ja: "まず+5を消してxの項だけにし、次にxの係数で割ってxを求めます。"
+    }
+  },
+  {
+    id: "linear_two_step_08",
+    topic: "equation",
+    equation: "-2x + 7 = 15",
+    answer: -4,
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: 7,  target: "both-sides", result: "-2x = 8" },
+      { action: "divide",   value: -2, target: "both-sides", result: "x = -4" }
+    ],
+    hints: {
+      en: [
+        "Start by removing the constant — subtract 7 from both sides.",
+        "Now divide both sides by -2 — watch the negative sign!"
+      ],
+      ja: [
+        "まず定数項を消す — 両辺から7を引く。",
+        "次に両辺を-2で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "Remove the +7 first, then divide by the coefficient -2 — including its negative sign.",
+      ja: "まず+7を消し、次に係数の-2（マイナスも含めて）で割ります。"
+    }
+  },
+  {
+    id: "linear_two_step_09",
+    topic: "equation",
+    equation: "x/2 - 6 = 1",
+    answer: 14,
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "add",      value: 6, target: "both-sides", result: "x/2 = 7" },
+      { action: "multiply", value: 2, target: "both-sides", result: "x = 14" }
+    ],
+    hints: {
+      en: [
+        "Start by removing the constant — add 6 to both sides.",
+        "Now multiply both sides by 2 to finish isolating x."
+      ],
+      ja: [
+        "まず定数項を消す — 両辺に6を足す。",
+        "次に両辺に2をかけてxを求める。"
+      ]
+    },
+    explanation: {
+      en: "First isolate the term with x by removing the -6, then multiply to undo the division and solve for x.",
+      ja: "まず-6を消してxの項だけにし、次に両辺に2をかけて割り算を打ち消し、xを求めます。"
+    }
+  },
+  {
+    id: "linear_two_step_10",
+    topic: "equation",
+    equation: "-x/3 + 4 = 6",
+    answer: -6,
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: 4,  target: "both-sides", result: "-x/3 = 2" },
+      { action: "multiply", value: -3, target: "both-sides", result: "x = -6" }
+    ],
+    hints: {
+      en: [
+        "Start by removing the constant — subtract 4 from both sides.",
+        "Now multiply both sides by -3 — watch the negative sign!"
+      ],
+      ja: [
+        "まず定数項を消す — 両辺から4を引く。",
+        "次に両辺に-3をかける — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "Remove the +4, then multiply by -3 to undo the division by -3.",
+      ja: "まず+4を消し、次に両辺に-3をかけて-3での割り算を打ち消します。"
+    }
+  },
 
   // ---- x-on-both-sides equations (hard) ----
   {
@@ -354,6 +562,246 @@ const LEVELS = [
     explanation: {
       en: "First eliminate the smaller x term, then solve the resulting two-step equation as usual.",
       ja: "まず小さい方のxの項を消し、残った2ステップの方程式をいつも通り解きます。"
+    }
+  },
+  {
+    id: "linear_x_both_sides_03",
+    topic: "equation",
+    equation: "4x + 3 = x + 18",
+    answer: 5,
+    difficulty: "hard",
+    type: "x-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 1, target: "both-sides", result: "3x + 3 = 18" },
+      { action: "subtract",   value: 3, target: "both-sides", result: "3x = 15" },
+      { action: "divide",     value: 3, target: "both-sides", result: "x = 5" }
+    ],
+    hints: {
+      en: [
+        "Start by combining the x terms — subtract x from both sides.",
+        "Now remove the constant — subtract 3 from both sides.",
+        "Finally divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "まずxの項をまとめる — 両辺からxを引く。",
+        "次に定数項を消す — 両辺から3を引く。",
+        "最後に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "First eliminate the smaller x term, then solve the resulting two-step equation as usual.",
+      ja: "まず小さい方のxの項を消し、残った2ステップの方程式をいつも通り解きます。"
+    }
+  },
+  {
+    id: "linear_x_both_sides_04",
+    topic: "equation",
+    equation: "6x - 5 = 2x + 7",
+    answer: 3,
+    difficulty: "hard",
+    type: "x-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 2, target: "both-sides", result: "4x - 5 = 7" },
+      { action: "add",        value: 5, target: "both-sides", result: "4x = 12" },
+      { action: "divide",     value: 4, target: "both-sides", result: "x = 3" }
+    ],
+    hints: {
+      en: [
+        "Start by combining the x terms — subtract 2x from both sides.",
+        "Now remove the constant — add 5 to both sides.",
+        "Finally divide both sides by 4 to isolate x."
+      ],
+      ja: [
+        "まずxの項をまとめる — 両辺から2xを引く。",
+        "次に定数項を消す — 両辺に5を足す。",
+        "最後に両辺を4で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "First eliminate the smaller x term, then solve the resulting two-step equation as usual.",
+      ja: "まず小さい方のxの項を消し、残った2ステップの方程式をいつも通り解きます。"
+    }
+  },
+  {
+    id: "linear_x_both_sides_05",
+    topic: "equation",
+    equation: "7x + 2 = 3x - 10",
+    answer: -3,
+    difficulty: "hard",
+    type: "x-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 3, target: "both-sides", result: "4x + 2 = -10" },
+      { action: "subtract",   value: 2, target: "both-sides", result: "4x = -12" },
+      { action: "divide",     value: 4, target: "both-sides", result: "x = -3" }
+    ],
+    hints: {
+      en: [
+        "Start by combining the x terms — subtract 3x from both sides.",
+        "Now remove the constant — subtract 2 from both sides.",
+        "Finally divide both sides by 4 to isolate x."
+      ],
+      ja: [
+        "まずxの項をまとめる — 両辺から3xを引く。",
+        "次に定数項を消す — 両辺から2を引く。",
+        "最後に両辺を4で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Eliminate the smaller x term, then remove the constant — the right side goes negative, so x does too.",
+      ja: "小さい方のxの項を消してから定数項を消します。右辺が負の数になるので、xも負の数になります。"
+    }
+  },
+  {
+    id: "linear_x_both_sides_06",
+    topic: "equation",
+    equation: "2x + 9 = 5x - 3",
+    answer: 4,
+    difficulty: "hard",
+    type: "x-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 5,  target: "both-sides", result: "-3x + 9 = -3" },
+      { action: "subtract",   value: 9,  target: "both-sides", result: "-3x = -12" },
+      { action: "divide",     value: -3, target: "both-sides", result: "x = 4" }
+    ],
+    hints: {
+      en: [
+        "Start by combining the x terms — subtract 5x from both sides.",
+        "Now remove the constant — subtract 9 from both sides.",
+        "Finally divide both sides by -3 — watch the negative sign!"
+      ],
+      ja: [
+        "まずxの項をまとめる — 両辺から5xを引く。",
+        "次に定数項を消す — 両辺から9を引く。",
+        "最後に両辺を-3で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "Subtracting 5x leaves a negative x term (-3x); dividing by -3 at the end turns -12 into a positive 4.",
+      ja: "5xを引くとxの項が負（-3x）になります。最後に-3で割ると、-12が正の4になります。"
+    }
+  },
+  {
+    id: "linear_x_both_sides_07",
+    topic: "equation",
+    equation: "5x - 8 = x + 12",
+    answer: 5,
+    difficulty: "hard",
+    type: "x-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 1, target: "both-sides", result: "4x - 8 = 12" },
+      { action: "add",        value: 8, target: "both-sides", result: "4x = 20" },
+      { action: "divide",     value: 4, target: "both-sides", result: "x = 5" }
+    ],
+    hints: {
+      en: [
+        "Start by combining the x terms — subtract x from both sides.",
+        "Now remove the constant — add 8 to both sides.",
+        "Finally divide both sides by 4 to isolate x."
+      ],
+      ja: [
+        "まずxの項をまとめる — 両辺からxを引く。",
+        "次に定数項を消す — 両辺に8を足す。",
+        "最後に両辺を4で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "First eliminate the smaller x term, then solve the resulting two-step equation as usual.",
+      ja: "まず小さい方のxの項を消し、残った2ステップの方程式をいつも通り解きます。"
+    }
+  },
+  {
+    id: "linear_x_both_sides_08",
+    topic: "equation",
+    equation: "3x + 14 = 5x + 2",
+    answer: 6,
+    difficulty: "hard",
+    type: "x-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 5,  target: "both-sides", result: "-2x + 14 = 2" },
+      { action: "subtract",   value: 14, target: "both-sides", result: "-2x = -12" },
+      { action: "divide",     value: -2, target: "both-sides", result: "x = 6" }
+    ],
+    hints: {
+      en: [
+        "Start by combining the x terms — subtract 5x from both sides.",
+        "Now remove the constant — subtract 14 from both sides.",
+        "Finally divide both sides by -2 — watch the negative sign!"
+      ],
+      ja: [
+        "まずxの項をまとめる — 両辺から5xを引く。",
+        "次に定数項を消す — 両辺から14を引く。",
+        "最後に両辺を-2で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "Subtracting 5x leaves -2x; dividing both sides by -2 at the end gives a positive answer.",
+      ja: "5xを引くと-2xが残ります。最後に両辺を-2で割ると、答えは正の数になります。"
+    }
+  },
+  {
+    id: "linear_x_both_sides_09",
+    topic: "equation",
+    equation: "8x - 3 = 5x + 18",
+    answer: 7,
+    difficulty: "hard",
+    type: "x-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 5, target: "both-sides", result: "3x - 3 = 18" },
+      { action: "add",        value: 3, target: "both-sides", result: "3x = 21" },
+      { action: "divide",     value: 3, target: "both-sides", result: "x = 7" }
+    ],
+    hints: {
+      en: [
+        "Start by combining the x terms — subtract 5x from both sides.",
+        "Now remove the constant — add 3 to both sides.",
+        "Finally divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "まずxの項をまとめる — 両辺から5xを引く。",
+        "次に定数項を消す — 両辺に3を足す。",
+        "最後に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "First eliminate the smaller x term, then solve the resulting two-step equation as usual.",
+      ja: "まず小さい方のxの項を消し、残った2ステップの方程式をいつも通り解きます。"
+    }
+  },
+  {
+    id: "linear_x_both_sides_10",
+    topic: "equation",
+    equation: "x + 6 = 4x + 12",
+    answer: -2,
+    difficulty: "hard",
+    type: "x-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 4,  target: "both-sides", result: "-3x + 6 = 12" },
+      { action: "subtract",   value: 6,  target: "both-sides", result: "-3x = 6" },
+      { action: "divide",     value: -3, target: "both-sides", result: "x = -2" }
+    ],
+    hints: {
+      en: [
+        "Start by combining the x terms — subtract 4x from both sides.",
+        "Now remove the constant — subtract 6 from both sides.",
+        "Finally divide both sides by -3 — watch the negative sign!"
+      ],
+      ja: [
+        "まずxの項をまとめる — 両辺から4xを引く。",
+        "次に定数項を消す — 両辺から6を引く。",
+        "最後に両辺を-3で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "Subtracting 4x leaves -3x; dividing 6 by -3 at the end gives a negative answer.",
+      ja: "4xを引くと-3xが残ります。最後に6を-3で割ると、答えは負の数になります。"
     }
   },
 
@@ -1097,10 +1545,8 @@ const LEVELS = [
   }
 ];
 
-// Handy lookup by difficulty tier, mirroring how lll-admin/lll-chem
-// filter their level banks by difficulty.
-// NOTE: equations only for now — inequalities stay hidden from the existing
-// Easy/Medium/Hard tabs until the Topic selector is wired up.
+// Equations-only lookup by difficulty tier. No longer used by index.html
+// (kept for compatibility) — the game uses LEVELS_BY_TOPIC_AND_DIFFICULTY below.
 const LEVELS_BY_DIFFICULTY = LEVELS
   .filter(lvl => lvl.topic === "equation")
   .reduce((acc, lvl) => {
@@ -1108,9 +1554,8 @@ const LEVELS_BY_DIFFICULTY = LEVELS
     return acc;
   }, {});
 
-// Topic → difficulty → levels. Ready for the Topic selector
-// (e.g. LEVELS_BY_TOPIC_AND_DIFFICULTY.inequality.medium); not used by
-// index.html yet.
+// Topic → difficulty → levels (e.g. LEVELS_BY_TOPIC_AND_DIFFICULTY.inequality.medium).
+// Drives the level select screen and level order in index.html.
 const LEVELS_BY_TOPIC_AND_DIFFICULTY = LEVELS.reduce((acc, lvl) => {
   acc[lvl.topic] = acc[lvl.topic] || {};
   (acc[lvl.topic][lvl.difficulty] = acc[lvl.topic][lvl.difficulty] || []).push(lvl);
@@ -1123,7 +1568,7 @@ const ACHIEVEMENTS = [
   {
     id: "first_steps",
     name: { en: "First Steps", ja: "はじめの一歩" },
-    desc: { en: "Solve your first equation", ja: "最初の方程式を解く" }
+    desc: { en: "Solve your first problem", ja: "最初の問題を解く" }
   },
   {
     id: "on_a_roll",
@@ -1148,7 +1593,7 @@ const ACHIEVEMENTS = [
   {
     id: "level_up",
     name: { en: "Level Up", ja: "レベルアップ" },
-    desc: { en: "Solve a Hard-tier equation", ja: "むずかしいの方程式を解く" }
+    desc: { en: "Solve a Hard-tier problem", ja: "むずかしいの問題を解く" }
   }
 ];
 
