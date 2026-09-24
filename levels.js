@@ -1545,15 +1545,6 @@ const LEVELS = [
   }
 ];
 
-// Equations-only lookup by difficulty tier. No longer used by index.html
-// (kept for compatibility) — the game uses LEVELS_BY_TOPIC_AND_DIFFICULTY below.
-const LEVELS_BY_DIFFICULTY = LEVELS
-  .filter(lvl => lvl.topic === "equation")
-  .reduce((acc, lvl) => {
-    (acc[lvl.difficulty] = acc[lvl.difficulty] || []).push(lvl);
-    return acc;
-  }, {});
-
 // Topic → difficulty → levels (e.g. LEVELS_BY_TOPIC_AND_DIFFICULTY.inequality.medium).
 // Drives the level select screen and level order in index.html.
 const LEVELS_BY_TOPIC_AND_DIFFICULTY = LEVELS.reduce((acc, lvl) => {
@@ -1597,4 +1588,4 @@ const ACHIEVEMENTS = [
   }
 ];
 
-export { LEVELS, LEVELS_BY_DIFFICULTY, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS };
+export { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS };
