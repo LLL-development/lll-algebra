@@ -9,6 +9,10 @@
 //   "divide"      — divide both sides by `value`
 //   "add_x"       — add `value`·x to both sides (combine x-terms)
 //   "subtract_x"  — subtract `value`·x from both sides (combine x-terms)
+//   "expand"      — multiply out brackets on ONE side (a rewrite, not a both-sides move).
+//                   `value` is the correct expansion as a string (e.g. "2x + 6");
+//                   `wrong` is an array of 3 authored wrong expansions used as distractors;
+//                   `target` is "left" or "right" (the side being rewritten).
 //
 // Authoring rules:
 //   - add/subtract/add_x/subtract_x values are always POSITIVE
@@ -17,9 +21,9 @@
 //   - Inequality steps that multiply/divide by a negative set `flip: true`
 //     (the inequality sign reverses on that step).
 //
-// `topic` is "equation" or "inequality". `target` is always "both-sides"
-// for v1 (no single-side operations yet — keeps the button set small and
-// the rule simple: "whatever you do, do it to both sides").
+// `topic` is "equation", "inequality" or "brackets". `target` is "both-sides"
+// for every move that changes a side's value; only "expand" rewrites one side,
+// because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
 // `hints` and `explanation` are per-language objects ({ en, ja }) so the
 // UI can pick the active language at render time.
@@ -1541,6 +1545,931 @@ const LEVELS = [
     explanation: {
       en: "Subtracting 4x leaves -3x on the left, so dividing by -3 flips < to >.",
       ja: "4xを引くと左辺が-3xになるので、-3で割ると < が > になります。"
+    }
+  },
+  // =====================================================================
+  // BRACKETS
+  // =====================================================================
+
+  // ---- Easy: positive number outside, + inside ----
+  {
+    id: "brackets_easy_01",
+    topic: "brackets",
+    equation: "2(x + 3) = 14",
+    answer: 4,
+    difficulty: "easy",
+    type: "brackets",
+    basePoints: 10,
+    steps: [
+      { action: "expand",   value: "2x + 6", wrong: ["2x + 3", "x + 6", "2x + 5"], target: "left", result: "2x + 6 = 14" },
+      { action: "subtract", value: 6, target: "both-sides", result: "2x = 8" },
+      { action: "divide",   value: 2, target: "both-sides", result: "x = 4" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 2 by each term inside: 2 × x and 2 × 3.",
+        "Now remove the constant — subtract 6 from both sides.",
+        "Finally divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 2をかっこの中の各項にかける：2 × x と 2 × 3。",
+        "次に定数項を消す — 両辺から6を引く。",
+        "最後に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Expanding multiplies the number outside by every term inside, so 2(x + 3) becomes 2x + 6. The value doesn't change, so it's done on one side only — then solve as usual.",
+      ja: "展開では、かっこの外の数を中のすべての項にかけます。2(x + 3) は 2x + 6 になります。値は変わらないので片側だけで行い、その後はいつも通り解きます。"
+    }
+  },
+
+  {
+    id: "brackets_easy_02",
+    topic: "brackets",
+    equation: "3(x + 2) = 21",
+    answer: 5,
+    difficulty: "easy",
+    type: "brackets",
+    basePoints: 10,
+    steps: [
+      { action: "expand",   value: "3x + 6", wrong: ["3x + 2", "x + 6", "3x + 5"], target: "left", result: "3x + 6 = 21" },
+      { action: "subtract", value: 6, target: "both-sides", result: "3x = 15" },
+      { action: "divide",   value: 3, target: "both-sides", result: "x = 5" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 3 by each term inside: 3 × x and 3 × 2.",
+        "Now remove the constant — subtract 6 from both sides.",
+        "Finally divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 3をかっこの中の各項にかける：3 × x と 3 × 2。",
+        "次に定数項を消す — 両辺から6を引く。",
+        "最後に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "3 multiplies both x and 2, so 3(x + 2) becomes 3x + 6 — not 3x + 2.",
+      ja: "3はxと2の両方にかかるので、3(x + 2) は 3x + 2 ではなく 3x + 6 になります。"
+    }
+  },
+  {
+    id: "brackets_easy_03",
+    topic: "brackets",
+    equation: "4(x + 1) = 20",
+    answer: 4,
+    difficulty: "easy",
+    type: "brackets",
+    basePoints: 10,
+    steps: [
+      { action: "expand",   value: "4x + 4", wrong: ["4x + 1", "x + 4", "4x + 5"], target: "left", result: "4x + 4 = 20" },
+      { action: "subtract", value: 4, target: "both-sides", result: "4x = 16" },
+      { action: "divide",   value: 4, target: "both-sides", result: "x = 4" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 4 by each term inside: 4 × x and 4 × 1.",
+        "Now remove the constant — subtract 4 from both sides.",
+        "Finally divide both sides by 4 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 4をかっこの中の各項にかける：4 × x と 4 × 1。",
+        "次に定数項を消す — 両辺から4を引く。",
+        "最後に両辺を4で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Multiply 4 by each term: 4 × x = 4x and 4 × 1 = 4, giving 4x + 4.",
+      ja: "4を各項にかけます：4 × x = 4x、4 × 1 = 4 で 4x + 4 になります。"
+    }
+  },
+  {
+    id: "brackets_easy_04",
+    topic: "brackets",
+    equation: "5(x + 2) = 40",
+    answer: 6,
+    difficulty: "easy",
+    type: "brackets",
+    basePoints: 10,
+    steps: [
+      { action: "expand",   value: "5x + 10", wrong: ["5x + 2", "x + 10", "5x + 7"], target: "left", result: "5x + 10 = 40" },
+      { action: "subtract", value: 10, target: "both-sides", result: "5x = 30" },
+      { action: "divide",   value: 5,  target: "both-sides", result: "x = 6" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 5 by each term inside: 5 × x and 5 × 2.",
+        "Now remove the constant — subtract 10 from both sides.",
+        "Finally divide both sides by 5 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 5をかっこの中の各項にかける：5 × x と 5 × 2。",
+        "次に定数項を消す — 両辺から10を引く。",
+        "最後に両辺を5で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Every term inside gets multiplied: 5(x + 2) = 5x + 10. Then remove the 10 and divide by 5.",
+      ja: "かっこの中のすべての項にかけます：5(x + 2) = 5x + 10。その後10を消して5で割ります。"
+    }
+  },
+  {
+    id: "brackets_easy_05",
+    topic: "brackets",
+    equation: "2(x + 5) = 16",
+    answer: 3,
+    difficulty: "easy",
+    type: "brackets",
+    basePoints: 10,
+    steps: [
+      { action: "expand",   value: "2x + 10", wrong: ["2x + 5", "x + 10", "2x + 7"], target: "left", result: "2x + 10 = 16" },
+      { action: "subtract", value: 10, target: "both-sides", result: "2x = 6" },
+      { action: "divide",   value: 2,  target: "both-sides", result: "x = 3" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 2 by each term inside: 2 × x and 2 × 5.",
+        "Now remove the constant — subtract 10 from both sides.",
+        "Finally divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 2をかっこの中の各項にかける：2 × x と 2 × 5。",
+        "次に定数項を消す — 両辺から10を引く。",
+        "最後に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "The number outside multiplies x too — 2(x + 5) is 2x + 10, not x + 10.",
+      ja: "外の数はxにもかかります。2(x + 5) は x + 10 ではなく 2x + 10 です。"
+    }
+  },
+  {
+    id: "brackets_easy_06",
+    topic: "brackets",
+    equation: "3(x + 4) = 18",
+    answer: 2,
+    difficulty: "easy",
+    type: "brackets",
+    basePoints: 10,
+    steps: [
+      { action: "expand",   value: "3x + 12", wrong: ["3x + 4", "x + 12", "3x + 7"], target: "left", result: "3x + 12 = 18" },
+      { action: "subtract", value: 12, target: "both-sides", result: "3x = 6" },
+      { action: "divide",   value: 3,  target: "both-sides", result: "x = 2" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 3 by each term inside: 3 × x and 3 × 4.",
+        "Now remove the constant — subtract 12 from both sides.",
+        "Finally divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 3をかっこの中の各項にかける：3 × x と 3 × 4。",
+        "次に定数項を消す — 両辺から12を引く。",
+        "最後に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "3 × 4 = 12, so 3(x + 4) expands to 3x + 12. Subtracting 12 and dividing by 3 gives x = 2.",
+      ja: "3 × 4 = 12 なので、3(x + 4) は 3x + 12 に展開されます。12を引いて3で割ると x = 2 です。"
+    }
+  },
+  {
+    id: "brackets_easy_07",
+    topic: "brackets",
+    equation: "6(x + 1) = 30",
+    answer: 4,
+    difficulty: "easy",
+    type: "brackets",
+    basePoints: 10,
+    steps: [
+      { action: "expand",   value: "6x + 6", wrong: ["6x + 1", "x + 6", "6x + 7"], target: "left", result: "6x + 6 = 30" },
+      { action: "subtract", value: 6, target: "both-sides", result: "6x = 24" },
+      { action: "divide",   value: 6, target: "both-sides", result: "x = 4" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 6 by each term inside: 6 × x and 6 × 1.",
+        "Now remove the constant — subtract 6 from both sides.",
+        "Finally divide both sides by 6 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 6をかっこの中の各項にかける：6 × x と 6 × 1。",
+        "次に定数項を消す — 両辺から6を引く。",
+        "最後に両辺を6で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Even when the term inside is 1, it still gets multiplied: 6 × 1 = 6, so 6(x + 1) = 6x + 6.",
+      ja: "かっこの中の項が1でもかけ算は必要です。6 × 1 = 6 なので、6(x + 1) = 6x + 6 です。"
+    }
+  },
+  {
+    id: "brackets_easy_08",
+    topic: "brackets",
+    equation: "2(x + 7) = 32",
+    answer: 9,
+    difficulty: "easy",
+    type: "brackets",
+    basePoints: 10,
+    steps: [
+      { action: "expand",   value: "2x + 14", wrong: ["2x + 7", "x + 14", "2x + 9"], target: "left", result: "2x + 14 = 32" },
+      { action: "subtract", value: 14, target: "both-sides", result: "2x = 18" },
+      { action: "divide",   value: 2,  target: "both-sides", result: "x = 9" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 2 by each term inside: 2 × x and 2 × 7.",
+        "Now remove the constant — subtract 14 from both sides.",
+        "Finally divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 2をかっこの中の各項にかける：2 × x と 2 × 7。",
+        "次に定数項を消す — 両辺から14を引く。",
+        "最後に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Expanding means multiplying, not adding: 2 × 7 = 14, so 2(x + 7) becomes 2x + 14.",
+      ja: "展開は足し算ではなくかけ算です。2 × 7 = 14 なので、2(x + 7) は 2x + 14 になります。"
+    }
+  },
+  {
+    id: "brackets_easy_09",
+    topic: "brackets",
+    equation: "4(x + 3) = 40",
+    answer: 7,
+    difficulty: "easy",
+    type: "brackets",
+    basePoints: 10,
+    steps: [
+      { action: "expand",   value: "4x + 12", wrong: ["4x + 3", "x + 12", "4x + 7"], target: "left", result: "4x + 12 = 40" },
+      { action: "subtract", value: 12, target: "both-sides", result: "4x = 28" },
+      { action: "divide",   value: 4,  target: "both-sides", result: "x = 7" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 4 by each term inside: 4 × x and 4 × 3.",
+        "Now remove the constant — subtract 12 from both sides.",
+        "Finally divide both sides by 4 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 4をかっこの中の各項にかける：4 × x と 4 × 3。",
+        "次に定数項を消す — 両辺から12を引く。",
+        "最後に両辺を4で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "4(x + 3) becomes 4x + 12. Subtract 12 to leave 4x = 28, then divide by 4.",
+      ja: "4(x + 3) は 4x + 12 になります。12を引くと 4x = 28、4で割って x = 7 です。"
+    }
+  },
+  {
+    id: "brackets_easy_10",
+    topic: "brackets",
+    equation: "5(x + 3) = 55",
+    answer: 8,
+    difficulty: "easy",
+    type: "brackets",
+    basePoints: 10,
+    steps: [
+      { action: "expand",   value: "5x + 15", wrong: ["5x + 3", "x + 15", "5x + 8"], target: "left", result: "5x + 15 = 55" },
+      { action: "subtract", value: 15, target: "both-sides", result: "5x = 40" },
+      { action: "divide",   value: 5,  target: "both-sides", result: "x = 8" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 5 by each term inside: 5 × x and 5 × 3.",
+        "Now remove the constant — subtract 15 from both sides.",
+        "Finally divide both sides by 5 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 5をかっこの中の各項にかける：5 × x と 5 × 3。",
+        "次に定数項を消す — 両辺から15を引く。",
+        "最後に両辺を5で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "5(x + 3) = 5x + 15 — both terms inside are multiplied by 5. Then solve the two-step equation as usual.",
+      ja: "5(x + 3) = 5x + 15 — かっこの中の両方の項に5をかけます。その後はいつも通り2ステップで解きます。"
+    }
+  },
+
+  // ---- Medium: minus inside the brackets ----
+  {
+    id: "brackets_medium_01",
+    topic: "brackets",
+    equation: "3(x - 2) = 12",
+    answer: 6,
+    difficulty: "medium",
+    type: "brackets",
+    basePoints: 20,
+    steps: [
+      { action: "expand", value: "3x - 6", wrong: ["3x - 2", "3x + 6", "x - 6"], target: "left", result: "3x - 6 = 12" },
+      { action: "add",    value: 6, target: "both-sides", result: "3x = 18" },
+      { action: "divide", value: 3, target: "both-sides", result: "x = 6" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 3 by each term: 3 × x and 3 × (-2).",
+        "Now remove the constant — add 6 to both sides.",
+        "Finally divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 3を各項にかける：3 × x と 3 ×（-2）。",
+        "次に定数項を消す — 両辺に6を足す。",
+        "最後に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "The minus inside the brackets gets multiplied too: 3 × (-2) = -6, so 3(x - 2) becomes 3x - 6.",
+      ja: "かっこの中のマイナスも一緒にかけます。3 ×（-2）= -6 なので、3(x - 2) は 3x - 6 になります。"
+    }
+  },
+
+  {
+    id: "brackets_medium_02",
+    topic: "brackets",
+    equation: "2(x - 4) = 6",
+    answer: 7,
+    difficulty: "medium",
+    type: "brackets",
+    basePoints: 20,
+    steps: [
+      { action: "expand", value: "2x - 8", wrong: ["2x - 4", "2x + 8", "x - 8"], target: "left", result: "2x - 8 = 6" },
+      { action: "add",    value: 8, target: "both-sides", result: "2x = 14" },
+      { action: "divide", value: 2, target: "both-sides", result: "x = 7" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 2 by each term: 2 × x and 2 × (-4).",
+        "Now remove the constant — add 8 to both sides.",
+        "Finally divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 2を各項にかける：2 × x と 2 ×（-4）。",
+        "次に定数項を消す — 両辺に8を足す。",
+        "最後に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Keep the minus with the 4: 2 × (-4) = -8, so 2(x - 4) becomes 2x - 8.",
+      ja: "4のマイナスも一緒にかけます：2 ×（-4）= -8 なので、2(x - 4) は 2x - 8 になります。"
+    }
+  },
+  {
+    id: "brackets_medium_03",
+    topic: "brackets",
+    equation: "4(x - 3) = 20",
+    answer: 8,
+    difficulty: "medium",
+    type: "brackets",
+    basePoints: 20,
+    steps: [
+      { action: "expand", value: "4x - 12", wrong: ["4x - 3", "4x + 12", "x - 12"], target: "left", result: "4x - 12 = 20" },
+      { action: "add",    value: 12, target: "both-sides", result: "4x = 32" },
+      { action: "divide", value: 4,  target: "both-sides", result: "x = 8" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 4 by each term: 4 × x and 4 × (-3).",
+        "Now remove the constant — add 12 to both sides.",
+        "Finally divide both sides by 4 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 4を各項にかける：4 × x と 4 ×（-3）。",
+        "次に定数項を消す — 両辺に12を足す。",
+        "最後に両辺を4で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "The minus stays with the 3 when you multiply: 4 × (-3) = -12, giving 4x - 12 — not 4x + 12.",
+      ja: "かけてもマイナスは3と一緒です。4 ×（-3）= -12 なので 4x - 12 になり、4x + 12 ではありません。"
+    }
+  },
+  {
+    id: "brackets_medium_04",
+    topic: "brackets",
+    equation: "5(x - 1) = 15",
+    answer: 4,
+    difficulty: "medium",
+    type: "brackets",
+    basePoints: 20,
+    steps: [
+      { action: "expand", value: "5x - 5", wrong: ["5x - 1", "5x + 5", "x - 5"], target: "left", result: "5x - 5 = 15" },
+      { action: "add",    value: 5, target: "both-sides", result: "5x = 20" },
+      { action: "divide", value: 5, target: "both-sides", result: "x = 4" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 5 by each term: 5 × x and 5 × (-1).",
+        "Now remove the constant — add 5 to both sides.",
+        "Finally divide both sides by 5 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 5を各項にかける：5 × x と 5 ×（-1）。",
+        "次に定数項を消す — 両辺に5を足す。",
+        "最後に両辺を5で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "5 × (-1) = -5, so 5(x - 1) expands to 5x - 5. Then add 5 and divide by 5.",
+      ja: "5 ×（-1）= -5 なので、5(x - 1) は 5x - 5 に展開されます。その後5を足して5で割ります。"
+    }
+  },
+  {
+    id: "brackets_medium_05",
+    topic: "brackets",
+    equation: "4(x + 5) = 8",
+    answer: -3,
+    difficulty: "medium",
+    type: "brackets",
+    basePoints: 20,
+    steps: [
+      { action: "expand",   value: "4x + 20", wrong: ["4x + 5", "x + 20", "4x + 9"], target: "left", result: "4x + 20 = 8" },
+      { action: "subtract", value: 20, target: "both-sides", result: "4x = -12" },
+      { action: "divide",   value: 4,  target: "both-sides", result: "x = -3" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 4 by each term inside: 4 × x and 4 × 5.",
+        "Now remove the constant — subtract 20 from both sides.",
+        "Finally divide both sides by 4 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 4をかっこの中の各項にかける：4 × x と 4 × 5。",
+        "次に定数項を消す — 両辺から20を引く。",
+        "最後に両辺を4で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Expanding gives 4x + 20. Subtracting 20 from 8 goes negative (4x = -12), so the answer is negative.",
+      ja: "展開すると 4x + 20。8から20を引くと負の数（4x = -12）になるので、答えも負の数です。"
+    }
+  },
+  {
+    id: "brackets_medium_06",
+    topic: "brackets",
+    equation: "3(x - 5) = -6",
+    answer: 3,
+    difficulty: "medium",
+    type: "brackets",
+    basePoints: 20,
+    steps: [
+      { action: "expand", value: "3x - 15", wrong: ["3x - 5", "3x + 15", "x - 15"], target: "left", result: "3x - 15 = -6" },
+      { action: "add",    value: 15, target: "both-sides", result: "3x = 9" },
+      { action: "divide", value: 3,  target: "both-sides", result: "x = 3" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 3 by each term: 3 × x and 3 × (-5).",
+        "Now remove the constant — add 15 to both sides.",
+        "Finally divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 3を各項にかける：3 × x と 3 ×（-5）。",
+        "次に定数項を消す — 両辺に15を足す。",
+        "最後に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "3(x - 5) = 3x - 15. Adding 15 to -6 gives 9, so 3x = 9 and x = 3.",
+      ja: "3(x - 5) = 3x - 15。-6に15を足すと9なので、3x = 9、x = 3 です。"
+    }
+  },
+  {
+    id: "brackets_medium_07",
+    topic: "brackets",
+    equation: "2(x - 6) = -20",
+    answer: -4,
+    difficulty: "medium",
+    type: "brackets",
+    basePoints: 20,
+    steps: [
+      { action: "expand", value: "2x - 12", wrong: ["2x - 6", "2x + 12", "x - 12"], target: "left", result: "2x - 12 = -20" },
+      { action: "add",    value: 12, target: "both-sides", result: "2x = -8" },
+      { action: "divide", value: 2,  target: "both-sides", result: "x = -4" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 2 by each term: 2 × x and 2 × (-6).",
+        "Now remove the constant — add 12 to both sides.",
+        "Finally divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 2を各項にかける：2 × x と 2 ×（-6）。",
+        "次に定数項を消す — 両辺に12を足す。",
+        "最後に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "2(x - 6) = 2x - 12. Adding 12 to -20 still leaves a negative, so x comes out negative.",
+      ja: "2(x - 6) = 2x - 12。-20に12を足してもまだ負の数なので、xも負の数になります。"
+    }
+  },
+  {
+    id: "brackets_medium_08",
+    topic: "brackets",
+    equation: "6(x - 2) = 18",
+    answer: 5,
+    difficulty: "medium",
+    type: "brackets",
+    basePoints: 20,
+    steps: [
+      { action: "expand", value: "6x - 12", wrong: ["6x - 2", "6x + 12", "x - 12"], target: "left", result: "6x - 12 = 18" },
+      { action: "add",    value: 12, target: "both-sides", result: "6x = 30" },
+      { action: "divide", value: 6,  target: "both-sides", result: "x = 5" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 6 by each term: 6 × x and 6 × (-2).",
+        "Now remove the constant — add 12 to both sides.",
+        "Finally divide both sides by 6 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 6を各項にかける：6 × x と 6 ×（-2）。",
+        "次に定数項を消す — 両辺に12を足す。",
+        "最後に両辺を6で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Multiply 6 by both terms: 6 × x = 6x and 6 × (-2) = -12, giving 6x - 12.",
+      ja: "6を両方の項にかけます：6 × x = 6x、6 ×（-2）= -12 で 6x - 12 です。"
+    }
+  },
+  {
+    id: "brackets_medium_09",
+    topic: "brackets",
+    equation: "3(x + 7) = 6",
+    answer: -5,
+    difficulty: "medium",
+    type: "brackets",
+    basePoints: 20,
+    steps: [
+      { action: "expand",   value: "3x + 21", wrong: ["3x + 7", "x + 21", "3x + 10"], target: "left", result: "3x + 21 = 6" },
+      { action: "subtract", value: 21, target: "both-sides", result: "3x = -15" },
+      { action: "divide",   value: 3,  target: "both-sides", result: "x = -5" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 3 by each term inside: 3 × x and 3 × 7.",
+        "Now remove the constant — subtract 21 from both sides.",
+        "Finally divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 3をかっこの中の各項にかける：3 × x と 3 × 7。",
+        "次に定数項を消す — 両辺から21を引く。",
+        "最後に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "3(x + 7) = 3x + 21. Since 21 is bigger than 6, subtracting it makes the right side negative: 3x = -15.",
+      ja: "3(x + 7) = 3x + 21。21は6より大きいので、引くと右辺は負の数になります：3x = -15。"
+    }
+  },
+  {
+    id: "brackets_medium_10",
+    topic: "brackets",
+    equation: "5(x - 4) = -35",
+    answer: -3,
+    difficulty: "medium",
+    type: "brackets",
+    basePoints: 20,
+    steps: [
+      { action: "expand", value: "5x - 20", wrong: ["5x - 4", "5x + 20", "x - 20"], target: "left", result: "5x - 20 = -35" },
+      { action: "add",    value: 20, target: "both-sides", result: "5x = -15" },
+      { action: "divide", value: 5,  target: "both-sides", result: "x = -3" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 5 by each term: 5 × x and 5 × (-4).",
+        "Now remove the constant — add 20 to both sides.",
+        "Finally divide both sides by 5 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 5を各項にかける：5 × x と 5 ×（-4）。",
+        "次に定数項を消す — 両辺に20を足す。",
+        "最後に両辺を5で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "5(x - 4) = 5x - 20. Add 20 to both sides: -35 + 20 = -15, then divide by 5 to get x = -3.",
+      ja: "5(x - 4) = 5x - 20。両辺に20を足すと -35 + 20 = -15、5で割って x = -3 です。"
+    }
+  },
+
+  // ---- Hard: negative number outside the brackets ----
+  {
+    id: "brackets_hard_01",
+    topic: "brackets",
+    equation: "-2(x - 3) = 14",
+    answer: -4,
+    difficulty: "hard",
+    type: "brackets",
+    basePoints: 30,
+    steps: [
+      { action: "expand",   value: "-2x + 6", wrong: ["-2x - 6", "-2x - 3", "2x - 6"], target: "left", result: "-2x + 6 = 14" },
+      { action: "subtract", value: 6,  target: "both-sides", result: "-2x = 8" },
+      { action: "divide",   value: -2, target: "both-sides", result: "x = -4" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply -2 by each term: -2 × x and -2 × (-3). Watch the signs!",
+        "Now remove the constant — subtract 6 from both sides.",
+        "Finally divide both sides by -2 — watch the negative sign!"
+      ],
+      ja: [
+        "かっこを展開する — -2を各項にかける：-2 × x と -2 ×（-3）。符号に注意！",
+        "次に定数項を消す — 両辺から6を引く。",
+        "最後に両辺を-2で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "A negative outside the brackets changes the sign of every term inside: -2 × x = -2x and -2 × (-3) = +6.",
+      ja: "かっこの外が負の数だと、中のすべての項の符号が変わります。-2 × x = -2x、-2 ×（-3）= +6 です。"
+    }
+  },
+  {
+    id: "brackets_hard_02",
+    topic: "brackets",
+    equation: "-3(x + 2) = 12",
+    answer: -6,
+    difficulty: "hard",
+    type: "brackets",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "-3x - 6", wrong: ["-3x + 6", "-3x - 2", "3x + 6"], target: "left", result: "-3x - 6 = 12" },
+      { action: "add",    value: 6,  target: "both-sides", result: "-3x = 18" },
+      { action: "divide", value: -3, target: "both-sides", result: "x = -6" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply -3 by each term: -3 × x and -3 × 2. Watch the signs!",
+        "Now remove the constant — add 6 to both sides.",
+        "Finally divide both sides by -3 — watch the negative sign!"
+      ],
+      ja: [
+        "かっこを展開する — -3を各項にかける：-3 × x と -3 × 2。符号に注意！",
+        "次に定数項を消す — 両辺に6を足す。",
+        "最後に両辺を-3で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "-3 × 2 = -6, so -3(x + 2) becomes -3x - 6. Both terms end up negative.",
+      ja: "-3 × 2 = -6 なので、-3(x + 2) は -3x - 6 になります。両方の項が負になります。"
+    }
+  },
+  {
+    id: "brackets_hard_03",
+    topic: "brackets",
+    equation: "-4(x - 1) = 20",
+    answer: -4,
+    difficulty: "hard",
+    type: "brackets",
+    basePoints: 30,
+    steps: [
+      { action: "expand",   value: "-4x + 4", wrong: ["-4x - 4", "-4x - 1", "4x - 4"], target: "left", result: "-4x + 4 = 20" },
+      { action: "subtract", value: 4,  target: "both-sides", result: "-4x = 16" },
+      { action: "divide",   value: -4, target: "both-sides", result: "x = -4" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply -4 by each term: -4 × x and -4 × (-1). Watch the signs!",
+        "Now remove the constant — subtract 4 from both sides.",
+        "Finally divide both sides by -4 — watch the negative sign!"
+      ],
+      ja: [
+        "かっこを展開する — -4を各項にかける：-4 × x と -4 ×（-1）。符号に注意！",
+        "次に定数項を消す — 両辺から4を引く。",
+        "最後に両辺を-4で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "-4 × (-1) = +4 — a negative times a negative is positive — so -4(x - 1) becomes -4x + 4.",
+      ja: "-4 ×（-1）= +4（負×負は正）なので、-4(x - 1) は -4x + 4 になります。"
+    }
+  },
+  {
+    id: "brackets_hard_04",
+    topic: "brackets",
+    equation: "-5(x + 3) = -10",
+    answer: -1,
+    difficulty: "hard",
+    type: "brackets",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "-5x - 15", wrong: ["-5x + 15", "-5x - 3", "5x + 15"], target: "left", result: "-5x - 15 = -10" },
+      { action: "add",    value: 15, target: "both-sides", result: "-5x = 5" },
+      { action: "divide", value: -5, target: "both-sides", result: "x = -1" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply -5 by each term: -5 × x and -5 × 3. Watch the signs!",
+        "Now remove the constant — add 15 to both sides.",
+        "Finally divide both sides by -5 — watch the negative sign!"
+      ],
+      ja: [
+        "かっこを展開する — -5を各項にかける：-5 × x と -5 × 3。符号に注意！",
+        "次に定数項を消す — 両辺に15を足す。",
+        "最後に両辺を-5で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "-5(x + 3) = -5x - 15. Adding 15 gives -5x = 5, and dividing by -5 gives x = -1.",
+      ja: "-5(x + 3) = -5x - 15。15を足すと -5x = 5、-5で割ると x = -1 です。"
+    }
+  },
+  {
+    id: "brackets_hard_05",
+    topic: "brackets",
+    equation: "-2(x - 7) = 6",
+    answer: 4,
+    difficulty: "hard",
+    type: "brackets",
+    basePoints: 30,
+    steps: [
+      { action: "expand",   value: "-2x + 14", wrong: ["-2x - 14", "-2x - 7", "2x - 14"], target: "left", result: "-2x + 14 = 6" },
+      { action: "subtract", value: 14, target: "both-sides", result: "-2x = -8" },
+      { action: "divide",   value: -2, target: "both-sides", result: "x = 4" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply -2 by each term: -2 × x and -2 × (-7). Watch the signs!",
+        "Now remove the constant — subtract 14 from both sides.",
+        "Finally divide both sides by -2 — watch the negative sign!"
+      ],
+      ja: [
+        "かっこを展開する — -2を各項にかける：-2 × x と -2 ×（-7）。符号に注意！",
+        "次に定数項を消す — 両辺から14を引く。",
+        "最後に両辺を-2で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "The minus outside flips the minus inside: -2 × (-7) = +14, giving -2x + 14.",
+      ja: "外のマイナスが中のマイナスを反転させます：-2 ×（-7）= +14 で -2x + 14 です。"
+    }
+  },
+  {
+    id: "brackets_hard_06",
+    topic: "brackets",
+    equation: "-6(x + 1) = -18",
+    answer: 2,
+    difficulty: "hard",
+    type: "brackets",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "-6x - 6", wrong: ["-6x + 6", "-6x - 1", "6x + 6"], target: "left", result: "-6x - 6 = -18" },
+      { action: "add",    value: 6,  target: "both-sides", result: "-6x = -12" },
+      { action: "divide", value: -6, target: "both-sides", result: "x = 2" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply -6 by each term: -6 × x and -6 × 1. Watch the signs!",
+        "Now remove the constant — add 6 to both sides.",
+        "Finally divide both sides by -6 — watch the negative sign!"
+      ],
+      ja: [
+        "かっこを展開する — -6を各項にかける：-6 × x と -6 × 1。符号に注意！",
+        "次に定数項を消す — 両辺に6を足す。",
+        "最後に両辺を-6で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "-6 × 1 = -6, so -6(x + 1) = -6x - 6. Then add 6 and divide by -6 — a negative divided by a negative makes x positive.",
+      ja: "-6 × 1 = -6 なので、-6(x + 1) = -6x - 6。6を足して-6で割ると、負÷負で x は正の数になります。"
+    }
+  },
+
+  // ---- Hard: brackets + x on both sides ----
+  {
+    id: "brackets_hard_07",
+    topic: "brackets",
+    equation: "3(x + 2) = x + 10",
+    answer: 2,
+    difficulty: "hard",
+    type: "brackets",
+    basePoints: 30,
+    steps: [
+      { action: "expand",     value: "3x + 6", wrong: ["3x + 2", "x + 6", "3x + 5"], target: "left", result: "3x + 6 = x + 10" },
+      { action: "subtract_x", value: 1, target: "both-sides", result: "2x + 6 = 10" },
+      { action: "subtract",   value: 6, target: "both-sides", result: "2x = 4" },
+      { action: "divide",     value: 2, target: "both-sides", result: "x = 2" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 3 by each term inside: 3 × x and 3 × 2.",
+        "Now combine the x terms — subtract x from both sides.",
+        "Remove the constant — subtract 6 from both sides.",
+        "Finally divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 3をかっこの中の各項にかける：3 × x と 3 × 2。",
+        "次にxの項をまとめる — 両辺からxを引く。",
+        "定数項を消す — 両辺から6を引く。",
+        "最後に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Expand first to get 3x + 6 = x + 10 — now it's an x-on-both-sides equation: subtract x, subtract 6, then divide by 2.",
+      ja: "まず展開して 3x + 6 = x + 10 にすると、両辺にxがある方程式になります。xを引き、6を引き、2で割ります。"
+    }
+  },
+  {
+    id: "brackets_hard_08",
+    topic: "brackets",
+    equation: "4(x - 1) = 2x + 6",
+    answer: 5,
+    difficulty: "hard",
+    type: "brackets",
+    basePoints: 30,
+    steps: [
+      { action: "expand",     value: "4x - 4", wrong: ["4x - 1", "4x + 4", "x - 4"], target: "left", result: "4x - 4 = 2x + 6" },
+      { action: "subtract_x", value: 2, target: "both-sides", result: "2x - 4 = 6" },
+      { action: "add",        value: 4, target: "both-sides", result: "2x = 10" },
+      { action: "divide",     value: 2, target: "both-sides", result: "x = 5" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 4 by each term: 4 × x and 4 × (-1).",
+        "Now combine the x terms — subtract 2x from both sides.",
+        "Remove the constant — add 4 to both sides.",
+        "Finally divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 4を各項にかける：4 × x と 4 ×（-1）。",
+        "次にxの項をまとめる — 両辺から2xを引く。",
+        "定数項を消す — 両辺に4を足す。",
+        "最後に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "4(x - 1) = 4x - 4. Subtract 2x to gather the x terms, add 4, then divide by 2.",
+      ja: "4(x - 1) = 4x - 4。2xを引いてxの項をまとめ、4を足してから2で割ります。"
+    }
+  },
+  {
+    id: "brackets_hard_09",
+    topic: "brackets",
+    equation: "5(x - 2) = 3x + 4",
+    answer: 7,
+    difficulty: "hard",
+    type: "brackets",
+    basePoints: 30,
+    steps: [
+      { action: "expand",     value: "5x - 10", wrong: ["5x - 2", "5x + 10", "x - 10"], target: "left", result: "5x - 10 = 3x + 4" },
+      { action: "subtract_x", value: 3,  target: "both-sides", result: "2x - 10 = 4" },
+      { action: "add",        value: 10, target: "both-sides", result: "2x = 14" },
+      { action: "divide",     value: 2,  target: "both-sides", result: "x = 7" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply 5 by each term: 5 × x and 5 × (-2).",
+        "Now combine the x terms — subtract 3x from both sides.",
+        "Remove the constant — add 10 to both sides.",
+        "Finally divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "かっこを展開する — 5を各項にかける：5 × x と 5 ×（-2）。",
+        "次にxの項をまとめる — 両辺から3xを引く。",
+        "定数項を消す — 両辺に10を足す。",
+        "最後に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Expanding gives 5x - 10 = 3x + 4. Subtract 3x, add 10, then divide by 2 to get x = 7.",
+      ja: "展開すると 5x - 10 = 3x + 4。3xを引き、10を足して、2で割ると x = 7 です。"
+    }
+  },
+  {
+    id: "brackets_hard_10",
+    topic: "brackets",
+    equation: "-2(x + 3) = x + 9",
+    answer: -5,
+    difficulty: "hard",
+    type: "brackets",
+    basePoints: 30,
+    steps: [
+      { action: "expand",     value: "-2x - 6", wrong: ["-2x + 6", "-2x - 3", "2x + 6"], target: "left", result: "-2x - 6 = x + 9" },
+      { action: "subtract_x", value: 1,  target: "both-sides", result: "-3x - 6 = 9" },
+      { action: "add",        value: 6,  target: "both-sides", result: "-3x = 15" },
+      { action: "divide",     value: -3, target: "both-sides", result: "x = -5" }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets — multiply -2 by each term: -2 × x and -2 × 3. Watch the signs!",
+        "Now combine the x terms — subtract x from both sides.",
+        "Remove the constant — add 6 to both sides.",
+        "Finally divide both sides by -3 — watch the negative sign!"
+      ],
+      ja: [
+        "かっこを展開する — -2を各項にかける：-2 × x と -2 × 3。符号に注意！",
+        "次にxの項をまとめる — 両辺からxを引く。",
+        "定数項を消す — 両辺に6を足す。",
+        "最後に両辺を-3で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "The negative outside gives -2x - 6. Subtracting x makes it -3x, so the last step divides by a negative.",
+      ja: "外のマイナスで -2x - 6 になります。xを引くと -3x になるので、最後は負の数で割ります。"
     }
   }
 ];

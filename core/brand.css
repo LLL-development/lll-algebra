@@ -357,6 +357,14 @@ body {
 .choice-btn.correct { border-color: var(--correct); background: var(--correct-tint); color: var(--correct); }
 .choice-btn.wrong { border-color: var(--wrong); background: var(--accent-tint); color: var(--wrong); }
 .choice-btn:disabled { cursor: default; }
+/* "Expand the brackets:" label above the choices on expand steps */
+.expand-prompt {
+  align-self: flex-start;
+  margin: 0 0 -16px;              /* pulls it close to the choices (the screen's gap is 28px) */
+  font-family: var(--sans); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
 
 /* ---------- Hint / feedback row ---------- */
 .controls-row { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; }
@@ -595,6 +603,8 @@ body {
 }
 .topic-card-title { font-family: var(--display); font-weight: 700; font-size: 18px; }
 .topic-card-desc { font-family: var(--sans); font-size: 13px; line-height: 1.5; color: var(--muted); }
+/* An odd card out (e.g. the 3rd of 3) spans the full row instead of sitting alone on the left */
+.topic-cards .topic-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 @media (max-width: 420px) {
   .topic-cards { grid-template-columns: 1fr; }
 }
