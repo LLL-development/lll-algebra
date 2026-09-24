@@ -132,6 +132,15 @@
           <span class="topic-card-count"></span>
         </span>
       </button>
+      <button class="topic-card" data-topic="brackets">
+        <span class="topic-card-sample">2(x + 3) = 14</span>
+        <span class="topic-card-title" data-i18n="topicBrackets">Brackets</span>
+        <span class="topic-card-desc" data-i18n="topicBracketsDesc">Expand, then solve for x</span>
+        <span class="topic-card-progress" data-progress="brackets">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -166,6 +175,8 @@
       <p class="equation" id="equationText">x + 5 = 12</p>
     </div>
 
+    <p class="expand-prompt" id="expandPrompt" data-i18n="expandPrompt" hidden>Expand the brackets:</p>
+
     <div class="choices" id="choicesGrid"></div>
 
     <div class="hint-text" id="hintText"></div>
@@ -195,6 +206,9 @@
       topicEquation: "Equations", topicInequality: "Inequalities",
       topicEquationDesc: "Find the value of x",
       topicInequalityDesc: "Find the range of x — watch the sign!",
+      topicBrackets: "Brackets",
+      topicBracketsDesc: "Expand, then solve for x",
+      expandPrompt: "Expand the brackets:",
       homeKicker: "Choose a topic", backHome: "Home",
       clearedLabel: "cleared", backLevels: "Levels", lockedLabel: "Locked",
       levelClear: "Level clear!", tierComplete: "{tier} complete!", dailyClear: "Challenge complete!",
@@ -223,6 +237,9 @@
       topicEquation: "方程式", topicInequality: "不等式",
       topicEquationDesc: "xの値を求めよう",
       topicInequalityDesc: "xの範囲を求めよう — 不等号の向きに注意！",
+      topicBrackets: "かっこ",
+      topicBracketsDesc: "かっこを展開してxを求めよう",
+      expandPrompt: "かっこを展開すると：",
       homeKicker: "トピックを選ぼう", backHome: "ホーム",
       clearedLabel: "クリア", backLevels: "レベル選択", lockedLabel: "ロック中",
       levelClear: "クリア！", tierComplete: "{tier} コンプリート！", dailyClear: "チャレンジ達成！",
@@ -286,6 +303,7 @@
 
   const $eq = document.getElementById("equationText");
   const $choices = document.getElementById("choicesGrid");
+  const $expandPrompt = document.getElementById("expandPrompt");
   const $hintText = document.getElementById("hintText");
   const $hintBtn = document.getElementById("hintBtn");
   const $hudScore = document.getElementById("hudScore");
@@ -586,6 +604,7 @@
   }
 
   function actionLabel(action, value) {
+    if (action === "expand") return value.replace(/-/g, "−"); // e.g. "2x + 6", shown with a proper minus sign
     const verbs = { add: "+", subtract: "−", multiply: "×", divide: "÷", add_x: "+", subtract_x: "−" };
     const suffix = LLL_I18N.t("bothSidesLabel") || "both sides";
     if (action === "add_x" || action === "subtract_x") {
@@ -708,7 +727,12 @@
     if (stepIndex === 0) $equationCard.classList.remove("solved");
 
     const step = currentStep();
-    const choices = [{ action: step.action, value: step.value }, ...makeDistractors(step)];
+    const isExpand = step.action === "expand";
+    $expandPrompt.hidden = !isExpand;
+    const distractors = isExpand
+      ? (step.wrong || []).map(w => ({ action: "expand", value: w }))
+      : makeDistractors(step);
+    const choices = [{ action: step.action, value: step.value }, ...distractors];
     for (let i = choices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [choices[i], choices[j]] = [choices[j], choices[i]];
@@ -968,8 +992,8 @@
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
-  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality" };
-  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14" };
 
   // Levels unlock in order within a tier; the first level of every tier is always open.
   function isUnlocked(level) {
