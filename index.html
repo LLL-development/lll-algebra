@@ -33,6 +33,7 @@
     <p class="complete-best" id="completeBest" hidden></p>
     <p class="complete-points" id="completePoints"></p>
     <p class="complete-bonus" id="completeBonus" hidden></p>
+    <p class="complete-explanation" id="completeExplanation" hidden></p>
     <div class="complete-actions">
       <button class="complete-btn primary" id="completePrimaryBtn"></button>
       <div class="complete-secondary">
@@ -189,7 +190,7 @@
       bothSidesLabel: "both sides",
       correctMsg: "Nice — that's the right move.",
       wrongMsg: "Not quite — try again.",
-      solvedMsg: "Solved! x is isolated.",
+      flipMsg: "Sign flipped: {from} → {to}",
       tierEasy: "Easy", tierMedium: "Medium", tierHard: "Hard",
       topicEquation: "Equations", topicInequality: "Inequalities",
       topicEquationDesc: "Find the value of x",
@@ -217,7 +218,7 @@
       bothSidesLabel: "両辺で" ,
       correctMsg: "正解です！",
       wrongMsg: "違います、もう一度。",
-      solvedMsg: "解けました！x が求まりました。",
+      flipMsg: "不等号の向きが逆に：{from} → {to}",
       tierEasy: "やさしい", tierMedium: "ふつう", tierHard: "むずかしい",
       topicEquation: "方程式", topicInequality: "不等式",
       topicEquationDesc: "xの値を求めよう",
@@ -323,6 +324,7 @@
   const $completeBest = document.getElementById("completeBest");
   const $completePoints = document.getElementById("completePoints");
   const $completeBonus = document.getElementById("completeBonus");
+  const $completeExplanation = document.getElementById("completeExplanation");
   const $completePrimaryBtn = document.getElementById("completePrimaryBtn");
   const $completeRetryBtn = document.getElementById("completeRetryBtn");
   const $completeLevelsBtn = document.getElementById("completeLevelsBtn");
@@ -596,16 +598,24 @@
 
   // Press Start 2P has no ≤ / ≥ glyphs, so draw them as the pixel < / > with an underline bar.
   const PIXEL_INEQ = { "≤": "<", "≥": ">" };
+  const INEQ_SIGN = /[<>≤≥]/;
+  let flipPending = false; // true while a flip step's result is being typed
 
   function appendEqChar(ch) {
-    if (PIXEL_INEQ[ch]) {
+    if (INEQ_SIGN.test(ch)) {
       const s = document.createElement("span");
-      s.className = "pixel-ineq";
-      s.textContent = PIXEL_INEQ[ch];
+      s.className = "ineq-sign" + (PIXEL_INEQ[ch] ? " pixel-ineq" : "") + (flipPending ? " flip-pending" : "");
+      s.textContent = PIXEL_INEQ[ch] || ch;
       $eq.appendChild(s);
     } else {
       $eq.appendChild(document.createTextNode(ch));
     }
+  }
+
+  function playFlipCue() {
+    flipPending = false;
+    const sign = $eq.querySelector(".ineq-sign.flip-pending");
+    if (sign) sign.classList.replace("flip-pending", "flip-cue");
   }
 
   function renderEqText(text) {
@@ -613,23 +623,24 @@
     for (const ch of text) appendEqChar(ch);
   }
 
-  function setEquationText(text) {
-    if (text === displayedEquationText) return;   // skip redundant fade
+  function setEquationText(text, onDone) {
+    if (text === displayedEquationText) { if (onDone) onDone(); return; }   // skip redundant fade
     displayedEquationText = text;
 
     if (firstRender) {
       renderEqText(text);
       firstRender = false;
+      if (onDone) onDone();
       return;
     }
     $eq.classList.add("updating");
     setTimeout(() => {
       $eq.classList.remove("updating");
-      typewriterReveal(text);
+      typewriterReveal(text, onDone);
     }, 220);
   }
 
-  function typewriterReveal(text) {
+  function typewriterReveal(text, onDone) {
     $eq.textContent = "";
     const chars = [...text];
     let i = 0;
@@ -639,6 +650,8 @@
         appendEqChar(chars[i]);
         i++;
         setTimeout(typeChar, speed);
+      } else if (onDone) {
+        onDone();
       }
     }
     typeChar();
@@ -719,8 +732,16 @@
 
     if (isCorrect) {
       btn.classList.add("correct");
+      const prevText = currentEquationText;
       currentEquationText = correctStep.result;
-      setEquationText(currentEquationText);
+      flipPending = !!correctStep.flip;
+      setEquationText(currentEquationText, correctStep.flip ? playFlipCue : null);
+      if (correctStep.flip) {
+        const from = (prevText.match(INEQ_SIGN) || [""])[0];
+        const to = (correctStep.result.match(INEQ_SIGN) || [""])[0];
+        $hintText.textContent = (LLL_I18N.t("flipMsg") || "Sign flipped: {from} → {to}")
+          .split("{from}").join(from).split("{to}").join(to);
+      }
       burstChalkDust();
 
       stepIndex++;
@@ -747,7 +768,6 @@
           }
         }
         $hudScore.textContent = score;
-        $hintText.textContent = LLL_I18N.t("solvedMsg") || "Solved!";
 
         const result = {
           hash: location.hash, daily: wasDaily, level,
@@ -770,8 +790,9 @@
         }
         saveProgress();
         checkAchievements({ justSolved: true, isFirstSolveEver, tierJustCompleted: result.tierJustCompleted });
-        // Let the solved card + typewriter finish before the overlay appears.
-        setTimeout(() => showCompleteOverlay(result), 900);
+        // Let the solved card + typewriter finish before the overlay appears
+        // (longer on a sign flip, so the flip animation and message can be seen).
+        setTimeout(() => showCompleteOverlay(result), correctStep.flip ? 1500 : 900);
       } else {
         setTimeout(render, 600);
       }
@@ -862,6 +883,10 @@
     $completePoints.textContent = `+${r.basePoints} ${t("ptsLabel") || "pts"}`;
     $completeBonus.hidden = !r.streakBonus;
     $completeBonus.textContent = `🔥 ${(t("streakBonus") || "{n} streak bonus").split("{n}").join(r.streakCount)} +${r.streakBonus}`;
+    const expl = r.level.explanation;
+    const explText = typeof expl === "string" ? expl : (expl && (expl[currentLang()] || expl.en)) || "";
+    $completeExplanation.textContent = explText;
+    $completeExplanation.hidden = !explText;
 
     // Buttons: primary = Next level (or Level select / Home when there's nothing next)
     const next = r.daily ? null : nextLevelAfter(r.level);
