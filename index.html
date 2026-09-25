@@ -70,16 +70,28 @@
     </div>
 
     <div class="intro-fade" id="introFade2">
-      <div class="intro-demo-staircase-wrap">
-        <svg id="introStaircase" class="staircase-svg" viewBox="0 0 240 140" xmlns="http://www.w3.org/2000/svg"></svg>
-      </div>
-      <div class="intro-demo-card">
+      <div class="step-progress intro-demo-dots" id="introStepDots"></div>
+      <div class="equation-card pixel-card intro-demo-card" id="introEquationCard">
         <p class="equation intro-demo-eq" id="introEquation">x + 5 = 12</p>
       </div>
+      <div class="intro-demo-choices" id="introChoices"></div>
     </div>
 
     <div class="intro-fade" id="introFade3">
-      <p data-i18n="introBody2">Pick the right move each round to isolate x. Start with equations, then try inequalities — where multiplying or dividing by a negative flips the sign!</p>
+      <ul class="intro-tips">
+        <li class="intro-tip">
+          <span class="intro-tip-icon" aria-hidden="true">📚</span>
+          <span class="intro-tip-text" data-i18n="introTipTopics">4 topics: Equations, Inequalities, Brackets and Quadratics</span>
+        </li>
+        <li class="intro-tip">
+          <span class="intro-tip-icon intro-tip-stars" aria-hidden="true">★★★</span>
+          <span class="intro-tip-text" data-i18n="introTipStars">No hints and no mistakes = 3 stars</span>
+        </li>
+        <li class="intro-tip">
+          <span class="intro-tip-icon" aria-hidden="true">🔓</span>
+          <span class="intro-tip-text" data-i18n="introTipUnlock">Clear a level to unlock the next one</span>
+        </li>
+      </ul>
       <button class="intro-start-btn" id="introStartBtn" data-i18n="introStartBtn">Let's start</button>
     </div>
   </div>
@@ -141,6 +153,15 @@
           <span class="topic-card-count"></span>
         </span>
       </button>
+      <button class="topic-card" data-topic="quadratic">
+        <span class="topic-card-sample">x² + 5x + 6 = 0</span>
+        <span class="topic-card-title" data-i18n="topicQuadratic">Quadratics</span>
+        <span class="topic-card-desc" data-i18n="topicQuadraticDesc">Factorise, then find both answers</span>
+        <span class="topic-card-progress" data-progress="quadratic">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -175,7 +196,7 @@
       <p class="equation" id="equationText">x + 5 = 12</p>
     </div>
 
-    <p class="expand-prompt" id="expandPrompt" data-i18n="expandPrompt" hidden>Expand the brackets:</p>
+    <p class="expand-prompt" id="expandPrompt" hidden></p>
 
     <div class="choices" id="choicesGrid"></div>
 
@@ -208,7 +229,11 @@
       topicInequalityDesc: "Find the range of x — watch the sign!",
       topicBrackets: "Brackets",
       topicBracketsDesc: "Expand, then solve for x",
+      topicQuadratic: "Quadratics",
+      topicQuadraticDesc: "Factorise, then find both answers",
       expandPrompt: "Expand the brackets:",
+      factorPrompt: "Factorise:",
+      rootsPrompt: "One bracket must be 0, so:",
       homeKicker: "Choose a topic", backHome: "Home",
       clearedLabel: "cleared", backLevels: "Levels", lockedLabel: "Locked",
       levelClear: "Level clear!", tierComplete: "{tier} complete!", dailyClear: "Challenge complete!",
@@ -220,8 +245,9 @@
       dailyStreakLabel: "day streak",
       introTitle: "How to Solve",
       introBody1: "Algebra is about balance. Whatever you do to one side of the equation, you must do to the other — so it stays true.",
-      introExampleStep: "Subtract 5 from both sides →",
-      introBody2: "Pick the right move each round to isolate x. Start with equations, then try inequalities — where multiplying or dividing by a negative flips the sign!",
+      introTipTopics: "4 topics: Equations, Inequalities, Brackets and Quadratics",
+      introTipStars: "No hints and no mistakes = 3 stars",
+      introTipUnlock: "Clear a level to unlock the next one",
       introStartBtn: "Let's start"
     },
     ja: {
@@ -239,7 +265,11 @@
       topicInequalityDesc: "xの範囲を求めよう — 不等号の向きに注意！",
       topicBrackets: "かっこ",
       topicBracketsDesc: "かっこを展開してxを求めよう",
+      topicQuadratic: "二次方程式",
+      topicQuadraticDesc: "因数分解して2つの解を求めよう",
       expandPrompt: "かっこを展開すると：",
+      factorPrompt: "因数分解すると：",
+      rootsPrompt: "どちらかのかっこが0なので：",
       homeKicker: "トピックを選ぼう", backHome: "ホーム",
       clearedLabel: "クリア", backLevels: "レベル選択", lockedLabel: "ロック中",
       levelClear: "クリア！", tierComplete: "{tier} コンプリート！", dailyClear: "チャレンジ達成！",
@@ -251,8 +281,9 @@
       dailyStreakLabel: "日連続",
       introTitle: "解き方",
       introBody1: "代数はバランスが大切です。方程式の片側に行った操作は、もう片方にも行う必要があります。",
-      introExampleStep: "両辺から5を引く →",
-      introBody2: "各ラウンドで正しい操作を選び、xを求めましょう。方程式に慣れたら不等式にも挑戦 — 負の数をかけたり負の数で割ったりすると、不等号の向きが逆になります！",
+      introTipTopics: "4トピック：方程式・不等式・かっこ・二次方程式",
+      introTipStars: "ヒントなし・ミスなしで★3つ",
+      introTipUnlock: "レベルをクリアすると次のレベルが解放されます",
       introStartBtn: "はじめる"
     }
   };
@@ -322,7 +353,9 @@
   const $introOverlay = document.getElementById("introOverlay");
   const $introStartBtn = document.getElementById("introStartBtn");
   const $howtoBtn = document.getElementById("howtoBtn");
-  const $introStaircase = document.getElementById("introStaircase");
+  const $introStepDots = document.getElementById("introStepDots");
+  const $introChoices = document.getElementById("introChoices");
+  const $introEquationCard = document.getElementById("introEquationCard");
   const $introEquation = document.getElementById("introEquation");
   const $introFade1 = document.getElementById("introFade1");
   const $introFade2 = document.getElementById("introFade2");
@@ -421,7 +454,7 @@
   }
 
   function currentLang() {
-    try { return localStorage.getItem("lll_lang") || "en"; } catch (e) { return "en"; }
+    return LLL_I18N.lang() || "en"; // same source as the UI text, even if localStorage is blocked
   }
 
   function updateDailyCard() {
@@ -603,8 +636,13 @@
     }
   }
 
+  // Steps that show their own authored choices get a short prompt above the buttons.
+  const CHOICE_PROMPT_KEYS = { expand: "expandPrompt", factor: "factorPrompt", roots: "rootsPrompt" };
+
   function actionLabel(action, value) {
-    if (action === "expand") return value.replace(/-/g, "−"); // e.g. "2x + 6", shown with a proper minus sign
+    // Authored choices (expand/factor/roots) are strings, shown as-is with a proper minus sign
+    // e.g. "2x + 6", "(x + 2)(x - 3)", "x = -2, -3"
+    if (typeof value === "string") return value.replace(/-/g, "−");
     const verbs = { add: "+", subtract: "−", multiply: "×", divide: "÷", add_x: "+", subtract_x: "−" };
     const suffix = LLL_I18N.t("bothSidesLabel") || "both sides";
     if (action === "add_x" || action === "subtract_x") {
@@ -727,10 +765,14 @@
     if (stepIndex === 0) $equationCard.classList.remove("solved");
 
     const step = currentStep();
-    const isExpand = step.action === "expand";
-    $expandPrompt.hidden = !isExpand;
-    const distractors = isExpand
-      ? (step.wrong || []).map(w => ({ action: "expand", value: w }))
+    // Authored-choice steps (expand, factor, roots) carry their own wrong options;
+    // every other step gets generated distractors.
+    const isAuthored = Array.isArray(step.wrong);
+    const promptKey = CHOICE_PROMPT_KEYS[step.action];
+    $expandPrompt.hidden = !promptKey;
+    if (promptKey) $expandPrompt.textContent = LLL_I18N.t(promptKey) || "";
+    const distractors = isAuthored
+      ? step.wrong.map(w => ({ action: step.action, value: w }))
       : makeDistractors(step);
     const choices = [{ action: step.action, value: step.value }, ...distractors];
     for (let i = choices.length - 1; i > 0; i--) {
@@ -992,8 +1034,8 @@
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
-  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets" };
-  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0" };
 
   // Levels unlock in order within a tier; the first level of every tier is always open.
   function isUnlocked(level) {
@@ -1141,59 +1183,59 @@
 
   // ---------- intro / onboarding (full-screen animated) ----------
   const INTRO_SEEN_KEY = "lll_algebra_intro_seen";
+  let introTimers = [];
 
-  function buildIntroStaircase() {
-    $introStaircase.innerHTML =
-      `<line class="stair-ground" x1="0" y1="115" x2="120" y2="115"/>` +
-      `<rect class="stair-block" x="30" y="83" width="56" height="32" rx="4"/>` +
-      `<text class="stair-summit" id="introSummit" x="55" y="55" text-anchor="middle">x</text>` +
-      `<circle class="stair-marker" id="introMarker" cx="15" cy="106" r="10"/>`;
-  }
+  function introLater(fn, ms) { introTimers.push(setTimeout(fn, ms)); }
+  function clearIntroTimers() { introTimers.forEach(clearTimeout); introTimers = []; }
 
+  // A mini round built from the real game pieces: step dot, pixel card, choice buttons.
   function runIntroDemo() {
-    buildIntroStaircase();
-    $introEquation.classList.remove("intro-demo-step-text");
+    $introStepDots.innerHTML = '<span class="step-dot"></span>';
+    const dot = $introStepDots.firstChild;
+    $introEquationCard.classList.remove("solved");
+    $introEquation.classList.remove("updating");
     $introEquation.textContent = "x + 5 = 12";
 
-    // Stage 1 → Stage 2: swap in the instruction, inside the same card
-    setTimeout(() => {
-      $introEquation.classList.add("updating");
-      setTimeout(() => {
-        $introEquation.textContent = LLL_I18N.t("introExampleStep") || "Subtract 5 from both sides →";
-        $introEquation.classList.add("intro-demo-step-text");
-        $introEquation.classList.remove("updating");
-      }, 220);
-    }, 1300);
+    $introChoices.innerHTML = "";
+    const [wrongBtn, correctBtn] = [
+      { action: "add", value: 5 },
+      { action: "subtract", value: 5 }
+    ].map(c => {
+      const b = document.createElement("button");
+      b.className = "choice-btn";
+      b.tabIndex = -1;                     // demo only, not interactive
+      b.setAttribute("aria-hidden", "true");
+      b.textContent = actionLabel(c.action, c.value);
+      $introChoices.appendChild(b);
+      return b;
+    });
 
-    // Stage 2 → Stage 3: reveal the answer, staircase climbs in sync
-    setTimeout(() => {
-      const marker = document.getElementById("introMarker");
-      const summit = document.getElementById("introSummit");
-      if (marker) {
-        marker.setAttribute("cx", 58);
-        marker.setAttribute("cy", 73);
-        marker.classList.add("solved");
-      }
-      if (summit) summit.classList.add("solved");
+    introLater(() => correctBtn.classList.add("intro-demo-tap"), 1400);
+    introLater(() => {
+      correctBtn.classList.remove("intro-demo-tap");
+      correctBtn.classList.add("correct");
       $introEquation.classList.add("updating");
-      setTimeout(() => {
-        $introEquation.textContent = "x = 7";
-        $introEquation.classList.remove("intro-demo-step-text");
-        $introEquation.classList.remove("updating");
-      }, 220);
-    }, 3200);
+    }, 1900);
+    introLater(() => {
+      $introEquation.textContent = "x = 7";
+      $introEquation.classList.remove("updating");
+      dot.classList.add("filled", "solved");
+      $introEquationCard.classList.add("solved");
+    }, 2150);
   }
 
   function openIntro() {
+    clearIntroTimers();
     $introOverlay.classList.remove("hiding");
     $introOverlay.classList.add("show");
     [$introFade1, $introFade2, $introFade3].forEach(el => el.classList.remove("reveal"));
-    setTimeout(() => $introFade1.classList.add("reveal"), 200);
-    setTimeout(() => { $introFade2.classList.add("reveal"); runIntroDemo(); }, 900);
-    setTimeout(() => $introFade3.classList.add("reveal"), 4600);
+    introLater(() => $introFade1.classList.add("reveal"), 200);
+    introLater(() => { $introFade2.classList.add("reveal"); runIntroDemo(); }, 900);
+    introLater(() => $introFade3.classList.add("reveal"), 3600);
   }
 
   function closeIntro() {
+    clearIntroTimers();
     $introOverlay.classList.add("hiding");
     setTimeout(() => $introOverlay.classList.remove("show"), 400);
     try { localStorage.setItem(INTRO_SEEN_KEY, "1"); } catch (e) { /* fail silently */ }

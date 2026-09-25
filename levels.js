@@ -13,6 +13,13 @@
 //                   `value` is the correct expansion as a string (e.g. "2x + 6");
 //                   `wrong` is an array of 3 authored wrong expansions used as distractors;
 //                   `target` is "left" or "right" (the side being rewritten).
+//   "factor"      — factorise a quadratic expression (quadratics topic). Authored like
+//                   "expand": `value` is the correct factorisation (e.g. "(x + 2)(x + 3)").
+//   "roots"       — read both answers off a factorised "= 0" equation (zero-product rule).
+//                   `value` is the answers as a string, smallest first (e.g. "x = -3, -2").
+//
+// Any step with a `wrong` array is an authored-choice step: the UI shows `value` plus
+// the 3 `wrong` options instead of generating distractors.
 //
 // Authoring rules:
 //   - add/subtract/add_x/subtract_x values are always POSITIVE
@@ -21,7 +28,7 @@
 //   - Inequality steps that multiply/divide by a negative set `flip: true`
 //     (the inequality sign reverses on that step).
 //
-// `topic` is "equation", "inequality" or "brackets". `target` is "both-sides"
+// `topic` is "equation", "inequality", "brackets" or "quadratic". `target` is "both-sides"
 // for every move that changes a side's value; only "expand" rewrites one side,
 // because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
@@ -2470,6 +2477,212 @@ const LEVELS = [
     explanation: {
       en: "The negative outside gives -2x - 6. Subtracting x makes it -3x, so the last step divides by a negative.",
       ja: "外のマイナスで -2x - 6 になります。xを引くと -3x になるので、最後は負の数で割ります。"
+    }
+  },
+
+  // =====================================================================
+  // QUADRATICS
+  // =====================================================================
+
+  // ---- Easy: already factored, read off both answers (zero-product rule) ----
+  {
+    id: "quad_easy_01",
+    topic: "quadratic",
+    equation: "(x + 2)(x + 3) = 0",
+    answer: [-3, -2],
+    difficulty: "easy",
+    type: "factored",
+    basePoints: 10,
+    steps: [
+      { action: "roots", value: "x = -3, -2", wrong: ["x = 2, 3", "x = -3, 2", "x = -2, 3"], target: "both-sides", result: "x = -3, -2" }
+    ],
+    hints: {
+      en: ["If two brackets multiply to 0, one of them must be 0. Solve x + 2 = 0 and x + 3 = 0."],
+      ja: ["かけて0になるなら、どちらかのかっこが0です。x + 2 = 0 と x + 3 = 0 を解きます。"]
+    },
+    explanation: {
+      en: "x + 2 = 0 gives x = -2, and x + 3 = 0 gives x = -3. Notice the sign flips: +2 inside the bracket becomes x = -2.",
+      ja: "x + 2 = 0 から x = -2、x + 3 = 0 から x = -3。かっこの中の +2 が x = -2 になるように、符号が逆になります。"
+    }
+  },
+  {
+    id: "quad_easy_02",
+    topic: "quadratic",
+    equation: "(x - 4)(x - 1) = 0",
+    answer: [1, 4],
+    difficulty: "easy",
+    type: "factored",
+    basePoints: 10,
+    steps: [
+      { action: "roots", value: "x = 1, 4", wrong: ["x = -4, -1", "x = -1, 4", "x = -4, 1"], target: "both-sides", result: "x = 1, 4" }
+    ],
+    hints: {
+      en: ["If two brackets multiply to 0, one of them must be 0. Solve x - 4 = 0 and x - 1 = 0."],
+      ja: ["かけて0になるなら、どちらかのかっこが0です。x - 4 = 0 と x - 1 = 0 を解きます。"]
+    },
+    explanation: {
+      en: "x - 4 = 0 gives x = 4, and x - 1 = 0 gives x = 1. A minus inside the bracket gives a positive answer.",
+      ja: "x - 4 = 0 から x = 4、x - 1 = 0 から x = 1。かっこの中がマイナスなら、答えはプラスになります。"
+    }
+  },
+  {
+    id: "quad_easy_03",
+    topic: "quadratic",
+    equation: "(x + 5)(x - 2) = 0",
+    answer: [-5, 2],
+    difficulty: "easy",
+    type: "factored",
+    basePoints: 10,
+    steps: [
+      { action: "roots", value: "x = -5, 2", wrong: ["x = -2, 5", "x = -5, -2", "x = 2, 5"], target: "both-sides", result: "x = -5, 2" }
+    ],
+    hints: {
+      en: ["If two brackets multiply to 0, one of them must be 0. Solve x + 5 = 0 and x - 2 = 0."],
+      ja: ["かけて0になるなら、どちらかのかっこが0です。x + 5 = 0 と x - 2 = 0 を解きます。"]
+    },
+    explanation: {
+      en: "x + 5 = 0 gives x = -5, and x - 2 = 0 gives x = 2 — one negative answer and one positive.",
+      ja: "x + 5 = 0 から x = -5、x - 2 = 0 から x = 2。答えは負の数と正の数が1つずつです。"
+    }
+  },
+  {
+    id: "quad_easy_04",
+    topic: "quadratic",
+    equation: "(x - 3)(x + 6) = 0",
+    answer: [-6, 3],
+    difficulty: "easy",
+    type: "factored",
+    basePoints: 10,
+    steps: [
+      { action: "roots", value: "x = -6, 3", wrong: ["x = -3, 6", "x = 3, 6", "x = -6, -3"], target: "both-sides", result: "x = -6, 3" }
+    ],
+    hints: {
+      en: ["If two brackets multiply to 0, one of them must be 0. Solve x - 3 = 0 and x + 6 = 0."],
+      ja: ["かけて0になるなら、どちらかのかっこが0です。x - 3 = 0 と x + 6 = 0 を解きます。"]
+    },
+    explanation: {
+      en: "x - 3 = 0 gives x = 3, and x + 6 = 0 gives x = -6. Answers are listed from smallest to largest.",
+      ja: "x - 3 = 0 から x = 3、x + 6 = 0 から x = -6。答えは小さい順に書きます。"
+    }
+  },
+  {
+    id: "quad_easy_05",
+    topic: "quadratic",
+    equation: "x(x - 5) = 0",
+    answer: [0, 5],
+    difficulty: "easy",
+    type: "factored",
+    basePoints: 10,
+    steps: [
+      { action: "roots", value: "x = 0, 5", wrong: ["x = 5", "x = -5, 0", "x = 1, 5"], target: "both-sides", result: "x = 0, 5" }
+    ],
+    hints: {
+      en: ["One factor is just x, so x = 0 is an answer. Then solve x - 5 = 0."],
+      ja: ["片方の因数はx自身なので、x = 0 も解です。次に x - 5 = 0 を解きます。"]
+    },
+    explanation: {
+      en: "Don't forget x = 0: the first factor is x itself, so x = 0 makes the whole product 0. Then x - 5 = 0 gives x = 5.",
+      ja: "x = 0 を忘れずに。最初の因数はx自身なので、x = 0 で全体が0になります。そして x - 5 = 0 から x = 5 です。"
+    }
+  },
+  {
+    id: "quad_easy_06",
+    topic: "quadratic",
+    equation: "(x + 7)(x + 1) = 0",
+    answer: [-7, -1],
+    difficulty: "easy",
+    type: "factored",
+    basePoints: 10,
+    steps: [
+      { action: "roots", value: "x = -7, -1", wrong: ["x = 1, 7", "x = -7, 1", "x = -1, 7"], target: "both-sides", result: "x = -7, -1" }
+    ],
+    hints: {
+      en: ["If two brackets multiply to 0, one of them must be 0. Solve x + 7 = 0 and x + 1 = 0."],
+      ja: ["かけて0になるなら、どちらかのかっこが0です。x + 7 = 0 と x + 1 = 0 を解きます。"]
+    },
+    explanation: {
+      en: "Both brackets have +, so both answers are negative: x = -7 and x = -1.",
+      ja: "どちらのかっこも + なので、答えは両方とも負の数です：x = -7 と x = -1。"
+    }
+  },
+  {
+    id: "quad_easy_07",
+    topic: "quadratic",
+    equation: "x(x + 3) = 0",
+    answer: [-3, 0],
+    difficulty: "easy",
+    type: "factored",
+    basePoints: 10,
+    steps: [
+      { action: "roots", value: "x = -3, 0", wrong: ["x = -3", "x = 0, 3", "x = -3, 1"], target: "both-sides", result: "x = -3, 0" }
+    ],
+    hints: {
+      en: ["One factor is just x, so x = 0 is an answer. Then solve x + 3 = 0."],
+      ja: ["片方の因数はx自身なので、x = 0 も解です。次に x + 3 = 0 を解きます。"]
+    },
+    explanation: {
+      en: "x = 0 comes from the first factor, and x + 3 = 0 gives x = -3.",
+      ja: "最初の因数から x = 0、x + 3 = 0 から x = -3 です。"
+    }
+  },
+  {
+    id: "quad_easy_08",
+    topic: "quadratic",
+    equation: "(x - 8)(x - 2) = 0",
+    answer: [2, 8],
+    difficulty: "easy",
+    type: "factored",
+    basePoints: 10,
+    steps: [
+      { action: "roots", value: "x = 2, 8", wrong: ["x = -8, -2", "x = -2, 8", "x = -8, 2"], target: "both-sides", result: "x = 2, 8" }
+    ],
+    hints: {
+      en: ["If two brackets multiply to 0, one of them must be 0. Solve x - 8 = 0 and x - 2 = 0."],
+      ja: ["かけて0になるなら、どちらかのかっこが0です。x - 8 = 0 と x - 2 = 0 を解きます。"]
+    },
+    explanation: {
+      en: "Both brackets have −, so both answers are positive: x = 2 and x = 8.",
+      ja: "どちらのかっこも − なので、答えは両方とも正の数です：x = 2 と x = 8。"
+    }
+  },
+  {
+    id: "quad_easy_09",
+    topic: "quadratic",
+    equation: "(x + 4)(x - 9) = 0",
+    answer: [-4, 9],
+    difficulty: "easy",
+    type: "factored",
+    basePoints: 10,
+    steps: [
+      { action: "roots", value: "x = -4, 9", wrong: ["x = -9, 4", "x = 4, 9", "x = -9, -4"], target: "both-sides", result: "x = -4, 9" }
+    ],
+    hints: {
+      en: ["If two brackets multiply to 0, one of them must be 0. Solve x + 4 = 0 and x - 9 = 0."],
+      ja: ["かけて0になるなら、どちらかのかっこが0です。x + 4 = 0 と x - 9 = 0 を解きます。"]
+    },
+    explanation: {
+      en: "x + 4 = 0 gives x = -4, and x - 9 = 0 gives x = 9.",
+      ja: "x + 4 = 0 から x = -4、x - 9 = 0 から x = 9 です。"
+    }
+  },
+  {
+    id: "quad_easy_10",
+    topic: "quadratic",
+    equation: "(x - 6)(x + 6) = 0",
+    answer: [-6, 6],
+    difficulty: "easy",
+    type: "factored",
+    basePoints: 10,
+    steps: [
+      { action: "roots", value: "x = -6, 6", wrong: ["x = 6", "x = -6", "x = 0, 6"], target: "both-sides", result: "x = -6, 6" }
+    ],
+    hints: {
+      en: ["Solve x - 6 = 0 and x + 6 = 0 — you'll get two answers of the same size."],
+      ja: ["x - 6 = 0 と x + 6 = 0 を解きます — 大きさが同じ2つの答えになります。"]
+    },
+    explanation: {
+      en: "x - 6 = 0 gives x = 6, and x + 6 = 0 gives x = -6. Both count — a quadratic can have two answers.",
+      ja: "x - 6 = 0 から x = 6、x + 6 = 0 から x = -6。どちらも解です — 二次方程式は2つの解を持つことがあります。"
     }
   }
 ];

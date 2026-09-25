@@ -1,9 +1,9 @@
 /* ============================================================
    LLL Algebra — brand styles
    Own visual direction (not copied from lll-chem): a chalkboard/
-   chalk-dust theme — equations feel handwritten and worked out,
-   not clinical. Balance-beam is the signature motif: algebra IS
-   balance, so the equation visually tilts until it's solved.
+   chalk-dust theme with a pixel-art equation card. The signature
+   element is the chalk-erase step progress: one dot per move,
+   filled as each step is solved.
    Variable *names* match the org's shared/theme.js contract.
    ============================================================ */
 :root {
@@ -198,24 +198,6 @@ body {
 .achievement-item-icon { font-size: 20px; }
 .achievement-item-name { font-family: var(--sans); font-weight: 700; font-size: 14px; color: var(--ink); }
 .achievement-item-desc { font-family: var(--sans); font-size: 12px; color: var(--muted); }
-
-/* ---------- Signature: staircase climb ---------- */
-.staircase-svg { width: 100%; height: auto; overflow: visible; }
-.stair-ground { stroke: var(--border); stroke-width: 2; }
-.stair-block { fill: var(--border); }
-.stair-summit { font-family: var(--display); font-weight: 700; font-size: 16px; fill: var(--muted); transition: fill .3s ease; }
-.stair-summit.solved { fill: var(--correct); }
-.stair-marker {
-  fill: var(--accent);
-  transition: cx .45s cubic-bezier(.34,1.56,.64,1), cy .45s cubic-bezier(.34,1.56,.64,1), fill .3s ease;
-}
-.stair-marker.solved { fill: var(--correct); }
-.stair-marker.shake { animation: stairShake .4s ease; }
-@keyframes stairShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
 
 /* ---------- Equation display ---------- */
 .equation-card {
@@ -436,10 +418,9 @@ body {
 .intro-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  width: 100vw; height: 100vh;
   z-index: 950;
-  display: grid;
-  place-items: center;
+  display: flex;
+  overflow-y: auto;               /* the overlay scrolls like a page when the intro is taller than the screen */
   background: var(--bg);
   opacity: 0; pointer-events: none;
   transition: opacity .4s ease;
@@ -449,9 +430,8 @@ body {
 
 .intro-content {
   width: min(460px, 90vw);
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 32px 24px;
+  margin: auto;                   /* centred when it fits; starts at the top and scrolls when it doesn't */
+  padding: 24px 20px;
   text-align: center;
 }
 
@@ -485,27 +465,36 @@ body {
   margin: 0;
 }
 
-/* Live demo block inside the intro — one card cycles through 3 states */
-.intro-demo-staircase-wrap {
-  width: 100%; max-width: 160px;
-  margin: 0 auto 16px;
+/* Live demo inside the intro: a mini round built from the real game pieces
+   (.step-progress, .pixel-card, .choice-btn), so it always matches the game. */
+#introFade2 {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  margin-bottom: 26px;
 }
-.intro-demo-staircase-wrap .staircase-svg { width: 100%; height: auto; overflow: visible; }
-.intro-demo-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-  padding: 18px;
+.intro-demo-card { padding: 20px 16px; }
+.intro-demo-choices {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;
 }
-.intro-demo-eq {
-  font-size: clamp(22px, 5vw, 28px);
-  transition: opacity .22s ease, transform .22s ease;
+.intro-demo-choices .choice-btn { pointer-events: none; }
+.intro-demo-choices .choice-btn.intro-demo-tap {
+  border-color: var(--accent);
+  transform: scale(.97);
 }
-.intro-demo-eq.intro-demo-step-text {
-  font-family: var(--sans);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--accent);
-  letter-spacing: normal;
+
+/* Three quick tips: topics, stars, unlocking */
+.intro-tips {
+  list-style: none; margin: 0 0 18px; padding: 0;
+  display: flex; flex-direction: column; gap: 8px;
+  text-align: left;
 }
+.intro-tip {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px 14px;
+  font-family: var(--sans); font-size: 14px; line-height: 1.5; color: var(--ink);
+}
+.intro-tip-icon { flex: none; width: 44px; text-align: center; font-size: 18px; }
+.intro-tip-stars { font-size: 13px; letter-spacing: 1px; color: var(--accent); }
 
 .intro-start-btn {
   width: 100%;
@@ -541,8 +530,7 @@ body {
 
 /* ---------- Reduced motion (single consolidated block) ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .stair-marker { transition: none !important; }
-  .stair-marker.shake { animation: none !important; }
+  .intro-demo-choices .choice-btn { transition: none !important; }
   .equation { transition: none !important; }
   .loading-dots span { animation: none !important; }
   .loading-overlay { transition: none !important; }
