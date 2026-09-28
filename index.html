@@ -234,6 +234,7 @@
       expandPrompt: "Expand the brackets:",
       factorPrompt: "Factorise:",
       rootsPrompt: "One bracket must be 0, so:",
+      rearrangePrompt: "To make one side 0:",
       homeKicker: "Choose a topic", backHome: "Home",
       clearedLabel: "cleared", backLevels: "Levels", lockedLabel: "Locked",
       levelClear: "Level clear!", tierComplete: "{tier} complete!", dailyClear: "Challenge complete!",
@@ -270,6 +271,7 @@
       expandPrompt: "かっこを展開すると：",
       factorPrompt: "因数分解すると：",
       rootsPrompt: "どちらかのかっこが0なので：",
+      rearrangePrompt: "右辺を0にするには：",
       homeKicker: "トピックを選ぼう", backHome: "ホーム",
       clearedLabel: "クリア", backLevels: "レベル選択", lockedLabel: "ロック中",
       levelClear: "クリア！", tierComplete: "{tier} コンプリート！", dailyClear: "チャレンジ達成！",
@@ -301,7 +303,7 @@
       const lang = currentLang();
       const hints = level.hints[lang] || level.hints.en;
       const hint = hints[stepIndex] || hints[hints.length - 1];
-      $hintText.textContent = hint;
+      setMathText($hintText, hint);
       hintUsedThisStep = true; // restore, so it won't double-charge the −2pt penalty later
     }
   });
@@ -455,6 +457,26 @@
 
   function currentLang() {
     return LLL_I18N.lang() || "en"; // same source as the UI text, even if localStorage is blocked
+  }
+
+  // Sets text, keeping each math run (e.g. "(x + 2)(x + 3)", "x = -2") on one line.
+  // A run is 2+ math tokens joined by " <op> "; the text around it still wraps normally.
+  const MATH_RUN = /(^|[^A-Za-z0-9])([x0-9()²\-−×÷\/.]+(?: [+\-−×÷=<>≤≥] [x0-9()²\-−×÷\/.]+)+)/g;
+
+  function setMathText(el, text) {
+    el.textContent = "";
+    let last = 0, m;
+    MATH_RUN.lastIndex = 0;
+    while ((m = MATH_RUN.exec(text))) {
+      const start = m.index + m[1].length;
+      el.appendChild(document.createTextNode(text.slice(last, start)));
+      const span = document.createElement("span");
+      span.className = "nowrap";
+      span.textContent = m[2].replace(/-/g, "−"); // proper minus, matching the choice buttons
+      el.appendChild(span);
+      last = start + m[2].length;
+    }
+    el.appendChild(document.createTextNode(text.slice(last)));
   }
 
   function updateDailyCard() {
@@ -768,7 +790,8 @@
     // Authored-choice steps (expand, factor, roots) carry their own wrong options;
     // every other step gets generated distractors.
     const isAuthored = Array.isArray(step.wrong);
-    const promptKey = CHOICE_PROMPT_KEYS[step.action];
+    // Quadratics' non-authored steps are always "move terms so one side is 0", so label them too.
+    const promptKey = CHOICE_PROMPT_KEYS[step.action] || (level.topic === "quadratic" ? "rearrangePrompt" : null);
     $expandPrompt.hidden = !promptKey;
     if (promptKey) $expandPrompt.textContent = LLL_I18N.t(promptKey) || "";
     const distractors = isAuthored
@@ -898,7 +921,7 @@
     const lang = currentLang();
     const hints = level.hints[lang] || level.hints.en;
     const hint = hints[stepIndex] || hints[hints.length - 1];
-    $hintText.textContent = hint;
+    setMathText($hintText, hint);
     hintUsedThisLevel = true;
     if (!hintUsedThisStep) {
       score = Math.max(0, score - 2);
@@ -951,7 +974,7 @@
     $completeBonus.textContent = `🔥 ${(t("streakBonus") || "{n} streak bonus").split("{n}").join(r.streakCount)} +${r.streakBonus}`;
     const expl = r.level.explanation;
     const explText = typeof expl === "string" ? expl : (expl && (expl[currentLang()] || expl.en)) || "";
-    $completeExplanation.textContent = explText;
+    setMathText($completeExplanation, explText);
     $completeExplanation.hidden = !explText;
 
     // Buttons: primary = Next level (or Level select / Home when there's nothing next)

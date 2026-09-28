@@ -2684,6 +2684,584 @@ const LEVELS = [
       en: "x - 6 = 0 gives x = 6, and x + 6 = 0 gives x = -6. Both count — a quadratic can have two answers.",
       ja: "x - 6 = 0 から x = 6、x + 6 = 0 から x = -6。どちらも解です — 二次方程式は2つの解を持つことがあります。"
     }
+  },
+
+  // ---- Medium: factorise it yourself (x² + bx + c, leading coefficient 1) ----
+  {
+    id: "quad_medium_01",
+    topic: "quadratic",
+    equation: "x² + 5x + 6 = 0",
+    answer: [-3, -2],
+    difficulty: "medium",
+    type: "factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x + 2)(x + 3)", wrong: ["(x + 1)(x + 6)", "(x - 2)(x - 3)", "(x + 2)(x - 3)"], target: "left", result: "(x + 2)(x + 3) = 0" },
+      { action: "roots",  value: "x = -3, -2", wrong: ["x = 2, 3", "x = -3, 2", "x = -2, 3"], target: "both-sides", result: "x = -3, -2" }
+    ],
+    hints: {
+      en: [
+        "Find two numbers that multiply to 6 and add to 5.",
+        "Now set each bracket to 0: x + 2 = 0 and x + 3 = 0."
+      ],
+      ja: [
+        "かけて6、足して5になる2つの数を探す。",
+        "それぞれのかっこを0にする：x + 2 = 0 と x + 3 = 0。"
+      ]
+    },
+    explanation: {
+      en: "2 × 3 = 6 and 2 + 3 = 5, so x² + 5x + 6 = (x + 2)(x + 3). Setting each bracket to 0 gives x = -2 and x = -3.",
+      ja: "2 × 3 = 6、2 + 3 = 5 なので、x² + 5x + 6 = (x + 2)(x + 3)。それぞれのかっこを0にすると x = -2 と x = -3 です。"
+    }
+  },
+  {
+    id: "quad_medium_02",
+    topic: "quadratic",
+    equation: "x² + 7x + 12 = 0",
+    answer: [-4, -3],
+    difficulty: "medium",
+    type: "factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x + 3)(x + 4)", wrong: ["(x + 2)(x + 6)", "(x - 3)(x - 4)", "(x + 1)(x + 12)"], target: "left", result: "(x + 3)(x + 4) = 0" },
+      { action: "roots",  value: "x = -4, -3", wrong: ["x = 3, 4", "x = -4, 3", "x = -3, 4"], target: "both-sides", result: "x = -4, -3" }
+    ],
+    hints: {
+      en: [
+        "Find two numbers that multiply to 12 and add to 7.",
+        "Now set each bracket to 0: x + 3 = 0 and x + 4 = 0."
+      ],
+      ja: [
+        "かけて12、足して7になる2つの数を探す。",
+        "それぞれのかっこを0にする：x + 3 = 0 と x + 4 = 0。"
+      ]
+    },
+    explanation: {
+      en: "12 has several factor pairs (1 × 12, 2 × 6, 3 × 4) — only 3 and 4 add to 7. So it's (x + 3)(x + 4), giving x = -3 and x = -4.",
+      ja: "12には複数の組（1 × 12、2 × 6、3 × 4）がありますが、足して7になるのは3と4だけです。(x + 3)(x + 4) から x = -3 と x = -4 です。"
+    }
+  },
+  {
+    id: "quad_medium_03",
+    topic: "quadratic",
+    equation: "x² - 5x + 6 = 0",
+    answer: [2, 3],
+    difficulty: "medium",
+    type: "factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x - 2)(x - 3)", wrong: ["(x - 1)(x - 6)", "(x + 2)(x + 3)", "(x + 2)(x - 3)"], target: "left", result: "(x - 2)(x - 3) = 0" },
+      { action: "roots",  value: "x = 2, 3", wrong: ["x = -3, -2", "x = -2, 3", "x = -3, 2"], target: "both-sides", result: "x = 2, 3" }
+    ],
+    hints: {
+      en: [
+        "Find two numbers that multiply to 6 and add to -5.",
+        "Now set each bracket to 0: x - 2 = 0 and x - 3 = 0."
+      ],
+      ja: [
+        "かけて6、足して-5になる2つの数を探す。",
+        "それぞれのかっこを0にする：x - 2 = 0 と x - 3 = 0。"
+      ]
+    },
+    explanation: {
+      en: "The constant is positive but the middle term is negative, so both numbers are negative: (-2) × (-3) = 6 and (-2) + (-3) = -5.",
+      ja: "定数項は正、真ん中の項は負なので、2つの数はどちらも負です：(-2) × (-3) = 6、(-2) + (-3) = -5。"
+    }
+  },
+  {
+    id: "quad_medium_04",
+    topic: "quadratic",
+    equation: "x² - 7x + 10 = 0",
+    answer: [2, 5],
+    difficulty: "medium",
+    type: "factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x - 2)(x - 5)", wrong: ["(x - 1)(x - 10)", "(x + 2)(x + 5)", "(x + 2)(x - 5)"], target: "left", result: "(x - 2)(x - 5) = 0" },
+      { action: "roots",  value: "x = 2, 5", wrong: ["x = -5, -2", "x = -2, 5", "x = -5, 2"], target: "both-sides", result: "x = 2, 5" }
+    ],
+    hints: {
+      en: [
+        "Find two numbers that multiply to 10 and add to -7.",
+        "Now set each bracket to 0: x - 2 = 0 and x - 5 = 0."
+      ],
+      ja: [
+        "かけて10、足して-7になる2つの数を探す。",
+        "それぞれのかっこを0にする：x - 2 = 0 と x - 5 = 0。"
+      ]
+    },
+    explanation: {
+      en: "(-2) × (-5) = 10 and (-2) + (-5) = -7, so it's (x - 2)(x - 5). A minus in each bracket gives two positive answers: x = 2 and x = 5.",
+      ja: "(-2) × (-5) = 10、(-2) + (-5) = -7 なので (x - 2)(x - 5)。どちらのかっこもマイナスなので、答えは正の x = 2 と x = 5 です。"
+    }
+  },
+  {
+    id: "quad_medium_05",
+    topic: "quadratic",
+    equation: "x² + 8x + 15 = 0",
+    answer: [-5, -3],
+    difficulty: "medium",
+    type: "factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x + 3)(x + 5)", wrong: ["(x + 1)(x + 15)", "(x - 3)(x - 5)", "(x + 3)(x - 5)"], target: "left", result: "(x + 3)(x + 5) = 0" },
+      { action: "roots",  value: "x = -5, -3", wrong: ["x = 3, 5", "x = -5, 3", "x = -3, 5"], target: "both-sides", result: "x = -5, -3" }
+    ],
+    hints: {
+      en: [
+        "Find two numbers that multiply to 15 and add to 8.",
+        "Now set each bracket to 0: x + 3 = 0 and x + 5 = 0."
+      ],
+      ja: [
+        "かけて15、足して8になる2つの数を探す。",
+        "それぞれのかっこを0にする：x + 3 = 0 と x + 5 = 0。"
+      ]
+    },
+    explanation: {
+      en: "3 × 5 = 15 and 3 + 5 = 8 (1 and 15 multiply to 15 too, but add to 16). So it's (x + 3)(x + 5), giving x = -3 and x = -5.",
+      ja: "3 × 5 = 15、3 + 5 = 8（1と15もかけて15ですが、足すと16）。(x + 3)(x + 5) から x = -3 と x = -5 です。"
+    }
+  },
+  {
+    id: "quad_medium_06",
+    topic: "quadratic",
+    equation: "x² + x - 6 = 0",
+    answer: [-3, 2],
+    difficulty: "medium",
+    type: "factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x + 3)(x - 2)", wrong: ["(x - 3)(x + 2)", "(x + 6)(x - 1)", "(x - 6)(x + 1)"], target: "left", result: "(x + 3)(x - 2) = 0" },
+      { action: "roots",  value: "x = -3, 2", wrong: ["x = -2, 3", "x = 2, 3", "x = -3, -2"], target: "both-sides", result: "x = -3, 2" }
+    ],
+    hints: {
+      en: [
+        "Find two numbers that multiply to -6 and add to 1.",
+        "Now set each bracket to 0: x + 3 = 0 and x - 2 = 0."
+      ],
+      ja: [
+        "かけて-6、足して1になる2つの数を探す。",
+        "それぞれのかっこを0にする：x + 3 = 0 と x - 2 = 0。"
+      ]
+    },
+    explanation: {
+      en: "The constant is negative, so the two numbers have opposite signs: 3 × (-2) = -6 and 3 + (-2) = 1. That gives (x + 3)(x - 2), so x = -3 and x = 2.",
+      ja: "定数項が負なので、2つの数は符号が逆です：3 × (-2) = -6、3 + (-2) = 1。(x + 3)(x - 2) から x = -3 と x = 2 です。"
+    }
+  },
+  {
+    id: "quad_medium_07",
+    topic: "quadratic",
+    equation: "x² - 2x - 8 = 0",
+    answer: [-2, 4],
+    difficulty: "medium",
+    type: "factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x - 4)(x + 2)", wrong: ["(x + 4)(x - 2)", "(x - 8)(x + 1)", "(x + 8)(x - 1)"], target: "left", result: "(x - 4)(x + 2) = 0" },
+      { action: "roots",  value: "x = -2, 4", wrong: ["x = -4, 2", "x = 2, 4", "x = -4, -2"], target: "both-sides", result: "x = -2, 4" }
+    ],
+    hints: {
+      en: [
+        "Find two numbers that multiply to -8 and add to -2.",
+        "Now set each bracket to 0: x - 4 = 0 and x + 2 = 0."
+      ],
+      ja: [
+        "かけて-8、足して-2になる2つの数を探す。",
+        "それぞれのかっこを0にする：x - 4 = 0 と x + 2 = 0。"
+      ]
+    },
+    explanation: {
+      en: "(-4) × 2 = -8 and (-4) + 2 = -2. The bigger number takes the minus, because the middle term is negative. So it's (x - 4)(x + 2), giving x = 4 and x = -2.",
+      ja: "(-4) × 2 = -8、(-4) + 2 = -2。真ん中の項が負なので、大きい方の数がマイナスになります。(x - 4)(x + 2) から x = 4 と x = -2 です。"
+    }
+  },
+  {
+    id: "quad_medium_08",
+    topic: "quadratic",
+    equation: "x² - x - 12 = 0",
+    answer: [-3, 4],
+    difficulty: "medium",
+    type: "factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x - 4)(x + 3)", wrong: ["(x + 4)(x - 3)", "(x - 6)(x + 2)", "(x - 12)(x + 1)"], target: "left", result: "(x - 4)(x + 3) = 0" },
+      { action: "roots",  value: "x = -3, 4", wrong: ["x = -4, 3", "x = 3, 4", "x = -4, -3"], target: "both-sides", result: "x = -3, 4" }
+    ],
+    hints: {
+      en: [
+        "Find two numbers that multiply to -12 and add to -1.",
+        "Now set each bracket to 0: x - 4 = 0 and x + 3 = 0."
+      ],
+      ja: [
+        "かけて-12、足して-1になる2つの数を探す。",
+        "それぞれのかっこを0にする：x - 4 = 0 と x + 3 = 0。"
+      ]
+    },
+    explanation: {
+      en: "(-4) × 3 = -12 and (-4) + 3 = -1. So it's (x - 4)(x + 3), giving x = 4 and x = -3.",
+      ja: "(-4) × 3 = -12、(-4) + 3 = -1。(x - 4)(x + 3) から x = 4 と x = -3 です。"
+    }
+  },
+  {
+    id: "quad_medium_09",
+    topic: "quadratic",
+    equation: "x² + 2x - 15 = 0",
+    answer: [-5, 3],
+    difficulty: "medium",
+    type: "factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x + 5)(x - 3)", wrong: ["(x - 5)(x + 3)", "(x + 15)(x - 1)", "(x - 15)(x + 1)"], target: "left", result: "(x + 5)(x - 3) = 0" },
+      { action: "roots",  value: "x = -5, 3", wrong: ["x = -3, 5", "x = 3, 5", "x = -5, -3"], target: "both-sides", result: "x = -5, 3" }
+    ],
+    hints: {
+      en: [
+        "Find two numbers that multiply to -15 and add to 2.",
+        "Now set each bracket to 0: x + 5 = 0 and x - 3 = 0."
+      ],
+      ja: [
+        "かけて-15、足して2になる2つの数を探す。",
+        "それぞれのかっこを0にする：x + 5 = 0 と x - 3 = 0。"
+      ]
+    },
+    explanation: {
+      en: "5 × (-3) = -15 and 5 + (-3) = 2. The middle term is positive, so the bigger number keeps the plus: (x + 5)(x - 3), giving x = -5 and x = 3.",
+      ja: "5 × (-3) = -15、5 + (-3) = 2。真ん中の項が正なので、大きい方の数がプラスです：(x + 5)(x - 3) から x = -5 と x = 3 です。"
+    }
+  },
+  {
+    id: "quad_medium_10",
+    topic: "quadratic",
+    equation: "x² - 9x + 20 = 0",
+    answer: [4, 5],
+    difficulty: "medium",
+    type: "factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x - 4)(x - 5)", wrong: ["(x - 2)(x - 10)", "(x + 4)(x + 5)", "(x - 1)(x - 20)"], target: "left", result: "(x - 4)(x - 5) = 0" },
+      { action: "roots",  value: "x = 4, 5", wrong: ["x = -5, -4", "x = -4, 5", "x = -5, 4"], target: "both-sides", result: "x = 4, 5" }
+    ],
+    hints: {
+      en: [
+        "Find two numbers that multiply to 20 and add to -9.",
+        "Now set each bracket to 0: x - 4 = 0 and x - 5 = 0."
+      ],
+      ja: [
+        "かけて20、足して-9になる2つの数を探す。",
+        "それぞれのかっこを0にする：x - 4 = 0 と x - 5 = 0。"
+      ]
+    },
+    explanation: {
+      en: "Both numbers are negative: (-4) × (-5) = 20 and (-4) + (-5) = -9. So it's (x - 4)(x - 5), giving x = 4 and x = 5.",
+      ja: "2つの数はどちらも負です：(-4) × (-5) = 20、(-4) + (-5) = -9。(x - 4)(x - 5) から x = 4 と x = 5 です。"
+    }
+  },
+
+  // ---- Hard: rearrange to "= 0" first, then factorise ----
+  // Levels 3, 6 and 9 are common-factor cases: the lesson is NOT to divide by x (that loses x = 0).
+  {
+    id: "quad_hard_01",
+    topic: "quadratic",
+    equation: "x² + 6x = -8",
+    answer: [-4, -2],
+    difficulty: "hard",
+    type: "rearrange",
+    basePoints: 30,
+    steps: [
+      { action: "add",    value: 8, target: "both-sides", result: "x² + 6x + 8 = 0" },
+      { action: "factor", value: "(x + 2)(x + 4)", wrong: ["(x + 1)(x + 8)", "(x - 2)(x - 4)", "(x + 2)(x - 4)"], target: "left", result: "(x + 2)(x + 4) = 0" },
+      { action: "roots",  value: "x = -4, -2", wrong: ["x = 2, 4", "x = -4, 2", "x = -2, 4"], target: "both-sides", result: "x = -4, -2" }
+    ],
+    hints: {
+      en: [
+        "Make the right side 0 — add 8 to both sides.",
+        "Find two numbers that multiply to 8 and add to 6.",
+        "Now set each bracket to 0: x + 2 = 0 and x + 4 = 0."
+      ],
+      ja: [
+        "右辺を0にする — 両辺に8を足す。",
+        "かけて8、足して6になる2つの数を探す。",
+        "それぞれのかっこを0にする：x + 2 = 0 と x + 4 = 0。"
+      ]
+    },
+    explanation: {
+      en: "Factorising only works when one side is 0, so add 8 first: x² + 6x + 8 = 0. Then 2 × 4 = 8 and 2 + 4 = 6 give (x + 2)(x + 4), so x = -2 or x = -4.",
+      ja: "因数分解で解くには片側を0にする必要があるので、まず8を足して x² + 6x + 8 = 0 にします。2 × 4 = 8、2 + 4 = 6 なので (x + 2)(x + 4)、x = -2 または x = -4 です。"
+    }
+  },
+  {
+    id: "quad_hard_02",
+    topic: "quadratic",
+    equation: "x² - 6x = -5",
+    answer: [1, 5],
+    difficulty: "hard",
+    type: "rearrange",
+    basePoints: 30,
+    steps: [
+      { action: "add",    value: 5, target: "both-sides", result: "x² - 6x + 5 = 0" },
+      { action: "factor", value: "(x - 1)(x - 5)", wrong: ["(x + 1)(x + 5)", "(x + 1)(x - 5)", "(x - 1)(x + 5)"], target: "left", result: "(x - 1)(x - 5) = 0" },
+      { action: "roots",  value: "x = 1, 5", wrong: ["x = -5, -1", "x = -1, 5", "x = -5, 1"], target: "both-sides", result: "x = 1, 5" }
+    ],
+    hints: {
+      en: [
+        "Make the right side 0 — add 5 to both sides.",
+        "Find two numbers that multiply to 5 and add to -6.",
+        "Now set each bracket to 0: x - 1 = 0 and x - 5 = 0."
+      ],
+      ja: [
+        "右辺を0にする — 両辺に5を足す。",
+        "かけて5、足して-6になる2つの数を探す。",
+        "それぞれのかっこを0にする：x - 1 = 0 と x - 5 = 0。"
+      ]
+    },
+    explanation: {
+      en: "Add 5 to make the right side 0: x² - 6x + 5 = 0. (-1) × (-5) = 5 and (-1) + (-5) = -6, so it's (x - 1)(x - 5), giving x = 1 and x = 5.",
+      ja: "5を足して右辺を0にします：x² - 6x + 5 = 0。(-1) × (-5) = 5、(-1) + (-5) = -6 なので (x - 1)(x - 5)、x = 1 と x = 5 です。"
+    }
+  },
+  {
+    id: "quad_hard_03",
+    topic: "quadratic",
+    equation: "x² = 4x",
+    answer: [0, 4],
+    difficulty: "hard",
+    type: "rearrange",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 4, target: "both-sides", result: "x² - 4x = 0" },
+      { action: "factor", value: "x(x - 4)", wrong: ["x(x + 4)", "(x - 2)(x + 2)", "2x(x - 2)"], target: "left", result: "x(x - 4) = 0" },
+      { action: "roots",  value: "x = 0, 4", wrong: ["x = 4", "x = -4, 0", "x = -2, 2"], target: "both-sides", result: "x = 0, 4" }
+    ],
+    hints: {
+      en: [
+        "Don't divide by x — you'd lose the answer x = 0. Subtract 4x from both sides so one side is 0.",
+        "Both terms have x in them — take x out: x(…).",
+        "Set each factor to 0: x = 0 and x - 4 = 0."
+      ],
+      ja: [
+        "xで割らないこと — x = 0 の解がなくなります。両辺から4xを引いて右辺を0にする。",
+        "どちらの項にもxがある — xでくくる：x(…)。",
+        "それぞれの因数を0にする：x = 0 と x - 4 = 0。"
+      ]
+    },
+    explanation: {
+      en: "Dividing both sides by x would only give x = 4 and lose x = 0. Instead, subtract 4x to get x² - 4x = 0, then take out x: x(x - 4) = 0. So x = 0 or x = 4.",
+      ja: "両辺をxで割ると x = 4 しか残らず、x = 0 を失います。代わりに4xを引いて x² - 4x = 0 にし、xでくくると x(x - 4) = 0。x = 0 または x = 4 です。"
+    }
+  },
+  {
+    id: "quad_hard_04",
+    topic: "quadratic",
+    equation: "x² + 3x = 10",
+    answer: [-5, 2],
+    difficulty: "hard",
+    type: "rearrange",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: 10, target: "both-sides", result: "x² + 3x - 10 = 0" },
+      { action: "factor", value: "(x + 5)(x - 2)", wrong: ["(x - 5)(x + 2)", "(x + 10)(x - 1)", "(x - 10)(x + 1)"], target: "left", result: "(x + 5)(x - 2) = 0" },
+      { action: "roots",  value: "x = -5, 2", wrong: ["x = -2, 5", "x = 2, 5", "x = -5, -2"], target: "both-sides", result: "x = -5, 2" }
+    ],
+    hints: {
+      en: [
+        "Make the right side 0 — subtract 10 from both sides.",
+        "Find two numbers that multiply to -10 and add to 3.",
+        "Now set each bracket to 0: x + 5 = 0 and x - 2 = 0."
+      ],
+      ja: [
+        "右辺を0にする — 両辺から10を引く。",
+        "かけて-10、足して3になる2つの数を探す。",
+        "それぞれのかっこを0にする：x + 5 = 0 と x - 2 = 0。"
+      ]
+    },
+    explanation: {
+      en: "Subtract 10 so the right side is 0: x² + 3x - 10 = 0. The constant is negative, so the signs are opposite: 5 × (-2) = -10 and 5 + (-2) = 3. That gives (x + 5)(x - 2), so x = -5 and x = 2.",
+      ja: "10を引いて右辺を0にします：x² + 3x - 10 = 0。定数項が負なので符号は逆です：5 × (-2) = -10、5 + (-2) = 3。(x + 5)(x - 2) から x = -5 と x = 2 です。"
+    }
+  },
+  {
+    id: "quad_hard_05",
+    topic: "quadratic",
+    equation: "x² - 4x = 12",
+    answer: [-2, 6],
+    difficulty: "hard",
+    type: "rearrange",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: 12, target: "both-sides", result: "x² - 4x - 12 = 0" },
+      { action: "factor", value: "(x - 6)(x + 2)", wrong: ["(x + 6)(x - 2)", "(x - 4)(x + 3)", "(x - 12)(x + 1)"], target: "left", result: "(x - 6)(x + 2) = 0" },
+      { action: "roots",  value: "x = -2, 6", wrong: ["x = -6, 2", "x = 2, 6", "x = -6, -2"], target: "both-sides", result: "x = -2, 6" }
+    ],
+    hints: {
+      en: [
+        "Make the right side 0 — subtract 12 from both sides.",
+        "Find two numbers that multiply to -12 and add to -4.",
+        "Now set each bracket to 0: x - 6 = 0 and x + 2 = 0."
+      ],
+      ja: [
+        "右辺を0にする — 両辺から12を引く。",
+        "かけて-12、足して-4になる2つの数を探す。",
+        "それぞれのかっこを0にする：x - 6 = 0 と x + 2 = 0。"
+      ]
+    },
+    explanation: {
+      en: "Subtract 12 to get x² - 4x - 12 = 0. (-6) × 2 = -12 and (-6) + 2 = -4. Careful: (-4) × 3 is also -12, but it adds to -1. So it's (x - 6)(x + 2), giving x = 6 and x = -2.",
+      ja: "12を引いて x² - 4x - 12 = 0 にします。(-6) × 2 = -12、(-6) + 2 = -4。注意：(-4) × 3 も -12 ですが、足すと -1 です。(x - 6)(x + 2) から x = 6 と x = -2 です。"
+    }
+  },
+  {
+    id: "quad_hard_06",
+    topic: "quadratic",
+    equation: "x² = -5x",
+    answer: [-5, 0],
+    difficulty: "hard",
+    type: "rearrange",
+    basePoints: 30,
+    steps: [
+      { action: "add_x",  value: 5, target: "both-sides", result: "x² + 5x = 0" },
+      { action: "factor", value: "x(x + 5)", wrong: ["x(x - 5)", "5x(x + 1)", "(x + 5)(x - 5)"], target: "left", result: "x(x + 5) = 0" },
+      { action: "roots",  value: "x = -5, 0", wrong: ["x = -5", "x = 0, 5", "x = -5, 5"], target: "both-sides", result: "x = -5, 0" }
+    ],
+    hints: {
+      en: [
+        "Don't divide by x — you'd lose the answer x = 0. Add 5x to both sides so one side is 0.",
+        "Both terms have x in them — take x out: x(…).",
+        "Set each factor to 0: x = 0 and x + 5 = 0."
+      ],
+      ja: [
+        "xで割らないこと — x = 0 の解がなくなります。両辺に5xを足して右辺を0にする。",
+        "どちらの項にもxがある — xでくくる：x(…)。",
+        "それぞれの因数を0にする：x = 0 と x + 5 = 0。"
+      ]
+    },
+    explanation: {
+      en: "Add 5x to both sides to get x² + 5x = 0, then take out x: x(x + 5) = 0. So x = 0 or x = -5. Dividing by x at the start would have lost x = 0.",
+      ja: "両辺に5xを足して x² + 5x = 0 にし、xでくくると x(x + 5) = 0。x = 0 または x = -5 です。最初にxで割ると x = 0 を失っていました。"
+    }
+  },
+  {
+    id: "quad_hard_07",
+    topic: "quadratic",
+    equation: "x² + 2x - 3 = 5",
+    answer: [-4, 2],
+    difficulty: "hard",
+    type: "rearrange",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: 5, target: "both-sides", result: "x² + 2x - 8 = 0" },
+      { action: "factor", value: "(x + 4)(x - 2)", wrong: ["(x - 4)(x + 2)", "(x + 8)(x - 1)", "(x - 8)(x + 1)"], target: "left", result: "(x + 4)(x - 2) = 0" },
+      { action: "roots",  value: "x = -4, 2", wrong: ["x = -2, 4", "x = 2, 4", "x = -4, -2"], target: "both-sides", result: "x = -4, 2" }
+    ],
+    hints: {
+      en: [
+        "Make the right side 0 — subtract 5 from both sides.",
+        "Find two numbers that multiply to -8 and add to 2.",
+        "Now set each bracket to 0: x + 4 = 0 and x - 2 = 0."
+      ],
+      ja: [
+        "右辺を0にする — 両辺から5を引く。",
+        "かけて-8、足して2になる2つの数を探す。",
+        "それぞれのかっこを0にする：x + 4 = 0 と x - 2 = 0。"
+      ]
+    },
+    explanation: {
+      en: "There's already a constant on the left, so subtracting 5 combines them: -3 - 5 = -8, giving x² + 2x - 8 = 0. Then 4 × (-2) = -8 and 4 + (-2) = 2, so (x + 4)(x - 2) and x = -4 or x = 2.",
+      ja: "左辺にすでに定数項があるので、5を引くとまとまります：-3 - 5 = -8 で x² + 2x - 8 = 0。4 × (-2) = -8、4 + (-2) = 2 なので (x + 4)(x - 2)、x = -4 または x = 2 です。"
+    }
+  },
+  {
+    id: "quad_hard_08",
+    topic: "quadratic",
+    equation: "x² - 5x + 1 = -3",
+    answer: [1, 4],
+    difficulty: "hard",
+    type: "rearrange",
+    basePoints: 30,
+    steps: [
+      { action: "add",    value: 3, target: "both-sides", result: "x² - 5x + 4 = 0" },
+      { action: "factor", value: "(x - 1)(x - 4)", wrong: ["(x - 2)(x - 2)", "(x + 1)(x + 4)", "(x + 1)(x - 4)"], target: "left", result: "(x - 1)(x - 4) = 0" },
+      { action: "roots",  value: "x = 1, 4", wrong: ["x = -4, -1", "x = -1, 4", "x = -4, 1"], target: "both-sides", result: "x = 1, 4" }
+    ],
+    hints: {
+      en: [
+        "Make the right side 0 — add 3 to both sides.",
+        "Find two numbers that multiply to 4 and add to -5.",
+        "Now set each bracket to 0: x - 1 = 0 and x - 4 = 0."
+      ],
+      ja: [
+        "右辺を0にする — 両辺に3を足す。",
+        "かけて4、足して-5になる2つの数を探す。",
+        "それぞれのかっこを0にする：x - 1 = 0 と x - 4 = 0。"
+      ]
+    },
+    explanation: {
+      en: "Add 3 to both sides: 1 + 3 = 4, giving x² - 5x + 4 = 0. (-1) × (-4) = 4 and (-1) + (-4) = -5. (-2) × (-2) is also 4, but it adds to -4. So (x - 1)(x - 4), and x = 1 or x = 4.",
+      ja: "両辺に3を足すと 1 + 3 = 4 で x² - 5x + 4 = 0。(-1) × (-4) = 4、(-1) + (-4) = -5。(-2) × (-2) も4ですが、足すと -4 です。(x - 1)(x - 4) から x = 1 または x = 4 です。"
+    }
+  },
+  {
+    id: "quad_hard_09",
+    topic: "quadratic",
+    equation: "x² + 2x = 5x",
+    answer: [0, 3],
+    difficulty: "hard",
+    type: "rearrange",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 5, target: "both-sides", result: "x² - 3x = 0" },
+      { action: "factor", value: "x(x - 3)", wrong: ["x(x + 3)", "3x(x - 1)", "(x - 3)(x + 3)"], target: "left", result: "x(x - 3) = 0" },
+      { action: "roots",  value: "x = 0, 3", wrong: ["x = 3", "x = -3, 0", "x = 0, 1"], target: "both-sides", result: "x = 0, 3" }
+    ],
+    hints: {
+      en: [
+        "Don't divide by x — you'd lose the answer x = 0. Subtract 5x from both sides so one side is 0.",
+        "Both terms have x in them — take x out: x(…).",
+        "Set each factor to 0: x = 0 and x - 3 = 0."
+      ],
+      ja: [
+        "xで割らないこと — x = 0 の解がなくなります。両辺から5xを引いて右辺を0にする。",
+        "どちらの項にもxがある — xでくくる：x(…)。",
+        "それぞれの因数を0にする：x = 0 と x - 3 = 0。"
+      ]
+    },
+    explanation: {
+      en: "Subtract 5x from both sides: 2x - 5x = -3x, so x² - 3x = 0. Take out x to get x(x - 3) = 0, so x = 0 or x = 3.",
+      ja: "両辺から5xを引くと 2x - 5x = -3x で x² - 3x = 0。xでくくると x(x - 3) = 0、x = 0 または x = 3 です。"
+    }
+  },
+  {
+    id: "quad_hard_10",
+    topic: "quadratic",
+    equation: "x² + 6x = 3x + 18",
+    answer: [-6, 3],
+    difficulty: "hard",
+    type: "rearrange",
+    basePoints: 30,
+    steps: [
+      { action: "subtract_x", value: 3,  target: "both-sides", result: "x² + 3x = 18" },
+      { action: "subtract",   value: 18, target: "both-sides", result: "x² + 3x - 18 = 0" },
+      { action: "factor", value: "(x + 6)(x - 3)", wrong: ["(x - 6)(x + 3)", "(x + 9)(x - 2)", "(x - 9)(x + 2)"], target: "left", result: "(x + 6)(x - 3) = 0" },
+      { action: "roots",  value: "x = -6, 3", wrong: ["x = -3, 6", "x = 3, 6", "x = -6, -3"], target: "both-sides", result: "x = -6, 3" }
+    ],
+    hints: {
+      en: [
+        "Start with the x terms — subtract 3x from both sides.",
+        "Now make the right side 0 — subtract 18 from both sides.",
+        "Find two numbers that multiply to -18 and add to 3.",
+        "Now set each bracket to 0: x + 6 = 0 and x - 3 = 0."
+      ],
+      ja: [
+        "まずxの項をまとめる — 両辺から3xを引く。",
+        "次に右辺を0にする — 両辺から18を引く。",
+        "かけて-18、足して3になる2つの数を探す。",
+        "それぞれのかっこを0にする：x + 6 = 0 と x - 3 = 0。"
+      ]
+    },
+    explanation: {
+      en: "Move everything to the left one step at a time: subtract 3x, then subtract 18, giving x² + 3x - 18 = 0. 6 × (-3) = -18 and 6 + (-3) = 3, so (x + 6)(x - 3) and x = -6 or x = 3.",
+      ja: "1ステップずつ左辺に移します：3xを引き、18を引くと x² + 3x - 18 = 0。6 × (-3) = -18、6 + (-3) = 3 なので (x + 6)(x - 3)、x = -6 または x = 3 です。"
+    }
   }
 ];
 
