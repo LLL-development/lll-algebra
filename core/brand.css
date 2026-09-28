@@ -358,6 +358,10 @@ body {
 .hint-btn:hover { color: var(--accent); border-color: var(--accent); }
 .hint-text { font-size: 14px; color: var(--muted); text-align: center; min-height: 20px; }
 
+/* Keeps a math run like "(x + 2)(x + 3)" on one line in hints and explanations
+   (see setMathText() in index.html); the text around it still wraps normally. */
+.nowrap { white-space: nowrap; }
+
 /* ---------- Loading overlay ---------- */
 .loading-overlay {
   position: fixed;
