@@ -81,7 +81,7 @@
       <ul class="intro-tips">
         <li class="intro-tip">
           <span class="intro-tip-icon" aria-hidden="true">📚</span>
-          <span class="intro-tip-text" data-i18n="introTipTopics">4 topics: Equations, Inequalities, Brackets and Quadratics</span>
+          <span class="intro-tip-text" data-i18n="introTipTopics">5 topics: Equations, Inequalities, Brackets, Quadratics and Systems</span>
         </li>
         <li class="intro-tip">
           <span class="intro-tip-icon intro-tip-stars" aria-hidden="true">★★★</span>
@@ -162,6 +162,15 @@
           <span class="topic-card-count"></span>
         </span>
       </button>
+      <button class="topic-card" data-topic="system">
+        <span class="topic-card-sample">x + y = 9<br>2x - y = 3</span>
+        <span class="topic-card-title" data-i18n="topicSystem">Systems</span>
+        <span class="topic-card-desc" data-i18n="topicSystemDesc">Two equations — find x and y</span>
+        <span class="topic-card-progress" data-progress="system">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -235,6 +244,11 @@
       factorPrompt: "Factorise:",
       rootsPrompt: "One bracket must be 0, so:",
       rearrangePrompt: "To make one side 0:",
+      topicSystem: "Systems",
+      topicSystemDesc: "Two equations — find x and y",
+      combinePrompt: "To cancel a letter, add or subtract:",
+      substitutePrompt: "Substitute back in:",
+      scalePrompt: "First, multiply so a letter will cancel:",
       homeKicker: "Choose a topic", backHome: "Home",
       clearedLabel: "cleared", backLevels: "Levels", lockedLabel: "Locked",
       levelClear: "Level clear!", tierComplete: "{tier} complete!", dailyClear: "Challenge complete!",
@@ -246,7 +260,7 @@
       dailyStreakLabel: "day streak",
       introTitle: "How to Solve",
       introBody1: "Algebra is about balance. Whatever you do to one side of the equation, you must do to the other — so it stays true.",
-      introTipTopics: "4 topics: Equations, Inequalities, Brackets and Quadratics",
+      introTipTopics: "5 topics: Equations, Inequalities, Brackets, Quadratics and Systems",
       introTipStars: "No hints and no mistakes = 3 stars",
       introTipUnlock: "Clear a level to unlock the next one",
       introStartBtn: "Let's start"
@@ -272,6 +286,11 @@
       factorPrompt: "因数分解すると：",
       rootsPrompt: "どちらかのかっこが0なので：",
       rearrangePrompt: "右辺を0にするには：",
+      topicSystem: "連立方程式",
+      topicSystemDesc: "2つの式からxとyを求めよう",
+      combinePrompt: "文字を1つ消すには、足すか引くか：",
+      substitutePrompt: "代入すると：",
+      scalePrompt: "まず、文字が消えるようにかけると：",
       homeKicker: "トピックを選ぼう", backHome: "ホーム",
       clearedLabel: "クリア", backLevels: "レベル選択", lockedLabel: "ロック中",
       levelClear: "クリア！", tierComplete: "{tier} コンプリート！", dailyClear: "チャレンジ達成！",
@@ -283,7 +302,7 @@
       dailyStreakLabel: "日連続",
       introTitle: "解き方",
       introBody1: "代数はバランスが大切です。方程式の片側に行った操作は、もう片方にも行う必要があります。",
-      introTipTopics: "4トピック：方程式・不等式・かっこ・二次方程式",
+      introTipTopics: "5トピック：方程式・不等式・かっこ・二次方程式・連立方程式",
       introTipStars: "ヒントなし・ミスなしで★3つ",
       introTipUnlock: "レベルをクリアすると次のレベルが解放されます",
       introStartBtn: "はじめる"
@@ -459,9 +478,9 @@
     return LLL_I18N.lang() || "en"; // same source as the UI text, even if localStorage is blocked
   }
 
-  // Sets text, keeping each math run (e.g. "(x + 2)(x + 3)", "x = -2") on one line.
+  // Sets text, keeping each math run (e.g. "(x + 2)(x + 3)", "x + y = 7") on one line.
   // A run is 2+ math tokens joined by " <op> "; the text around it still wraps normally.
-  const MATH_RUN = /(^|[^A-Za-z0-9])([x0-9()²\-−×÷\/.]+(?: [+\-−×÷=<>≤≥] [x0-9()²\-−×÷\/.]+)+)/g;
+  const MATH_RUN = /(^|[^A-Za-z0-9])([xy0-9()²\-−×÷\/.]+(?: [+\-−×÷=<>≤≥] [xy0-9()²\-−×÷\/.]+)+)/g;
 
   function setMathText(el, text) {
     el.textContent = "";
@@ -659,7 +678,10 @@
   }
 
   // Steps that show their own authored choices get a short prompt above the buttons.
-  const CHOICE_PROMPT_KEYS = { expand: "expandPrompt", factor: "factorPrompt", roots: "rootsPrompt" };
+  const CHOICE_PROMPT_KEYS = {
+    expand: "expandPrompt", factor: "factorPrompt", roots: "rootsPrompt",
+    combine: "combinePrompt", substitute: "substitutePrompt", scale: "scalePrompt"
+  };
 
   function actionLabel(action, value) {
     // Authored choices (expand/factor/roots) are strings, shown as-is with a proper minus sign
@@ -747,6 +769,7 @@
       const center = allowNegative ? correctStep.value : Math.abs(correctStep.value);
       [center, center + 1, center - 1].forEach(v => {
         if (v === 0) return;
+        if (allowNegative && v === 1) return; // "× 1" / "÷ 1" change nothing, so never offer them
         if (!allowNegative && v < 0) return;
         if (a === correctStep.action && v === correctStep.value) return;
         pool.push({ action: a, value: v });
@@ -757,6 +780,22 @@
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
+    // Guaranteed sign-mistake distractor: for +/− moves, always offer the opposite move with
+    // the same value (e.g. "− 8" when the answer is "+ 8"). For constant moves, also offer a
+    // same-number ×/÷ move, so most buttons share the number and the player has to pick the
+    // right operation, not just the right number.
+    const OPPOSITE = { add: "subtract", subtract: "add", add_x: "subtract_x", subtract_x: "add_x" };
+    const opposite = OPPOSITE[correctStep.action];
+    if (opposite) {
+      const v = correctStep.value;
+      const picks = [{ action: opposite, value: v }];
+      if (!isXAction && v !== 1) {   // "× 1" / "÷ 1" would be a do-nothing move, so skip it
+        picks.push({ action: Math.random() < 0.5 ? "multiply" : "divide", value: v });
+      }
+      const alreadyPicked = d => picks.some(p => p.action === d.action && p.value === d.value);
+      return [...picks, ...pool.filter(d => !alreadyPicked(d))].slice(0, 3);
+    }
+
     // Guaranteed sign-flip distractor: when the correct move is multiply/divide by a
     // negative, always offer the positive counterpart (the classic "forgot the sign" mistake).
     const isNegativeMulDiv =
@@ -785,6 +824,7 @@
     buildStepDots(level.steps.length);
     updateStepDots(stepIndex, level.steps.length, false);
     if (stepIndex === 0) $equationCard.classList.remove("solved");
+    $equationCard.classList.toggle("system-card", level.topic === "system");
 
     const step = currentStep();
     // Authored-choice steps (expand, factor, roots) carry their own wrong options;
@@ -1057,8 +1097,8 @@
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
-  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic" };
-  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3" };
 
   // Levels unlock in order within a tier; the first level of every tier is always open.
   function isUnlocked(level) {

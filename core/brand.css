@@ -208,6 +208,7 @@ body {
 .equation {
   font-family: var(--mono); font-size: clamp(26px, 6vw, 38px); font-weight: 600;
   letter-spacing: -0.01em; margin: 0;
+  white-space: pre-line;          /* systems: "x + y = 7\nx - y = 1" shows as two lines */
   transition: opacity .22s ease, filter .22s ease, transform .22s ease;
 }
 .equation.updating {
@@ -235,6 +236,13 @@ body {
   font-size: clamp(15px, 3.6vw, 24px);
   line-height: 1.8;
   letter-spacing: 0;
+}
+/* Systems: reserve two lines so the card doesn't shrink between steps;
+   one-line steps (e.g. "3x = 12") sit in the middle. */
+.pixel-card.system-card .equation {
+  min-height: 3.6em;              /* 2 lines × line-height 1.8 */
+  display: grid;
+  align-content: center;
 }
 
 /* ---------- Floating background symbols ---------- */
@@ -592,6 +600,7 @@ body {
 .topic-card-sample {
   font-family: "Press Start 2P", var(--mono); font-size: 13px; line-height: 1.6;
   color: var(--accent);
+  white-space: pre-line;          /* systems sample is two lines */
 }
 .topic-card-title { font-family: var(--display); font-weight: 700; font-size: 18px; }
 .topic-card-desc { font-family: var(--sans); font-size: 13px; line-height: 1.5; color: var(--muted); }

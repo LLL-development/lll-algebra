@@ -17,6 +17,18 @@
 //                   "expand": `value` is the correct factorisation (e.g. "(x + 2)(x + 3)").
 //   "roots"       — read both answers off a factorised "= 0" equation (zero-product rule).
 //                   `value` is the answers as a string, smallest first (e.g. "x = -3, -2").
+//   "combine"     — add or subtract the two equations of a system to eliminate a letter
+//                   (systems topic). Authored: `value` is the resulting equation (e.g. "3x = 12").
+//                   Always top minus bottom when subtracting.
+//   "substitute"  — put the known letter back into an equation to find the other (systems).
+//                   Authored: `value` is the full answer, x first (e.g. "x = 4, y = 5").
+//   "scale"       — multiply one equation of a system so a letter will cancel (systems, Hard).
+//                   Authored: `value` is just the scaled equation (e.g. "2x + 6y = 14");
+//                   `result` is the new two-line system with that line replaced.
+//
+// Systems: `equation` is two lines joined by "\n" (e.g. "x + y = 9\n2x - y = 3"), and
+// `answer` is { x, y }. A step whose result the player must substitute into keeps that
+// equation as a second line (e.g. "x = 4\nx + y = 9"), so it stays on the card.
 //
 // Any step with a `wrong` array is an authored-choice step: the UI shows `value` plus
 // the 3 `wrong` options instead of generating distractors.
@@ -28,7 +40,7 @@
 //   - Inequality steps that multiply/divide by a negative set `flip: true`
 //     (the inequality sign reverses on that step).
 //
-// `topic` is "equation", "inequality", "brackets" or "quadratic". `target` is "both-sides"
+// `topic` is "equation", "inequality", "brackets", "quadratic" or "system". `target` is "both-sides"
 // for every move that changes a side's value; only "expand" rewrites one side,
 // because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
@@ -3261,6 +3273,954 @@ const LEVELS = [
     explanation: {
       en: "Move everything to the left one step at a time: subtract 3x, then subtract 18, giving x² + 3x - 18 = 0. 6 × (-3) = -18 and 6 + (-3) = 3, so (x + 6)(x - 3) and x = -6 or x = 3.",
       ja: "1ステップずつ左辺に移します：3xを引き、18を引くと x² + 3x - 18 = 0。6 × (-3) = -18、6 + (-3) = 3 なので (x + 6)(x - 3)、x = -6 または x = 3 です。"
+    }
+  },
+
+  // =====================================================================
+  // SYSTEMS OF EQUATIONS
+  // =====================================================================
+
+  // ---- Easy: add the equations to cancel y ----
+  // x coefficients always differ, so subtracting never eliminates a letter (it's a real mistake here).
+  {
+    id: "system_easy_01",
+    topic: "system",
+    equation: "x + y = 9\n2x - y = 3",
+    answer: { x: 4, y: 5 },
+    difficulty: "easy",
+    type: "elimination",
+    basePoints: 10,
+    steps: [
+      { action: "combine",    value: "3x = 12", wrong: ["-x + 2y = 6", "3x = 9", "3x = 6"], target: "both-sides", result: "3x = 12" },
+      { action: "divide",     value: 3, target: "both-sides", result: "x = 4\nx + y = 9" },
+      { action: "substitute", value: "x = 4, y = 5", wrong: ["x = 4, y = 13", "x = 4, y = -5", "x = 4, y = 4"], target: "both-sides", result: "x = 4, y = 5" }
+    ],
+    hints: {
+      en: [
+        "Add the two equations: +y and -y cancel.",
+        "Divide both sides by 3.",
+        "Put x = 4 into the top line: 4 + y = 9, so y = 5."
+      ],
+      ja: [
+        "2つの式を足す — +y と -y が消える。",
+        "両辺を3で割る。",
+        "上の式に x = 4 を代入：4 + y = 9 なので y = 5。"
+      ]
+    },
+    explanation: {
+      en: "Adding the equations cancels y, leaving 3x = 12, so x = 4. Putting x = 4 back into x + y = 9 gives y = 5.",
+      ja: "2つの式を足すとyが消えて 3x = 12、x = 4 です。x = 4 を x + y = 9 に代入すると y = 5 です。"
+    }
+  },
+  {
+    id: "system_easy_02",
+    topic: "system",
+    equation: "2x + y = 7\nx - y = -1",
+    answer: { x: 2, y: 3 },
+    difficulty: "easy",
+    type: "elimination",
+    basePoints: 10,
+    steps: [
+      { action: "combine",    value: "3x = 6", wrong: ["x + 2y = 8", "3x = 7", "3x = 8"], target: "both-sides", result: "3x = 6" },
+      { action: "divide",     value: 3, target: "both-sides", result: "x = 2\n2x + y = 7" },
+      { action: "substitute", value: "x = 2, y = 3", wrong: ["x = 2, y = 5", "x = 2, y = 11", "x = 2, y = -3"], target: "both-sides", result: "x = 2, y = 3" }
+    ],
+    hints: {
+      en: [
+        "Add the two equations: +y and -y cancel.",
+        "Divide both sides by 3.",
+        "Put x = 2 into the top line: 2 × 2 = 4, so 4 + y = 7 and y = 3."
+      ],
+      ja: [
+        "2つの式を足す — +y と -y が消える。",
+        "両辺を3で割る。",
+        "上の式に x = 2 を代入：2 × 2 = 4 なので 4 + y = 7、y = 3。"
+      ]
+    },
+    explanation: {
+      en: "Watch the negative on the bottom line: 7 + (-1) = 6, so 3x = 6 and x = 2. Then 2 × 2 = 4, so 4 + y = 7 and y = 3.",
+      ja: "下の式の右辺は負の数です：7 + (-1) = 6 なので 3x = 6、x = 2。2 × 2 = 4 なので 4 + y = 7、y = 3 です。"
+    }
+  },
+  {
+    id: "system_easy_03",
+    topic: "system",
+    equation: "3x + y = 14\nx - y = 2",
+    answer: { x: 4, y: 2 },
+    difficulty: "easy",
+    type: "elimination",
+    basePoints: 10,
+    steps: [
+      { action: "combine",    value: "4x = 16", wrong: ["2x + 2y = 12", "4x = 14", "4x = 12"], target: "both-sides", result: "4x = 16" },
+      { action: "divide",     value: 4, target: "both-sides", result: "x = 4\n3x + y = 14" },
+      { action: "substitute", value: "x = 4, y = 2", wrong: ["x = 4, y = 10", "x = 4, y = 26", "x = 4, y = -2"], target: "both-sides", result: "x = 4, y = 2" }
+    ],
+    hints: {
+      en: [
+        "Add the two equations: +y and -y cancel.",
+        "Divide both sides by 4.",
+        "Put x = 4 into the top line: 3 × 4 = 12, so 12 + y = 14 and y = 2."
+      ],
+      ja: [
+        "2つの式を足す — +y と -y が消える。",
+        "両辺を4で割る。",
+        "上の式に x = 4 を代入：3 × 4 = 12 なので 12 + y = 14、y = 2。"
+      ]
+    },
+    explanation: {
+      en: "Adding cancels y: 4x = 16, so x = 4. Remember to multiply when you substitute: 3 × 4 = 12, so 12 + y = 14 and y = 2.",
+      ja: "足すとyが消えて 4x = 16、x = 4。代入するときはかけ算を忘れずに：3 × 4 = 12 なので 12 + y = 14、y = 2 です。"
+    }
+  },
+  {
+    id: "system_easy_04",
+    topic: "system",
+    equation: "3x + y = 13\n2x - y = -3",
+    answer: { x: 2, y: 7 },
+    difficulty: "easy",
+    type: "elimination",
+    basePoints: 10,
+    steps: [
+      { action: "combine",    value: "5x = 10", wrong: ["x + 2y = 16", "5x = 13", "5x = 16"], target: "both-sides", result: "5x = 10" },
+      { action: "divide",     value: 5, target: "both-sides", result: "x = 2\n3x + y = 13" },
+      { action: "substitute", value: "x = 2, y = 7", wrong: ["x = 2, y = 11", "x = 2, y = 19", "x = 2, y = -7"], target: "both-sides", result: "x = 2, y = 7" }
+    ],
+    hints: {
+      en: [
+        "Add the two equations: +y and -y cancel.",
+        "Divide both sides by 5.",
+        "Put x = 2 into the top line: 3 × 2 = 6, so 6 + y = 13 and y = 7."
+      ],
+      ja: [
+        "2つの式を足す — +y と -y が消える。",
+        "両辺を5で割る。",
+        "上の式に x = 2 を代入：3 × 2 = 6 なので 6 + y = 13、y = 7。"
+      ]
+    },
+    explanation: {
+      en: "Adding cancels y: 13 + (-3) = 10, so 5x = 10 and x = 2. Then 3 × 2 = 6, so 6 + y = 13 and y = 7.",
+      ja: "足すとyが消えます：13 + (-3) = 10 なので 5x = 10、x = 2。3 × 2 = 6 なので 6 + y = 13、y = 7 です。"
+    }
+  },
+  {
+    id: "system_easy_05",
+    topic: "system",
+    equation: "2x + y = 2\nx - y = 7",
+    answer: { x: 3, y: -4 },
+    difficulty: "easy",
+    type: "elimination",
+    basePoints: 10,
+    steps: [
+      { action: "combine",    value: "3x = 9", wrong: ["x + 2y = -5", "3x = 2", "3x = -5"], target: "both-sides", result: "3x = 9" },
+      { action: "divide",     value: 3, target: "both-sides", result: "x = 3\n2x + y = 2" },
+      { action: "substitute", value: "x = 3, y = -4", wrong: ["x = 3, y = -1", "x = 3, y = 8", "x = 3, y = 4"], target: "both-sides", result: "x = 3, y = -4" }
+    ],
+    hints: {
+      en: [
+        "Add the two equations: +y and -y cancel.",
+        "Divide both sides by 3.",
+        "Put x = 3 into the top line: 2 × 3 = 6, so 6 + y = 2 and y = -4."
+      ],
+      ja: [
+        "2つの式を足す — +y と -y が消える。",
+        "両辺を3で割る。",
+        "上の式に x = 3 を代入：2 × 3 = 6 なので 6 + y = 2、y = -4。"
+      ]
+    },
+    explanation: {
+      en: "Adding gives 3x = 9, so x = 3. Then 6 + y = 2 — y has to take 4 away, so y = -4.",
+      ja: "足すと 3x = 9、x = 3。6 + y = 2 なので、yは4を引く数、つまり y = -4 です。"
+    }
+  },
+  {
+    id: "system_easy_06",
+    topic: "system",
+    equation: "4x + y = 14\n2x - y = -2",
+    answer: { x: 2, y: 6 },
+    difficulty: "easy",
+    type: "elimination",
+    basePoints: 10,
+    steps: [
+      { action: "combine",    value: "6x = 12", wrong: ["2x + 2y = 16", "6x = 14", "6x = 16"], target: "both-sides", result: "6x = 12" },
+      { action: "divide",     value: 6, target: "both-sides", result: "x = 2\n4x + y = 14" },
+      { action: "substitute", value: "x = 2, y = 6", wrong: ["x = 2, y = 12", "x = 2, y = 22", "x = 2, y = -6"], target: "both-sides", result: "x = 2, y = 6" }
+    ],
+    hints: {
+      en: [
+        "Add the two equations: +y and -y cancel.",
+        "Divide both sides by 6.",
+        "Put x = 2 into the top line: 4 × 2 = 8, so 8 + y = 14 and y = 6."
+      ],
+      ja: [
+        "2つの式を足す — +y と -y が消える。",
+        "両辺を6で割る。",
+        "上の式に x = 2 を代入：4 × 2 = 8 なので 8 + y = 14、y = 6。"
+      ]
+    },
+    explanation: {
+      en: "Adding cancels y: 14 + (-2) = 12, so 6x = 12 and x = 2. Then 4 × 2 = 8, so 8 + y = 14 and y = 6.",
+      ja: "足すとyが消えます：14 + (-2) = 12 なので 6x = 12、x = 2。4 × 2 = 8 なので 8 + y = 14、y = 6 です。"
+    }
+  },
+  {
+    id: "system_easy_07",
+    topic: "system",
+    equation: "x + 2y = 13\n2x - 2y = 8",
+    answer: { x: 7, y: 3 },
+    difficulty: "easy",
+    type: "elimination",
+    basePoints: 10,
+    steps: [
+      { action: "combine",    value: "3x = 21", wrong: ["-x + 4y = 5", "3x = 13", "3x = 5"], target: "both-sides", result: "3x = 21" },
+      { action: "divide",     value: 3, target: "both-sides", result: "x = 7\nx + 2y = 13" },
+      { action: "substitute", value: "x = 7, y = 3", wrong: ["x = 7, y = 6", "x = 7, y = 10", "x = 7, y = -3"], target: "both-sides", result: "x = 7, y = 3" }
+    ],
+    hints: {
+      en: [
+        "Add the two equations: +2y and -2y cancel.",
+        "Divide both sides by 3.",
+        "Put x = 7 into the top line: 7 + 2y = 13, so 2y = 6 and y = 3."
+      ],
+      ja: [
+        "2つの式を足す — +2y と -2y が消える。",
+        "両辺を3で割る。",
+        "上の式に x = 7 を代入：7 + 2y = 13 なので 2y = 6、y = 3。"
+      ]
+    },
+    explanation: {
+      en: "+2y and -2y cancel just like +y and -y, leaving 3x = 21, so x = 7. Then 7 + 2y = 13 gives 2y = 6 — divide by 2 to get y = 3.",
+      ja: "+2y と -2y も +y と -y と同じように消えて 3x = 21、x = 7。7 + 2y = 13 から 2y = 6、2で割って y = 3 です。"
+    }
+  },
+  {
+    id: "system_easy_08",
+    topic: "system",
+    equation: "3x + 2y = 16\nx - 2y = -8",
+    answer: { x: 2, y: 5 },
+    difficulty: "easy",
+    type: "elimination",
+    basePoints: 10,
+    steps: [
+      { action: "combine",    value: "4x = 8", wrong: ["2x + 4y = 24", "4x = 16", "4x = 24"], target: "both-sides", result: "4x = 8" },
+      { action: "divide",     value: 4, target: "both-sides", result: "x = 2\n3x + 2y = 16" },
+      { action: "substitute", value: "x = 2, y = 5", wrong: ["x = 2, y = 10", "x = 2, y = 7", "x = 2, y = -5"], target: "both-sides", result: "x = 2, y = 5" }
+    ],
+    hints: {
+      en: [
+        "Add the two equations: +2y and -2y cancel.",
+        "Divide both sides by 4.",
+        "Put x = 2 into the top line: 3 × 2 = 6, so 6 + 2y = 16, 2y = 10 and y = 5."
+      ],
+      ja: [
+        "2つの式を足す — +2y と -2y が消える。",
+        "両辺を4で割る。",
+        "上の式に x = 2 を代入：3 × 2 = 6 なので 6 + 2y = 16、2y = 10、y = 5。"
+      ]
+    },
+    explanation: {
+      en: "Adding cancels 2y: 16 + (-8) = 8, so 4x = 8 and x = 2. Then 6 + 2y = 16 gives 2y = 10, so y = 5.",
+      ja: "足すと2yが消えます：16 + (-8) = 8 なので 4x = 8、x = 2。6 + 2y = 16 から 2y = 10、y = 5 です。"
+    }
+  },
+  {
+    id: "system_easy_09",
+    topic: "system",
+    equation: "x + 3y = 14\n5x - 3y = 16",
+    answer: { x: 5, y: 3 },
+    difficulty: "easy",
+    type: "elimination",
+    basePoints: 10,
+    steps: [
+      { action: "combine",    value: "6x = 30", wrong: ["-4x + 6y = -2", "6x = 14", "6x = -2"], target: "both-sides", result: "6x = 30" },
+      { action: "divide",     value: 6, target: "both-sides", result: "x = 5\nx + 3y = 14" },
+      { action: "substitute", value: "x = 5, y = 3", wrong: ["x = 5, y = 9", "x = 5, y = 19", "x = 5, y = -3"], target: "both-sides", result: "x = 5, y = 3" }
+    ],
+    hints: {
+      en: [
+        "Add the two equations: +3y and -3y cancel.",
+        "Divide both sides by 6.",
+        "Put x = 5 into the top line: 5 + 3y = 14, so 3y = 9 and y = 3."
+      ],
+      ja: [
+        "2つの式を足す — +3y と -3y が消える。",
+        "両辺を6で割る。",
+        "上の式に x = 5 を代入：5 + 3y = 14 なので 3y = 9、y = 3。"
+      ]
+    },
+    explanation: {
+      en: "Adding cancels 3y, leaving 6x = 30, so x = 5. Then 5 + 3y = 14 gives 3y = 9 — divide by 3 to get y = 3.",
+      ja: "足すと3yが消えて 6x = 30、x = 5。5 + 3y = 14 から 3y = 9、3で割って y = 3 です。"
+    }
+  },
+  {
+    id: "system_easy_10",
+    topic: "system",
+    equation: "3x + 2y = 5\n2x - 2y = 20",
+    answer: { x: 5, y: -5 },
+    difficulty: "easy",
+    type: "elimination",
+    basePoints: 10,
+    steps: [
+      { action: "combine",    value: "5x = 25", wrong: ["x + 4y = -15", "5x = 5", "5x = -15"], target: "both-sides", result: "5x = 25" },
+      { action: "divide",     value: 5, target: "both-sides", result: "x = 5\n3x + 2y = 5" },
+      { action: "substitute", value: "x = 5, y = -5", wrong: ["x = 5, y = -10", "x = 5, y = 5", "x = 5, y = 0"], target: "both-sides", result: "x = 5, y = -5" }
+    ],
+    hints: {
+      en: [
+        "Add the two equations: +2y and -2y cancel.",
+        "Divide both sides by 5.",
+        "Put x = 5 into the top line: 3 × 5 = 15, so 15 + 2y = 5, 2y = -10 and y = -5."
+      ],
+      ja: [
+        "2つの式を足す — +2y と -2y が消える。",
+        "両辺を5で割る。",
+        "上の式に x = 5 を代入：3 × 5 = 15 なので 15 + 2y = 5、2y = -10、y = -5。"
+      ]
+    },
+    explanation: {
+      en: "Adding cancels 2y: 5x = 25, so x = 5. Then 3 × 5 = 15, so 15 + 2y = 5 gives 2y = -10 and y = -5.",
+      ja: "足すと2yが消えて 5x = 25、x = 5。3 × 5 = 15 なので 15 + 2y = 5 から 2y = -10、y = -5 です。"
+    }
+  },
+
+  // ---- Medium: decide whether to add or subtract ----
+  // Same-sign letter → subtract (always top minus bottom); opposite signs → add.
+  // Combine options form a 2×2 grid (letter terms added/subtracted × numbers added/subtracted),
+  // so every option has the same shape and the player has to choose the operation.
+  // Levels 4, 5, 6 and 9 cancel x instead of y.
+  {
+    id: "system_medium_01",
+    topic: "system",
+    equation: "3x + y = 14\nx + y = 6",
+    answer: { x: 4, y: 2 },
+    difficulty: "medium",
+    type: "elimination",
+    basePoints: 20,
+    steps: [
+      { action: "combine",    value: "2x = 8", wrong: ["4x = 20", "2x = 20", "4x = 8"], target: "both-sides", result: "2x = 8" },
+      { action: "divide",     value: 2, target: "both-sides", result: "x = 4\n3x + y = 14" },
+      { action: "substitute", value: "x = 4, y = 2", wrong: ["x = 4, y = 10", "x = 4, y = 26", "x = 4, y = -2"], target: "both-sides", result: "x = 4, y = 2" }
+    ],
+    hints: {
+      en: [
+        "+y and +y are the same, so subtract: top minus bottom. y cancels.",
+        "Divide both sides by 2.",
+        "Put x = 4 into 3x + y = 14: 3 × 4 = 12, so 12 + y = 14 and y = 2."
+      ],
+      ja: [
+        "+y と +y は同じなので、上の式から下の式を引く。yが消える。",
+        "両辺を2で割る。",
+        "x = 4 を 3x + y = 14 に代入：3 × 4 = 12 なので 12 + y = 14、y = 2。"
+      ]
+    },
+    explanation: {
+      en: "Both equations have +y, so subtracting cancels it: 3x - x = 2x and 14 - 6 = 8, giving x = 4. Then 3 × 4 = 12, so 12 + y = 14 and y = 2.",
+      ja: "どちらの式も +y なので、引くとyが消えます：3x - x = 2x、14 - 6 = 8 で x = 4。3 × 4 = 12 なので 12 + y = 14、y = 2 です。"
+    }
+  },
+  {
+    id: "system_medium_02",
+    topic: "system",
+    equation: "2x + 3y = 12\nx - 3y = -3",
+    answer: { x: 3, y: 2 },
+    difficulty: "medium",
+    type: "elimination",
+    basePoints: 20,
+    steps: [
+      { action: "combine",    value: "3x = 9", wrong: ["x = 15", "3x = 15", "x = 9"], target: "both-sides", result: "3x = 9" },
+      { action: "divide",     value: 3, target: "both-sides", result: "x = 3\n2x + 3y = 12" },
+      { action: "substitute", value: "x = 3, y = 2", wrong: ["x = 3, y = 6", "x = 3, y = 3", "x = 3, y = -2"], target: "both-sides", result: "x = 3, y = 2" }
+    ],
+    hints: {
+      en: [
+        "+3y and -3y are opposite, so add the two equations. y cancels.",
+        "Divide both sides by 3.",
+        "Put x = 3 into 2x + 3y = 12: 2 × 3 = 6, so 6 + 3y = 12, 3y = 6 and y = 2."
+      ],
+      ja: [
+        "+3y と -3y は反対なので、2つの式を足す。yが消える。",
+        "両辺を3で割る。",
+        "x = 3 を 2x + 3y = 12 に代入：2 × 3 = 6 なので 6 + 3y = 12、3y = 6、y = 2。"
+      ]
+    },
+    explanation: {
+      en: "+3y and -3y are opposites, so adding cancels y: 12 + (-3) = 9, so 3x = 9 and x = 3. Then 6 + 3y = 12 gives 3y = 6, so y = 2.",
+      ja: "+3y と -3y は反対なので、足すとyが消えます：12 + (-3) = 9 で 3x = 9、x = 3。6 + 3y = 12 から 3y = 6、y = 2 です。"
+    }
+  },
+  {
+    id: "system_medium_03",
+    topic: "system",
+    equation: "x + 2y = 11\n3x - 2y = 1",
+    answer: { x: 3, y: 4 },
+    difficulty: "medium",
+    type: "elimination",
+    basePoints: 20,
+    steps: [
+      { action: "combine",    value: "4x = 12", wrong: ["-2x = 10", "4x = 10", "-2x = 12"], target: "both-sides", result: "4x = 12" },
+      { action: "divide",     value: 4, target: "both-sides", result: "x = 3\nx + 2y = 11" },
+      { action: "substitute", value: "x = 3, y = 4", wrong: ["x = 3, y = 8", "x = 3, y = 7", "x = 3, y = -4"], target: "both-sides", result: "x = 3, y = 4" }
+    ],
+    hints: {
+      en: [
+        "+2y and -2y are opposite, so add the two equations. y cancels.",
+        "Divide both sides by 4.",
+        "Put x = 3 into x + 2y = 11: 3 + 2y = 11, so 2y = 8 and y = 4."
+      ],
+      ja: [
+        "+2y と -2y は反対なので、2つの式を足す。yが消える。",
+        "両辺を4で割る。",
+        "x = 3 を x + 2y = 11 に代入：3 + 2y = 11 なので 2y = 8、y = 4。"
+      ]
+    },
+    explanation: {
+      en: "+2y and -2y are opposites, so add: x + 3x = 4x and 11 + 1 = 12, giving x = 3. Then 3 + 2y = 11, so 2y = 8 and y = 4.",
+      ja: "+2y と -2y は反対なので足します：x + 3x = 4x、11 + 1 = 12 で x = 3。3 + 2y = 11 から 2y = 8、y = 4 です。"
+    }
+  },
+  {
+    id: "system_medium_04",
+    topic: "system",
+    equation: "2x + 5y = 16\n2x + y = 8",
+    answer: { x: 3, y: 2 },
+    difficulty: "medium",
+    type: "elimination",
+    basePoints: 20,
+    steps: [
+      { action: "combine",    value: "4y = 8", wrong: ["6y = 24", "4y = 24", "6y = 8"], target: "both-sides", result: "4y = 8" },
+      { action: "divide",     value: 4, target: "both-sides", result: "y = 2\n2x + y = 8" },
+      { action: "substitute", value: "x = 3, y = 2", wrong: ["x = 6, y = 2", "x = 5, y = 2", "x = -3, y = 2"], target: "both-sides", result: "x = 3, y = 2" }
+    ],
+    hints: {
+      en: [
+        "+2x and +2x are the same, so subtract: top minus bottom. This time x cancels.",
+        "Divide both sides by 4.",
+        "Put y = 2 into 2x + y = 8: 2x + 2 = 8, so 2x = 6 and x = 3."
+      ],
+      ja: [
+        "+2x と +2x は同じなので、上の式から下の式を引く。今回はxが消える。",
+        "両辺を4で割る。",
+        "y = 2 を 2x + y = 8 に代入：2x + 2 = 8 なので 2x = 6、x = 3。"
+      ]
+    },
+    explanation: {
+      en: "Both equations have +2x, so subtracting cancels x: 5y - y = 4y and 16 - 8 = 8, giving y = 2. Then 2x + 2 = 8, so 2x = 6 and x = 3.",
+      ja: "どちらの式も +2x なので、引くとxが消えます：5y - y = 4y、16 - 8 = 8 で y = 2。2x + 2 = 8 から 2x = 6、x = 3 です。"
+    }
+  },
+  {
+    id: "system_medium_05",
+    topic: "system",
+    equation: "3x + 2y = 12\n-3x + y = -3",
+    answer: { x: 2, y: 3 },
+    difficulty: "medium",
+    type: "elimination",
+    basePoints: 20,
+    steps: [
+      { action: "combine",    value: "3y = 9", wrong: ["y = 15", "3y = 15", "y = 9"], target: "both-sides", result: "3y = 9" },
+      { action: "divide",     value: 3, target: "both-sides", result: "y = 3\n3x + 2y = 12" },
+      { action: "substitute", value: "x = 2, y = 3", wrong: ["x = 3, y = 3", "x = 6, y = 3", "x = -2, y = 3"], target: "both-sides", result: "x = 2, y = 3" }
+    ],
+    hints: {
+      en: [
+        "+3x and -3x are opposite, so add the two equations. x cancels.",
+        "Divide both sides by 3.",
+        "Put y = 3 into 3x + 2y = 12: 2 × 3 = 6, so 3x + 6 = 12, 3x = 6 and x = 2."
+      ],
+      ja: [
+        "+3x と -3x は反対なので、2つの式を足す。xが消える。",
+        "両辺を3で割る。",
+        "y = 3 を 3x + 2y = 12 に代入：2 × 3 = 6 なので 3x + 6 = 12、3x = 6、x = 2。"
+      ]
+    },
+    explanation: {
+      en: "+3x and -3x are opposites, so adding cancels x: 12 + (-3) = 9, so 3y = 9 and y = 3. Then 3x + 6 = 12 gives 3x = 6, so x = 2.",
+      ja: "+3x と -3x は反対なので、足すとxが消えます：12 + (-3) = 9 で 3y = 9、y = 3。3x + 6 = 12 から 3x = 6、x = 2 です。"
+    }
+  },
+  {
+    id: "system_medium_06",
+    topic: "system",
+    equation: "2x + 3y = 7\n2x - y = -5",
+    answer: { x: -1, y: 3 },
+    difficulty: "medium",
+    type: "elimination",
+    basePoints: 20,
+    steps: [
+      { action: "combine",    value: "4y = 12", wrong: ["2y = 2", "4y = 2", "2y = 12"], target: "both-sides", result: "4y = 12" },
+      { action: "divide",     value: 4, target: "both-sides", result: "y = 3\n2x + 3y = 7" },
+      { action: "substitute", value: "x = -1, y = 3", wrong: ["x = 2, y = 3", "x = -2, y = 3", "x = 8, y = 3"], target: "both-sides", result: "x = -1, y = 3" }
+    ],
+    hints: {
+      en: [
+        "+2x and +2x are the same, so subtract: top minus bottom. Careful: 3y - (-y) = 4y.",
+        "Divide both sides by 4.",
+        "Put y = 3 into 2x + 3y = 7: 3 × 3 = 9, so 2x + 9 = 7, 2x = -2 and x = -1."
+      ],
+      ja: [
+        "+2x と +2x は同じなので、上の式から下の式を引く。注意：3y - (-y) = 4y。",
+        "両辺を4で割る。",
+        "y = 3 を 2x + 3y = 7 に代入：3 × 3 = 9 なので 2x + 9 = 7、2x = -2、x = -1。"
+      ]
+    },
+    explanation: {
+      en: "Subtracting cancels x. Subtracting a negative adds: 3y - (-y) = 4y and 7 - (-5) = 12, so 4y = 12 and y = 3. Then 2x + 9 = 7 gives 2x = -2, so x = -1.",
+      ja: "引くとxが消えます。負の数を引くと足し算になります：3y - (-y) = 4y、7 - (-5) = 12 で 4y = 12、y = 3。2x + 9 = 7 から 2x = -2、x = -1 です。"
+    }
+  },
+  {
+    id: "system_medium_07",
+    topic: "system",
+    equation: "x + 2y = 8\n3x + 2y = 12",
+    answer: { x: 2, y: 3 },
+    difficulty: "medium",
+    type: "elimination",
+    basePoints: 20,
+    steps: [
+      { action: "combine",    value: "-2x = -4", wrong: ["4x = 20", "-2x = 20", "4x = -4"], target: "both-sides", result: "-2x = -4" },
+      { action: "divide",     value: -2, target: "both-sides", result: "x = 2\nx + 2y = 8" },
+      { action: "substitute", value: "x = 2, y = 3", wrong: ["x = 2, y = 6", "x = 2, y = 5", "x = 2, y = -3"], target: "both-sides", result: "x = 2, y = 3" }
+    ],
+    hints: {
+      en: [
+        "+2y and +2y are the same, so subtract top minus bottom: x - 3x = -2x and 8 - 12 = -4.",
+        "Divide both sides by -2 — watch the sign!",
+        "Put x = 2 into x + 2y = 8: 2 + 2y = 8, so 2y = 6 and y = 3."
+      ],
+      ja: [
+        "+2y と +2y は同じなので、上の式から下の式を引く：x - 3x = -2x、8 - 12 = -4。",
+        "両辺を-2で割る — 符号に注意！",
+        "x = 2 を x + 2y = 8 に代入：2 + 2y = 8 なので 2y = 6、y = 3。"
+      ]
+    },
+    explanation: {
+      en: "Top minus bottom cancels y and leaves a negative: x - 3x = -2x and 8 - 12 = -4. Dividing by -2 gives x = 2. Then 2 + 2y = 8, so y = 3.",
+      ja: "上の式から下の式を引くとyが消え、負の数が残ります：x - 3x = -2x、8 - 12 = -4。-2で割ると x = 2。2 + 2y = 8 から y = 3 です。"
+    }
+  },
+  {
+    id: "system_medium_08",
+    topic: "system",
+    equation: "4x - y = 25\nx - y = 7",
+    answer: { x: 6, y: -1 },
+    difficulty: "medium",
+    type: "elimination",
+    basePoints: 20,
+    steps: [
+      { action: "combine",    value: "3x = 18", wrong: ["5x = 32", "3x = 32", "5x = 18"], target: "both-sides", result: "3x = 18" },
+      { action: "divide",     value: 3, target: "both-sides", result: "x = 6\n4x - y = 25" },
+      { action: "substitute", value: "x = 6, y = -1", wrong: ["x = 6, y = 1", "x = 6, y = -19", "x = 6, y = -15"], target: "both-sides", result: "x = 6, y = -1" }
+    ],
+    hints: {
+      en: [
+        "-y and -y are the same, so subtract: top minus bottom. -y - (-y) = 0, so y cancels.",
+        "Divide both sides by 3.",
+        "Put x = 6 into 4x - y = 25: 4 × 6 = 24, so 24 - y = 25, -y = 1 and y = -1."
+      ],
+      ja: [
+        "-y と -y は同じなので、上の式から下の式を引く。-y - (-y) = 0 でyが消える。",
+        "両辺を3で割る。",
+        "x = 6 を 4x - y = 25 に代入：4 × 6 = 24 なので 24 - y = 25、-y = 1、y = -1。"
+      ]
+    },
+    explanation: {
+      en: "Both equations have -y, so subtract: 4x - x = 3x and 25 - 7 = 18, giving x = 6. Then 24 - y = 25, so -y = 1 and y = -1.",
+      ja: "どちらの式も -y なので引きます：4x - x = 3x、25 - 7 = 18 で x = 6。24 - y = 25 から -y = 1、y = -1 です。"
+    }
+  },
+  {
+    id: "system_medium_09",
+    topic: "system",
+    equation: "2x + 4y = 4\n-2x + y = 6",
+    answer: { x: -2, y: 2 },
+    difficulty: "medium",
+    type: "elimination",
+    basePoints: 20,
+    steps: [
+      { action: "combine",    value: "5y = 10", wrong: ["3y = -2", "5y = -2", "3y = 10"], target: "both-sides", result: "5y = 10" },
+      { action: "divide",     value: 5, target: "both-sides", result: "y = 2\n2x + 4y = 4" },
+      { action: "substitute", value: "x = -2, y = 2", wrong: ["x = 1, y = 2", "x = 6, y = 2", "x = 2, y = 2"], target: "both-sides", result: "x = -2, y = 2" }
+    ],
+    hints: {
+      en: [
+        "+2x and -2x are opposite, so add the two equations. x cancels.",
+        "Divide both sides by 5.",
+        "Put y = 2 into 2x + 4y = 4: 4 × 2 = 8, so 2x + 8 = 4, 2x = -4 and x = -2."
+      ],
+      ja: [
+        "+2x と -2x は反対なので、2つの式を足す。xが消える。",
+        "両辺を5で割る。",
+        "y = 2 を 2x + 4y = 4 に代入：4 × 2 = 8 なので 2x + 8 = 4、2x = -4、x = -2。"
+      ]
+    },
+    explanation: {
+      en: "+2x and -2x are opposites, so adding cancels x: 4y + y = 5y and 4 + 6 = 10, giving y = 2. Then 2x + 8 = 4 gives 2x = -4, so x = -2.",
+      ja: "+2x と -2x は反対なので、足すとxが消えます：4y + y = 5y、4 + 6 = 10 で y = 2。2x + 8 = 4 から 2x = -4、x = -2 です。"
+    }
+  },
+  {
+    id: "system_medium_10",
+    topic: "system",
+    equation: "5x + 2y = 11\n2x + 2y = -4",
+    answer: { x: 5, y: -7 },
+    difficulty: "medium",
+    type: "elimination",
+    basePoints: 20,
+    steps: [
+      { action: "combine",    value: "3x = 15", wrong: ["7x = 7", "3x = 7", "7x = 15"], target: "both-sides", result: "3x = 15" },
+      { action: "divide",     value: 3, target: "both-sides", result: "x = 5\n5x + 2y = 11" },
+      { action: "substitute", value: "x = 5, y = -7", wrong: ["x = 5, y = -14", "x = 5, y = 3", "x = 5, y = 7"], target: "both-sides", result: "x = 5, y = -7" }
+    ],
+    hints: {
+      en: [
+        "+2y and +2y are the same, so subtract: top minus bottom. Careful: 11 - (-4) = 15.",
+        "Divide both sides by 3.",
+        "Put x = 5 into 5x + 2y = 11: 5 × 5 = 25, so 25 + 2y = 11, 2y = -14 and y = -7."
+      ],
+      ja: [
+        "+2y と +2y は同じなので、上の式から下の式を引く。注意：11 - (-4) = 15。",
+        "両辺を3で割る。",
+        "x = 5 を 5x + 2y = 11 に代入：5 × 5 = 25 なので 25 + 2y = 11、2y = -14、y = -7。"
+      ]
+    },
+    explanation: {
+      en: "Subtracting cancels 2y. Subtracting a negative adds: 11 - (-4) = 15, so 3x = 15 and x = 5. Then 25 + 2y = 11 gives 2y = -14, so y = -7.",
+      ja: "引くと2yが消えます。負の数を引くと足し算になります：11 - (-4) = 15 で 3x = 15、x = 5。25 + 2y = 11 から 2y = -14、y = -7 です。"
+    }
+  },
+
+  // ---- Hard: multiply one equation first (scale), then combine ----
+  // Each system has exactly one coefficient of 1, so there is one clear route: multiply that line.
+  // Scale options form a 2×2 grid: the matched term is always right; the other letter term and
+  // the number are each either multiplied or not. Combine options use the same 2×2 grid as Medium.
+  {
+    id: "system_hard_01",
+    topic: "system",
+    equation: "2x + 11y = 24\nx + 3y = 7",
+    answer: { x: 1, y: 2 },
+    difficulty: "hard",
+    type: "elimination",
+    basePoints: 30,
+    steps: [
+      { action: "scale",      value: "2x + 6y = 14", wrong: ["2x + 6y = 7", "2x + 3y = 14", "2x + 3y = 7"], target: "both-sides", result: "2x + 11y = 24\n2x + 6y = 14" },
+      { action: "combine",    value: "5y = 10", wrong: ["17y = 38", "5y = 38", "17y = 10"], target: "both-sides", result: "5y = 10" },
+      { action: "divide",     value: 5, target: "both-sides", result: "y = 2\nx + 3y = 7" },
+      { action: "substitute", value: "x = 1, y = 2", wrong: ["x = 5, y = 2", "x = 13, y = 2", "x = -1, y = 2"], target: "both-sides", result: "x = 1, y = 2" }
+    ],
+    hints: {
+      en: [
+        "Multiply the bottom equation by 2 so both have 2x. Multiply every term, including the number.",
+        "+2x and +2x are the same, so subtract: top minus bottom. x cancels.",
+        "Divide both sides by 5.",
+        "Put y = 2 into x + 3y = 7: 3 × 2 = 6, so x + 6 = 7 and x = 1."
+      ],
+      ja: [
+        "下の式を2倍して、どちらも2xにする。数字も含めて、すべての項にかける。",
+        "+2x と +2x は同じなので、上の式から下の式を引く。xが消える。",
+        "両辺を5で割る。",
+        "y = 2 を x + 3y = 7 に代入：3 × 2 = 6 なので x + 6 = 7、x = 1。"
+      ]
+    },
+    explanation: {
+      en: "No letter matches yet, so multiply x + 3y = 7 by 2 to get 2x + 6y = 14. Now subtract: 11y - 6y = 5y and 24 - 14 = 10, so y = 2. Then x + 6 = 7 gives x = 1.",
+      ja: "そのままでは消せる文字がないので、x + 3y = 7 を2倍して 2x + 6y = 14 にします。引くと 11y - 6y = 5y、24 - 14 = 10 で y = 2。x + 6 = 7 から x = 1 です。"
+    }
+  },
+  {
+    id: "system_hard_02",
+    topic: "system",
+    equation: "2x + y = 8\n3x - 2y = 5",
+    answer: { x: 3, y: 2 },
+    difficulty: "hard",
+    type: "elimination",
+    basePoints: 30,
+    steps: [
+      { action: "scale",      value: "4x + 2y = 16", wrong: ["4x + 2y = 8", "2x + 2y = 16", "2x + 2y = 8"], target: "both-sides", result: "4x + 2y = 16\n3x - 2y = 5" },
+      { action: "combine",    value: "7x = 21", wrong: ["x = 11", "7x = 11", "x = 21"], target: "both-sides", result: "7x = 21" },
+      { action: "divide",     value: 7, target: "both-sides", result: "x = 3\n2x + y = 8" },
+      { action: "substitute", value: "x = 3, y = 2", wrong: ["x = 3, y = 5", "x = 3, y = 14", "x = 3, y = -2"], target: "both-sides", result: "x = 3, y = 2" }
+    ],
+    hints: {
+      en: [
+        "Multiply the top equation by 2 so it has +2y to match -2y.",
+        "+2y and -2y are opposite, so add the two equations. y cancels.",
+        "Divide both sides by 7.",
+        "Put x = 3 into 2x + y = 8: 2 × 3 = 6, so 6 + y = 8 and y = 2."
+      ],
+      ja: [
+        "上の式を2倍して +2y にし、-2y とそろえる。",
+        "+2y と -2y は反対なので、2つの式を足す。yが消える。",
+        "両辺を7で割る。",
+        "x = 3 を 2x + y = 8 に代入：2 × 3 = 6 なので 6 + y = 8、y = 2。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying 2x + y = 8 by 2 gives +2y, the opposite of -2y. Adding cancels y: 4x + 3x = 7x and 16 + 5 = 21, so x = 3. Then 6 + y = 8 gives y = 2.",
+      ja: "2x + y = 8 を2倍すると +2y になり、-2y と反対になります。足すとyが消えて 4x + 3x = 7x、16 + 5 = 21 で x = 3。6 + y = 8 から y = 2 です。"
+    }
+  },
+  {
+    id: "system_hard_03",
+    topic: "system",
+    equation: "3x + 2y = 12\n2x - y = 1",
+    answer: { x: 2, y: 3 },
+    difficulty: "hard",
+    type: "elimination",
+    basePoints: 30,
+    steps: [
+      { action: "scale",      value: "4x - 2y = 2", wrong: ["4x - 2y = 1", "2x - 2y = 2", "2x - 2y = 1"], target: "both-sides", result: "3x + 2y = 12\n4x - 2y = 2" },
+      { action: "combine",    value: "7x = 14", wrong: ["-x = 10", "7x = 10", "-x = 14"], target: "both-sides", result: "7x = 14" },
+      { action: "divide",     value: 7, target: "both-sides", result: "x = 2\n2x - y = 1" },
+      { action: "substitute", value: "x = 2, y = 3", wrong: ["x = 2, y = 1", "x = 2, y = -5", "x = 2, y = -3"], target: "both-sides", result: "x = 2, y = 3" }
+    ],
+    hints: {
+      en: [
+        "Multiply the bottom equation by 2 so it has -2y to match +2y.",
+        "+2y and -2y are opposite, so add the two equations. y cancels.",
+        "Divide both sides by 7.",
+        "Put x = 2 into 2x - y = 1: 2 × 2 = 4, so 4 - y = 1, -y = -3 and y = 3."
+      ],
+      ja: [
+        "下の式を2倍して -2y にし、+2y とそろえる。",
+        "+2y と -2y は反対なので、2つの式を足す。yが消える。",
+        "両辺を7で割る。",
+        "x = 2 を 2x - y = 1 に代入：2 × 2 = 4 なので 4 - y = 1、-y = -3、y = 3。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying 2x - y = 1 by 2 gives -2y, the opposite of +2y. Adding cancels y: 3x + 4x = 7x and 12 + 2 = 14, so x = 2. Then 4 - y = 1 gives y = 3.",
+      ja: "2x - y = 1 を2倍すると -2y になり、+2y と反対になります。足すとyが消えて 3x + 4x = 7x、12 + 2 = 14 で x = 2。4 - y = 1 から y = 3 です。"
+    }
+  },
+  {
+    id: "system_hard_04",
+    topic: "system",
+    equation: "x + 3y = 11\n4x + 5y = 23",
+    answer: { x: 2, y: 3 },
+    difficulty: "hard",
+    type: "elimination",
+    basePoints: 30,
+    steps: [
+      { action: "scale",      value: "4x + 12y = 44", wrong: ["4x + 12y = 11", "4x + 3y = 44", "4x + 3y = 11"], target: "both-sides", result: "4x + 12y = 44\n4x + 5y = 23" },
+      { action: "combine",    value: "7y = 21", wrong: ["17y = 67", "7y = 67", "17y = 21"], target: "both-sides", result: "7y = 21" },
+      { action: "divide",     value: 7, target: "both-sides", result: "y = 3\nx + 3y = 11" },
+      { action: "substitute", value: "x = 2, y = 3", wrong: ["x = 8, y = 3", "x = 20, y = 3", "x = -2, y = 3"], target: "both-sides", result: "x = 2, y = 3" }
+    ],
+    hints: {
+      en: [
+        "Multiply the top equation by 4 so both have 4x.",
+        "+4x and +4x are the same, so subtract: top minus bottom. x cancels.",
+        "Divide both sides by 7.",
+        "Put y = 3 into x + 3y = 11: 3 × 3 = 9, so x + 9 = 11 and x = 2."
+      ],
+      ja: [
+        "上の式を4倍して、どちらも4xにする。",
+        "+4x と +4x は同じなので、上の式から下の式を引く。xが消える。",
+        "両辺を7で割る。",
+        "y = 3 を x + 3y = 11 に代入：3 × 3 = 9 なので x + 9 = 11、x = 2。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying x + 3y = 11 by 4 makes 4x, matching the bottom line. Subtracting cancels x: 12y - 5y = 7y and 44 - 23 = 21, so y = 3. Then x + 9 = 11 gives x = 2.",
+      ja: "x + 3y = 11 を4倍すると 4x になり、下の式とそろいます。引くとxが消えて 12y - 5y = 7y、44 - 23 = 21 で y = 3。x + 9 = 11 から x = 2 です。"
+    }
+  },
+  {
+    id: "system_hard_05",
+    topic: "system",
+    equation: "2x + 3y = 12\nx + 4y = 11",
+    answer: { x: 3, y: 2 },
+    difficulty: "hard",
+    type: "elimination",
+    basePoints: 30,
+    steps: [
+      { action: "scale",      value: "2x + 8y = 22", wrong: ["2x + 8y = 11", "2x + 4y = 22", "2x + 4y = 11"], target: "both-sides", result: "2x + 3y = 12\n2x + 8y = 22" },
+      { action: "combine",    value: "-5y = -10", wrong: ["11y = 34", "-5y = 34", "11y = -10"], target: "both-sides", result: "-5y = -10" },
+      { action: "divide",     value: -5, target: "both-sides", result: "y = 2\nx + 4y = 11" },
+      { action: "substitute", value: "x = 3, y = 2", wrong: ["x = 9, y = 2", "x = 19, y = 2", "x = -3, y = 2"], target: "both-sides", result: "x = 3, y = 2" }
+    ],
+    hints: {
+      en: [
+        "Multiply the bottom equation by 2 so both have 2x.",
+        "+2x and +2x are the same, so subtract top minus bottom: 3y - 8y = -5y and 12 - 22 = -10.",
+        "Divide both sides by -5 — watch the sign!",
+        "Put y = 2 into x + 4y = 11: 4 × 2 = 8, so x + 8 = 11 and x = 3."
+      ],
+      ja: [
+        "下の式を2倍して、どちらも2xにする。",
+        "+2x と +2x は同じなので、上の式から下の式を引く：3y - 8y = -5y、12 - 22 = -10。",
+        "両辺を-5で割る — 符号に注意！",
+        "y = 2 を x + 4y = 11 に代入：4 × 2 = 8 なので x + 8 = 11、x = 3。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying x + 4y = 11 by 2 makes 2x on both lines. Top minus bottom gives 3y - 8y = -5y and 12 - 22 = -10, so y = 2. Then x + 8 = 11 gives x = 3.",
+      ja: "x + 4y = 11 を2倍すると、どちらも2xになります。上の式から下の式を引くと 3y - 8y = -5y、12 - 22 = -10 で y = 2。x + 8 = 11 から x = 3 です。"
+    }
+  },
+  {
+    id: "system_hard_06",
+    topic: "system",
+    equation: "3x - 2y = -7\n-x + 3y = 7",
+    answer: { x: -1, y: 2 },
+    difficulty: "hard",
+    type: "elimination",
+    basePoints: 30,
+    steps: [
+      { action: "scale",      value: "-3x + 9y = 21", wrong: ["-3x + 9y = 7", "-3x + 3y = 21", "-3x + 3y = 7"], target: "both-sides", result: "3x - 2y = -7\n-3x + 9y = 21" },
+      { action: "combine",    value: "7y = 14", wrong: ["-11y = -28", "7y = -28", "-11y = 14"], target: "both-sides", result: "7y = 14" },
+      { action: "divide",     value: 7, target: "both-sides", result: "y = 2\n-x + 3y = 7" },
+      { action: "substitute", value: "x = -1, y = 2", wrong: ["x = -5, y = 2", "x = -13, y = 2", "x = 1, y = 2"], target: "both-sides", result: "x = -1, y = 2" }
+    ],
+    hints: {
+      en: [
+        "Multiply the bottom equation by 3 so it has -3x to match +3x.",
+        "+3x and -3x are opposite, so add the two equations. x cancels.",
+        "Divide both sides by 7.",
+        "Put y = 2 into -x + 3y = 7: 3 × 2 = 6, so -x + 6 = 7, -x = 1 and x = -1."
+      ],
+      ja: [
+        "下の式を3倍して -3x にし、+3x とそろえる。",
+        "+3x と -3x は反対なので、2つの式を足す。xが消える。",
+        "両辺を7で割る。",
+        "y = 2 を -x + 3y = 7 に代入：3 × 2 = 6 なので -x + 6 = 7、-x = 1、x = -1。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying -x + 3y = 7 by 3 gives -3x, the opposite of +3x. Adding cancels x: -2y + 9y = 7y and -7 + 21 = 14, so y = 2. Then -x + 6 = 7, so -x = 1 and x = -1.",
+      ja: "-x + 3y = 7 を3倍すると -3x になり、+3x と反対になります。足すとxが消えて -2y + 9y = 7y、-7 + 21 = 14 で y = 2。-x + 6 = 7 から -x = 1、x = -1 です。"
+    }
+  },
+  {
+    id: "system_hard_07",
+    topic: "system",
+    equation: "4x + 3y = 5\n-x + 2y = -4",
+    answer: { x: 2, y: -1 },
+    difficulty: "hard",
+    type: "elimination",
+    basePoints: 30,
+    steps: [
+      { action: "scale",      value: "-4x + 8y = -16", wrong: ["-4x + 8y = -4", "-4x + 2y = -16", "-4x + 2y = -4"], target: "both-sides", result: "4x + 3y = 5\n-4x + 8y = -16" },
+      { action: "combine",    value: "11y = -11", wrong: ["-5y = 21", "11y = 21", "-5y = -11"], target: "both-sides", result: "11y = -11" },
+      { action: "divide",     value: 11, target: "both-sides", result: "y = -1\n-x + 2y = -4" },
+      { action: "substitute", value: "x = 2, y = -1", wrong: ["x = 3, y = -1", "x = 6, y = -1", "x = -2, y = -1"], target: "both-sides", result: "x = 2, y = -1" }
+    ],
+    hints: {
+      en: [
+        "Multiply the bottom equation by 4 so it has -4x to match +4x.",
+        "+4x and -4x are opposite, so add the two equations. x cancels.",
+        "Divide both sides by 11.",
+        "Put y = -1 into -x + 2y = -4: 2 × (-1) = -2, so -x - 2 = -4, -x = -2 and x = 2."
+      ],
+      ja: [
+        "下の式を4倍して -4x にし、+4x とそろえる。",
+        "+4x と -4x は反対なので、2つの式を足す。xが消える。",
+        "両辺を11で割る。",
+        "y = -1 を -x + 2y = -4 に代入：2 × (-1) = -2 なので -x - 2 = -4、-x = -2、x = 2。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying -x + 2y = -4 by 4 gives -4x, the opposite of +4x. Adding cancels x: 3y + 8y = 11y and 5 + (-16) = -11, so y = -1. Then -x - 2 = -4, so -x = -2 and x = 2.",
+      ja: "-x + 2y = -4 を4倍すると -4x になり、+4x と反対になります。足すとxが消えて 3y + 8y = 11y、5 + (-16) = -11 で y = -1。-x - 2 = -4 から -x = -2、x = 2 です。"
+    }
+  },
+  {
+    id: "system_hard_08",
+    topic: "system",
+    equation: "2x - 3y = 7\n3x - y = 7",
+    answer: { x: 2, y: -1 },
+    difficulty: "hard",
+    type: "elimination",
+    basePoints: 30,
+    steps: [
+      { action: "scale",      value: "9x - 3y = 21", wrong: ["9x - 3y = 7", "3x - 3y = 21", "3x - 3y = 7"], target: "both-sides", result: "2x - 3y = 7\n9x - 3y = 21" },
+      { action: "combine",    value: "-7x = -14", wrong: ["11x = 28", "-7x = 28", "11x = -14"], target: "both-sides", result: "-7x = -14" },
+      { action: "divide",     value: -7, target: "both-sides", result: "x = 2\n3x - y = 7" },
+      { action: "substitute", value: "x = 2, y = -1", wrong: ["x = 2, y = -5", "x = 2, y = -13", "x = 2, y = 1"], target: "both-sides", result: "x = 2, y = -1" }
+    ],
+    hints: {
+      en: [
+        "Multiply the bottom equation by 3 so both have -3y.",
+        "-3y and -3y are the same, so subtract top minus bottom: 2x - 9x = -7x and 7 - 21 = -14.",
+        "Divide both sides by -7 — watch the sign!",
+        "Put x = 2 into 3x - y = 7: 3 × 2 = 6, so 6 - y = 7, -y = 1 and y = -1."
+      ],
+      ja: [
+        "下の式を3倍して、どちらも -3y にする。",
+        "-3y と -3y は同じなので、上の式から下の式を引く：2x - 9x = -7x、7 - 21 = -14。",
+        "両辺を-7で割る — 符号に注意！",
+        "x = 2 を 3x - y = 7 に代入：3 × 2 = 6 なので 6 - y = 7、-y = 1、y = -1。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying 3x - y = 7 by 3 makes -3y on both lines. Top minus bottom gives 2x - 9x = -7x and 7 - 21 = -14, so x = 2. Then 6 - y = 7, so -y = 1 and y = -1.",
+      ja: "3x - y = 7 を3倍すると、どちらも -3y になります。上の式から下の式を引くと 2x - 9x = -7x、7 - 21 = -14 で x = 2。6 - y = 7 から -y = 1、y = -1 です。"
+    }
+  },
+  {
+    id: "system_hard_09",
+    topic: "system",
+    equation: "x - 2y = 5\n4x - 3y = 10",
+    answer: { x: 1, y: -2 },
+    difficulty: "hard",
+    type: "elimination",
+    basePoints: 30,
+    steps: [
+      { action: "scale",      value: "4x - 8y = 20", wrong: ["4x - 8y = 5", "4x - 2y = 20", "4x - 2y = 5"], target: "both-sides", result: "4x - 8y = 20\n4x - 3y = 10" },
+      { action: "combine",    value: "-5y = 10", wrong: ["-11y = 30", "-5y = 30", "-11y = 10"], target: "both-sides", result: "-5y = 10" },
+      { action: "divide",     value: -5, target: "both-sides", result: "y = -2\nx - 2y = 5" },
+      { action: "substitute", value: "x = 1, y = -2", wrong: ["x = 3, y = -2", "x = 9, y = -2", "x = -1, y = -2"], target: "both-sides", result: "x = 1, y = -2" }
+    ],
+    hints: {
+      en: [
+        "Multiply the top equation by 4 so both have 4x.",
+        "+4x and +4x are the same, so subtract top minus bottom: -8y - (-3y) = -5y and 20 - 10 = 10.",
+        "Divide both sides by -5 — watch the sign!",
+        "Put y = -2 into x - 2y = 5: -2 × (-2) = +4, so x + 4 = 5 and x = 1."
+      ],
+      ja: [
+        "上の式を4倍して、どちらも4xにする。",
+        "+4x と +4x は同じなので、上の式から下の式を引く：-8y - (-3y) = -5y、20 - 10 = 10。",
+        "両辺を-5で割る — 符号に注意！",
+        "y = -2 を x - 2y = 5 に代入：-2 × (-2) = +4 なので x + 4 = 5、x = 1。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying x - 2y = 5 by 4 makes 4x on both lines. Subtracting cancels x: -8y - (-3y) = -5y and 20 - 10 = 10, so y = -2. Then -2 × (-2) = +4, so x + 4 = 5 and x = 1.",
+      ja: "x - 2y = 5 を4倍すると、どちらも4xになります。引くとxが消えて -8y - (-3y) = -5y、20 - 10 = 10 で y = -2。-2 × (-2) = +4 なので x + 4 = 5、x = 1 です。"
+    }
+  },
+  {
+    id: "system_hard_10",
+    topic: "system",
+    equation: "3x + 5y = 9\n2x + y = -1",
+    answer: { x: -2, y: 3 },
+    difficulty: "hard",
+    type: "elimination",
+    basePoints: 30,
+    steps: [
+      { action: "scale",      value: "10x + 5y = -5", wrong: ["10x + 5y = -1", "2x + 5y = -5", "2x + 5y = -1"], target: "both-sides", result: "3x + 5y = 9\n10x + 5y = -5" },
+      { action: "combine",    value: "-7x = 14", wrong: ["13x = 4", "-7x = 4", "13x = 14"], target: "both-sides", result: "-7x = 14" },
+      { action: "divide",     value: -7, target: "both-sides", result: "x = -2\n2x + y = -1" },
+      { action: "substitute", value: "x = -2, y = 3", wrong: ["x = -2, y = 1", "x = -2, y = -5", "x = -2, y = -3"], target: "both-sides", result: "x = -2, y = 3" }
+    ],
+    hints: {
+      en: [
+        "Multiply the bottom equation by 5 so both have 5y.",
+        "+5y and +5y are the same, so subtract top minus bottom. Careful: 9 - (-5) = 14.",
+        "Divide both sides by -7 — watch the sign!",
+        "Put x = -2 into 2x + y = -1: 2 × (-2) = -4, so -4 + y = -1 and y = 3."
+      ],
+      ja: [
+        "下の式を5倍して、どちらも5yにする。",
+        "+5y と +5y は同じなので、上の式から下の式を引く。注意：9 - (-5) = 14。",
+        "両辺を-7で割る — 符号に注意！",
+        "x = -2 を 2x + y = -1 に代入：2 × (-2) = -4 なので -4 + y = -1、y = 3。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying 2x + y = -1 by 5 makes 5y on both lines. Subtracting cancels y: 3x - 10x = -7x and 9 - (-5) = 14, so x = -2. Then -4 + y = -1 gives y = 3.",
+      ja: "2x + y = -1 を5倍すると、どちらも5yになります。引くとyが消えて 3x - 10x = -7x、9 - (-5) = 14 で x = -2。-4 + y = -1 から y = 3 です。"
     }
   }
 ];
