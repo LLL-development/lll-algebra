@@ -90,6 +90,17 @@ body {
 }
 .trophy-btn:hover { background: var(--accent-tint); }
 
+/* Narrow phones (~344px): 4 controls + brand don't fit on one row, so compact the bar.
+   The logo already carries the Live Laugh Love wordmark, so the text name can go. */
+@media (max-width: 420px) {
+  .topbar { padding-left: 12px; padding-right: 12px; gap: 8px; }
+  .brand-name { display: none; }
+  .topbar-controls { gap: 6px; }
+  .theme-btn, .trophy-btn, .howto-btn { width: 32px; height: 32px; }
+  .lang-switch { padding: 5px 6px 5px 8px; }
+  .lang-switch svg { display: none; }
+}
+
 /* ---------- How-to-play button ---------- */
 .howto-btn {
   width: 36px; height: 36px; padding: 0;
@@ -132,6 +143,9 @@ body {
   margin-top: 2px;
 }
 .daily-card.completed .daily-card-status { color: var(--correct); }
+/* Mixed Review before 10 levels are cleared */
+.daily-card.locked { opacity: .6; cursor: default; }
+.daily-card.locked:hover { border-color: var(--border); }
 
 /* ---------- Achievement toast (bottom-right, slide up) ---------- */
 .achievement-toast {
@@ -578,6 +592,7 @@ body {
 
 /* ---------- Home screen ---------- */
 #screenHome .daily-card { max-width: 520px; }
+#screenHome .review-card { margin-top: -16px; }   /* 12px below Today's Challenge instead of 28px */
 .home-kicker {
   font-family: var(--display); font-size: 13px; font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase;
@@ -726,7 +741,7 @@ body {
   line-height: 1.55;
   text-align: left;
 }
-.complete-best[hidden], .complete-bonus[hidden], .complete-explanation[hidden] { display: none; }
+.complete-best[hidden], .complete-bonus[hidden], .complete-explanation[hidden], .complete-review[hidden] { display: none; }
 .complete-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 10px; }
 .complete-secondary { display: flex; gap: 10px; }
 .complete-secondary[hidden] { display: none; }
@@ -740,6 +755,34 @@ body {
 .complete-btn.primary:hover { opacity: .9; }
 .complete-btn.secondary { color: var(--ink); background: transparent; border: 1px solid var(--border); }
 .complete-btn.secondary:hover { border-color: var(--accent); }
+
+/* ---------- Mixed Review summary (inside the complete card) ---------- */
+/* Up to 5 topic rows + nudge can make the card tall — let it scroll on short screens */
+.complete-card { max-height: calc(100dvh - 40px); overflow-y: auto; }
+.complete-review {
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  margin-top: 4px;
+}
+.review-flawless { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.review-rows { width: 100%; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.review-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.review-row-name { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--ink); }
+.review-row-marks { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.review-mark {
+  width: 20px; height: 20px;
+  display: inline-grid; place-items: center;
+  border-radius: 6px;
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
+}
+.review-mark.ok { color: var(--correct); background: var(--correct-tint); }
+.review-mark.slip { color: var(--wrong); background: var(--accent-tint); }
+.review-nudge { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--accent); }
+.review-practise-btn { width: 100%; }
 @keyframes completeFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes completePop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
 @keyframes starPop {
