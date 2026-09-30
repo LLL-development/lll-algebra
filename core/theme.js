@@ -1,6 +1,7 @@
 /* ============================================================
    LLL Algebra — core theme (light / dark)
-   Reused from lll-chem as-is — pure logic, no visual opinions.
+   Reused from lll-chem — pure logic; only the browser theme-color
+   values below are lll-algebra's (they match --bg in brand.css)
    - Follows the OS setting by default.
    - A manual toggle overrides it and is remembered across visits.
    - Degrades safely if localStorage is unavailable.
@@ -23,7 +24,7 @@
   function apply(theme) {
     document.documentElement.setAttribute("data-theme", theme);
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", theme === "dark" ? "#17171a" : "#222220");
+    if (meta) meta.setAttribute("content", theme === "dark" ? "#14181d" : "#f6f3ee");
   }
   var API = {
     current: function () { return document.documentElement.getAttribute("data-theme") || "light"; },

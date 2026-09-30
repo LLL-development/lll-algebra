@@ -33,6 +33,7 @@
     <p class="complete-best" id="completeBest" hidden></p>
     <p class="complete-points" id="completePoints"></p>
     <p class="complete-bonus" id="completeBonus" hidden></p>
+    <div class="complete-review" id="completeReview" hidden></div>
     <p class="complete-explanation" id="completeExplanation" hidden></p>
     <div class="complete-actions">
       <button class="complete-btn primary" id="completePrimaryBtn"></button>
@@ -120,6 +121,14 @@
       <div class="daily-card-text">
         <div class="daily-card-title" data-i18n="dailyTitle">Today's Challenge</div>
         <div class="daily-card-status" id="dailyCardStatus"></div>
+      </div>
+    </button>
+
+    <button class="daily-card review-card" id="reviewCard">
+      <span class="daily-card-icon">🔀</span>
+      <div class="daily-card-text">
+        <div class="daily-card-title" data-i18n="reviewTitle">Mixed Review</div>
+        <div class="daily-card-status" id="reviewCardStatus"></div>
       </div>
     </button>
 
@@ -258,6 +267,16 @@
       dailyTitle: "Today's Challenge",
       dailyCompleted: "✓ Completed — come back tomorrow",
       dailyStreakLabel: "day streak",
+      reviewTitle: "Mixed Review",
+      reviewReady: "{n} questions from all topics",
+      reviewBest: "Best {n} pts",
+      reviewLocked: "🔒 Clear {n} more levels to unlock",
+      reviewComplete: "Review complete!",
+      reviewFlawless: "{n} / {total} flawless",
+      reviewNudge: "{topic} tripped you up a few times.",
+      reviewPractiseBtn: "Practise {topic} →",
+      reviewCleanSweep: "Clean sweep!",
+      reviewAgainBtn: "Play again",
       introTitle: "How to Solve",
       introBody1: "Algebra is about balance. Whatever you do to one side of the equation, you must do to the other — so it stays true.",
       introTipTopics: "5 topics: Equations, Inequalities, Brackets, Quadratics and Systems",
@@ -300,6 +319,16 @@
       dailyTitle: "今日のチャレンジ",
       dailyCompleted: "✓ 完了 — また明日",
       dailyStreakLabel: "日連続",
+      reviewTitle: "ミックス復習",
+      reviewReady: "全トピックから{n}問",
+      reviewBest: "ベスト {n} pt",
+      reviewLocked: "🔒 あと{n}レベルクリアで解放",
+      reviewComplete: "復習完了！",
+      reviewFlawless: "ノーミス {n} / {total}",
+      reviewNudge: "{topic}で何度かつまずきました。",
+      reviewPractiseBtn: "{topic}を練習 →",
+      reviewCleanSweep: "パーフェクト！",
+      reviewAgainBtn: "もう一度",
       introTitle: "解き方",
       introBody1: "代数はバランスが大切です。方程式の片側に行った操作は、もう片方にも行う必要があります。",
       introTipTopics: "5トピック：方程式・不等式・かっこ・二次方程式・連立方程式",
@@ -311,6 +340,7 @@
   document.getElementById("langHost").addEventListener("change", () => {
     const hintWasShown = hintUsedThisStep;
     updateDailyCard();
+    updateReviewCard();
     updateHomeCards();
     if (!$screenLevels.hidden) renderLevelSelect(location.hash.split("/")[1]);
     if ($achievementsModal.classList.contains("show")) renderAchievementsList();
@@ -351,7 +381,10 @@
   let dailyLevel = null;
   let wrongThisLevel = 0;   // wrong taps on the current level (for stars)
   let levelProgress = {};   // { [level id]: { stars: 1–3 } } — best result per level
-  let regularLevelState = null; // regular level's step/hint/wrong state, parked during Today's Challenge
+  let regularLevelState = null; // regular level's step/hint/wrong state, parked during Today's Challenge / Mixed Review
+  let inReviewMode = false;
+  let review = null;        // { levels, index, score, results: [{ topic, clean }] } — current Mixed Review session
+  let reviewBest = 0;       // best Mixed Review session score
 
   const $eq = document.getElementById("equationText");
   const $choices = document.getElementById("choicesGrid");
@@ -371,6 +404,8 @@
   const $achievementsList = document.getElementById("achievementsList");
   const $dailyCard = document.getElementById("dailyCard");
   const $dailyCardStatus = document.getElementById("dailyCardStatus");
+  const $reviewCard = document.getElementById("reviewCard");
+  const $reviewCardStatus = document.getElementById("reviewCardStatus");
   const $introOverlay = document.getElementById("introOverlay");
   const $introStartBtn = document.getElementById("introStartBtn");
   const $howtoBtn = document.getElementById("howtoBtn");
@@ -396,6 +431,7 @@
   const $completeBest = document.getElementById("completeBest");
   const $completePoints = document.getElementById("completePoints");
   const $completeBonus = document.getElementById("completeBonus");
+  const $completeReview = document.getElementById("completeReview");
   const $completeExplanation = document.getElementById("completeExplanation");
   const $completePrimaryBtn = document.getElementById("completePrimaryBtn");
   const $completeRetryBtn = document.getElementById("completeRetryBtn");
@@ -413,8 +449,8 @@
 
   // ---------- persistence ----------
   function saveProgress() {
-    // During Today's Challenge, save the parked regular-level state, not the challenge's.
-    const reg = inDailyMode && regularLevelState
+    // During Today's Challenge / Mixed Review, save the parked regular-level state, not the side mode's.
+    const reg = (inDailyMode || inReviewMode) && regularLevelState
       ? regularLevelState
       : { stepIndex, hintUsedThisLevel, wrongThisLevel };
     try {
@@ -423,7 +459,7 @@
         stepIndex: reg.stepIndex, hintUsedThisLevel: reg.hintUsedThisLevel, wrongThisLevel: reg.wrongThisLevel,
         levelProgress,
         unlockedAchievements: [...unlockedAchievements], totalSolves,
-        dailyStreak, lastDailySolvedDate
+        dailyStreak, lastDailySolvedDate, reviewBest
       }));
     } catch (e) { /* localStorage unavailable — fail silently */ }
   }
@@ -447,6 +483,7 @@
         totalSolves = saved.totalSolves || 0;
         dailyStreak = saved.dailyStreak || 0;
         lastDailySolvedDate = saved.lastDailySolvedDate || null;
+        reviewBest = saved.reviewBest || 0;
         hintUsedThisLevel = !!saved.hintUsedThisLevel;
         wrongThisLevel = saved.wrongThisLevel || 0;
         levelProgress = (saved.levelProgress && typeof saved.levelProgress === "object") ? saved.levelProgress : {};
@@ -455,8 +492,10 @@
   }
 
   // ---------- daily challenge helpers ----------
+  // Local date, so Today's Challenge, "completed today" and the streak all roll over at local midnight
   function getDateKey(d = new Date()) {
-    return d.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const pad = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; // "YYYY-MM-DD"
   }
 
   function getDayOfYear(d = new Date()) {
@@ -465,9 +504,15 @@
     return Math.floor(diff / 86400000);
   }
 
+  // Rotates through the topics day by day (Equations → Inequalities → … → Systems → Equations),
+  // stepping through each topic's Easy + Medium levels. Hard is left out because
+  // Today's Challenge isn't locked behind progress.
   function getTodaysLevel() {
-    const pool = LEVELS.filter(l => l.topic === "equation");
-    return pool[getDayOfYear() % pool.length];
+    const day = getDayOfYear();
+    const topics = Object.keys(LEVELS_BY_TOPIC_AND_DIFFICULTY);
+    const topic = topics[day % topics.length];
+    const pool = LEVELS.filter(l => l.topic === topic && l.difficulty !== "hard");
+    return pool[Math.floor(day / topics.length) % pool.length];
   }
 
   function isDailyCompletedToday() {
@@ -513,7 +558,11 @@
     go("#daily");
   });
 
-  function currentLevel() { return inDailyMode ? dailyLevel : activeLevels[levelIndex]; }
+  function currentLevel() {
+    if (inDailyMode) return dailyLevel;
+    if (inReviewMode) return review.levels[review.index];
+    return activeLevels[levelIndex];
+  }
   function currentStep() { return currentLevel().steps[stepIndex]; }
 
   // ---------- chalk-erase signature element ----------
@@ -796,6 +845,20 @@
       return [...picks, ...pool.filter(d => !alreadyPicked(d))].slice(0, 3);
     }
 
+    // Guaranteed ×/÷ mistakes: for a positive ×/÷ move, always offer the opposite operation
+    // with the same number (e.g. "× 3" when the answer is "÷ 3") and the matching +/− move
+    // (e.g. "− 3" for 3x = 12), so ×/÷ steps don't end up with only +/− options.
+    const MULDIV_OPPOSITE = { multiply: "divide", divide: "multiply" };
+    if (MULDIV_OPPOSITE[correctStep.action] && correctStep.value > 0) {
+      const v = correctStep.value;
+      const picks = [
+        { action: MULDIV_OPPOSITE[correctStep.action], value: v },
+        { action: correctStep.action === "divide" ? "subtract" : "add", value: v }
+      ];
+      const alreadyPicked = d => picks.some(p => p.action === d.action && p.value === d.value);
+      return [...picks, ...pool.filter(d => !alreadyPicked(d))].slice(0, 3);
+    }
+
     // Guaranteed sign-flip distractor: when the correct move is multiply/divide by a
     // negative, always offer the positive counterpart (the classic "forgot the sign" mistake).
     const isNegativeMulDiv =
@@ -816,10 +879,12 @@
     setEquationText(currentEquationText);
     $hudLevel.textContent = inDailyMode
       ? (LLL_I18N.t("dailyTitle") || "Today's Challenge")
-      : `${levelIndex + 1} / ${activeLevels.length}`;
-    $playLevelLabel.textContent = inDailyMode ? "" :
+      : inReviewMode
+        ? `${review.index + 1} / ${review.levels.length}`
+        : `${levelIndex + 1} / ${activeLevels.length}`;
+    $playLevelLabel.textContent =
       `${LLL_I18N.t(TOPIC_LABEL_KEYS[level.topic]) || level.topic} · ${LLL_I18N.t(TIER_LABEL_KEYS[level.difficulty]) || level.difficulty}`;
-    $hudScore.textContent = score;
+    $hudScore.textContent = inReviewMode ? review.score : score;
     $hintText.textContent = "";
     buildStepDots(level.steps.length);
     updateStepDots(stepIndex, level.steps.length, false);
@@ -880,7 +945,9 @@
       if (justSolved) $equationCard.classList.add("solved");
       saveProgress();
 
-      if (justSolved) {
+      if (justSolved && inReviewMode) {
+        finishReviewLevel(correctStep);
+      } else if (justSolved) {
         const level = currentLevel();
         const wasDaily = inDailyMode;
         score += level.basePoints;
@@ -964,8 +1031,9 @@
     setMathText($hintText, hint);
     hintUsedThisLevel = true;
     if (!hintUsedThisStep) {
-      score = Math.max(0, score - 2);
-      $hudScore.textContent = score;
+      if (inReviewMode) review.score = Math.max(0, review.score - 2);
+      else score = Math.max(0, score - 2);
+      $hudScore.textContent = inReviewMode ? review.score : score;
       hintUsedThisStep = true;
     }
   });
@@ -1016,6 +1084,7 @@
     const explText = typeof expl === "string" ? expl : (expl && (expl[currentLang()] || expl.en)) || "";
     setMathText($completeExplanation, explText);
     $completeExplanation.hidden = !explText;
+    $completeReview.hidden = true;
 
     // Buttons: primary = Next level (or Level select / Home when there's nothing next)
     const next = r.daily ? null : nextLevelAfter(r.level);
@@ -1094,6 +1163,150 @@
     });
   }
 
+  // ---------- mixed review ----------
+  // A session = a queue of levels played back to back, then a summary.
+  // buildReviewQueue() takes any pool + length, so checkpoints can reuse it later.
+  const REVIEW_LENGTH = 10;   // levels per session
+  const REVIEW_UNLOCK = 10;   // cleared levels needed before Mixed Review opens
+
+  function shuffled(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function clearedLevels() { return LEVELS.filter(l => levelProgress[l.id]); }
+
+  // Picks n levels with no repeats, one topic at a time (round-robin), so a session
+  // isn't dominated by whichever topic has the most cleared levels.
+  function buildReviewQueue(pool, n) {
+    const byTopic = {};
+    shuffled(pool).forEach(l => (byTopic[l.topic] ||= []).push(l));
+    const topics = shuffled(Object.keys(byTopic));
+    const picks = [];
+    while (picks.length < n && topics.some(tp => byTopic[tp].length)) {
+      for (const tp of topics) {
+        if (picks.length >= n) break;
+        const l = byTopic[tp].pop();
+        if (l) picks.push(l);
+      }
+    }
+    return shuffled(picks);
+  }
+
+  function updateReviewCard() {
+    const t = (k, fb) => LLL_I18N.t(k) || fb;
+    const cleared = clearedLevels().length;
+    const locked = cleared < REVIEW_UNLOCK;
+    $reviewCard.disabled = locked;
+    $reviewCard.classList.toggle("locked", locked);
+    if (locked) {
+      $reviewCardStatus.textContent =
+        t("reviewLocked", "🔒 Clear {n} more levels to unlock").split("{n}").join(REVIEW_UNLOCK - cleared);
+    } else {
+      const ready = t("reviewReady", "{n} questions from all topics").split("{n}").join(REVIEW_LENGTH);
+      // Non-breaking spaces keep "Best 110 pts" together when the line wraps on narrow screens
+      const best = reviewBest
+        ? ` · ${t("reviewBest", "Best {n} pts").split("{n}").join(reviewBest).replace(/ /g, "\u00A0")}`
+        : "";
+      $reviewCardStatus.textContent = ready + best;
+    }
+  }
+
+  $reviewCard.addEventListener("click", () => {
+    if (!$reviewCard.disabled) go("#review");
+  });
+
+  function startReview() {
+    review = { levels: buildReviewQueue(clearedLevels(), REVIEW_LENGTH), index: 0, score: 0, results: [] };
+    stepIndex = 0;
+    render();
+  }
+
+  // Runs when the last step of a review level is solved. Stars, streak and achievements are left alone.
+  function finishReviewLevel(correctStep) {
+    const level = currentLevel();
+    review.score += level.basePoints;
+    review.results.push({ topic: level.topic, clean: !hintUsedThisLevel && wrongThisLevel === 0 });
+    $hudScore.textContent = review.score;
+    const session = review;
+    setTimeout(() => {
+      if (review !== session) return;   // player left or restarted in the meantime
+      review.index++;
+      if (review.index < review.levels.length) { stepIndex = 0; render(); }
+      else showReviewSummary();
+    }, correctStep.flip ? 1500 : 900);
+  }
+
+  function showReviewSummary() {
+    const t = (k, fb) => LLL_I18N.t(k) || fb;
+    const { score: sessionScore, results } = review;
+    const flawless = results.filter(r => r.clean).length;
+    const newBest = reviewBest > 0 && sessionScore > reviewBest;
+    if (sessionScore > reviewBest) { reviewBest = sessionScore; saveProgress(); }
+
+    $completeKicker.textContent = t("reviewComplete", "Review complete!");
+    $completeSub.textContent = t("reviewTitle", "Mixed Review");
+    $completeStars.hidden = true;
+    $completeBest.hidden = !newBest;
+    $completeBest.textContent = t("newBest", "New best!");
+    $completePoints.textContent = `${sessionScore} ${t("ptsLabel", "pts")}`;
+    $completeBonus.hidden = true;
+    $completeExplanation.hidden = true;
+
+    // One row per topic that came up, in home-screen order: ✓ = flawless, ✗ = hint or wrong move
+    const marksByTopic = {};
+    results.forEach(r => (marksByTopic[r.topic] ||= []).push(r.clean));
+    const topics = Object.keys(TOPIC_LABEL_KEYS).filter(tp => marksByTopic[tp]);
+    let weakest = null, mostSlips = 1;   // nudge only at 2+ slips in one topic
+    topics.forEach(tp => {
+      const slips = marksByTopic[tp].filter(c => !c).length;
+      if (slips > mostSlips) { mostSlips = slips; weakest = tp; }
+    });
+    const topicName = tp => t(TOPIC_LABEL_KEYS[tp], tp);
+    const rows = topics.map(tp => `
+      <div class="review-row">
+        <span class="review-row-name">${topicName(tp)}</span>
+        <span class="review-row-marks">${marksByTopic[tp].map(c =>
+          `<span class="review-mark ${c ? "ok" : "slip"}">${c ? "✓" : "✗"}</span>`).join("")}</span>
+      </div>`).join("");
+
+    let footer = "";
+    if (weakest) {
+      footer = `
+        <p class="review-nudge">${t("reviewNudge", "{topic} tripped you up a few times.").split("{topic}").join(topicName(weakest))}</p>
+        <button class="complete-btn secondary review-practise-btn" data-topic="${weakest}">${
+          t("reviewPractiseBtn", "Practise {topic} →").split("{topic}").join(topicName(weakest))}</button>`;
+    } else if (flawless === results.length) {
+      footer = `<p class="review-nudge">${t("reviewCleanSweep", "Clean sweep!")}</p>`;
+    }
+    $completeReview.innerHTML = `
+      <p class="review-flawless">${t("reviewFlawless", "{n} / {total} flawless")
+        .split("{n}").join(flawless).split("{total}").join(results.length)}</p>
+      <div class="review-rows">${rows}</div>${footer}`;
+    $completeReview.hidden = false;
+
+    completeActions = { primary: () => go("#review"), levels: () => go("#home"), escape: () => go("#home") };
+    $completePrimaryBtn.textContent = t("reviewAgainBtn", "Play again");
+    $completeRetryBtn.hidden = true;
+    $completeLevelsBtn.hidden = false;
+    $completeLevelsBtn.textContent = t("homeBtn", "Home");
+    $completeRetryBtn.parentElement.hidden = false;
+
+    $completeKicker.classList.toggle("pixel", /^[\x20-\x7E]*$/.test($completeKicker.textContent));
+    $completeOverlay.hidden = false;
+    $completePrimaryBtn.focus({ preventScroll: true });
+    if (flawless === results.length) burstGrandConfetti();
+  }
+
+  $completeReview.addEventListener("click", (e) => {
+    const btn = e.target.closest(".review-practise-btn");
+    if (btn) go(`#levels/${btn.dataset.topic}`);
+  });
+
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
@@ -1167,7 +1380,7 @@
   }
 
   // ---------- screens + hash routing ----------
-  // Routes: #home · #play/<level id> · #daily
+  // Routes: #home · #levels/<topic> · #play/<level id> · #daily · #review
   const LEVELS_BY_ID = Object.fromEntries(LEVELS.map(l => [l.id, l]));
   const SCREENS = { home: $screenHome, levels: $screenLevels, play: $screenPlay };
 
@@ -1190,8 +1403,17 @@
     regularLevelState = null;
   }
 
+  function leaveReview() {
+    if (!inReviewMode) return;
+    inReviewMode = false;
+    review = null;
+    if (regularLevelState) ({ stepIndex, hintUsedThisLevel, wrongThisLevel } = regularLevelState);
+    regularLevelState = null;
+  }
+
   function openLevel(level) {
     leaveDaily();
+    leaveReview();
     const sameLevel = currentLevel() === level; // resume mid-level if it's the one you left
     activeDifficulty = level.difficulty;
     setActiveTopic(level.topic, false);
@@ -1215,9 +1437,11 @@
       showScreen("play");
     } else if (screen === "levels" && LEVELS_BY_TOPIC_AND_DIFFICULTY[arg]) {
       leaveDaily();
+      leaveReview();
       renderLevelSelect(arg);
       showScreen("levels");
     } else if (screen === "daily" && !isDailyCompletedToday()) {
+      leaveReview();
       if (!inDailyMode) regularLevelState = { stepIndex, hintUsedThisLevel, wrongThisLevel };
       inDailyMode = true;
       dailyLevel = getTodaysLevel();
@@ -1225,10 +1449,19 @@
       render();
       setBackLabel("backHome", "Home");
       showScreen("play");
+    } else if (screen === "review" && clearedLevels().length >= REVIEW_UNLOCK) {
+      leaveDaily();
+      if (!inReviewMode) regularLevelState = { stepIndex, hintUsedThisLevel, wrongThisLevel };
+      inReviewMode = true;
+      startReview();   // always a fresh session, including "Play again" and a page refresh
+      setBackLabel("backHome", "Home");
+      showScreen("play");
     } else {
       if (location.hash !== "#home") history.replaceState(null, "", "#home");
       leaveDaily();
+      leaveReview();
       updateDailyCard();
+      updateReviewCard();
       updateHomeCards();
       showScreen("home");
     }
@@ -1242,7 +1475,7 @@
     go(`#levels/${card.dataset.topic}`);
   });
 
-  $backBtn.addEventListener("click", () => go(inDailyMode ? "#home" : `#levels/${activeTopic}`));
+  $backBtn.addEventListener("click", () => go(inDailyMode || inReviewMode ? "#home" : `#levels/${activeTopic}`));
 
   // ---------- intro / onboarding (full-screen animated) ----------
   const INTRO_SEEN_KEY = "lll_algebra_intro_seen";
