@@ -38,6 +38,7 @@
   --wrong: #e2a06b;
   --on-accent: #14181d;
   --logo-invert: 1;
+  color-scheme: dark;   /* native scrollbars / form controls follow the dark theme */
 }
 
 * { box-sizing: border-box; }
@@ -81,6 +82,9 @@ body {
 }
 .lang-switch svg { color: var(--muted); flex: none; }
 .lang-switch select { border: none; background: transparent; font-family: var(--sans); font-size: 14px; color: var(--ink); cursor: pointer; }
+/* The option list opens on the browser's default white, so give it the pill's own colors
+   (otherwise dark mode shows light text on white). */
+.lang-switch select option { background-color: var(--surface); color: var(--ink); }
 
 .trophy-btn {
   width: 36px; height: 36px; padding: 0;
@@ -199,10 +203,23 @@ body {
 .achievements-modal-header h2 {
   font-family: var(--display); font-size: 18px; margin: 0; color: var(--ink);
 }
+.achievements-total {
+  margin-left: 8px;
+  font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--muted);
+}
 .achievements-close-btn {
   background: none; border: none; font-size: 18px; color: var(--muted); cursor: pointer;
 }
-.achievements-list { display: flex; flex-direction: column; gap: 10px; }
+.achievements-list { display: flex; flex-direction: column; gap: 18px; }
+/* Sections: General / Mixed Review / one per topic, each with an "n / m" count */
+.achievement-group { display: flex; flex-direction: column; gap: 8px; }
+.achievement-group-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.achievement-group-name { font-family: var(--sans); font-size: 13px; font-weight: 700; color: var(--ink); }
+.achievement-group-count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .achievement-item {
   display: flex; align-items: center; gap: 12px;
   padding: 12px; border-radius: 12px; border: 1px solid var(--border);
@@ -212,6 +229,7 @@ body {
 .achievement-item-icon { font-size: 20px; }
 .achievement-item-name { font-family: var(--sans); font-weight: 700; font-size: 14px; color: var(--ink); }
 .achievement-item-desc { font-family: var(--sans); font-size: 12px; color: var(--muted); }
+.achievement-item-progress { margin-top: 3px; font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); }
 
 /* ---------- Equation display ---------- */
 .equation-card {
