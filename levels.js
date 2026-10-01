@@ -4233,39 +4233,122 @@ const LEVELS_BY_TOPIC_AND_DIFFICULTY = LEVELS.reduce((acc, lvl) => {
   return acc;
 }, {});
 
-// Achievement definitions — name/desc are per-language objects, matching
-// the levels.js convention above.
+// ---------- Achievements ----------
+// name/desc are per-language objects, matching the levels.js convention above.
+// `group` decides the section in the achievements panel: "general", "review", or a topic key.
+
+// Topic display names for the generated per-topic achievements
+// (keep in sync with the topic labels in index.html's STRINGS).
+const TOPIC_NAMES = {
+  equation:   { en: "Equations",    ja: "方程式" },
+  inequality: { en: "Inequalities", ja: "不等式" },
+  brackets:   { en: "Brackets",     ja: "かっこ" },
+  quadratic:  { en: "Quadratics",   ja: "二次方程式" },
+  system:     { en: "Systems",      ja: "連立方程式" }
+};
+
+// One template per per-topic achievement type. {topic} = topic name, {n} = level or star count.
+//   warmup  — every Easy level in the topic cleared
+//   master  — every level in the topic cleared
+//   perfect — every star in the topic earned (3 per level)
+const TOPIC_ACHIEVEMENT_TYPES = [
+  {
+    kind: "warmup",
+    name: { en: "{topic} Warm-up", ja: "{topic}ウォームアップ" },
+    desc: { en: "Clear every Easy level in {topic}", ja: "{topic}の「やさしい」をすべてクリア" }
+  },
+  {
+    kind: "master",
+    name: { en: "{topic} Master", ja: "{topic}マスター" },
+    desc: { en: "Clear all {n} {topic} levels", ja: "{topic}の{n}レベルをすべてクリア" }
+  },
+  {
+    kind: "perfect",
+    name: { en: "{topic} Perfect", ja: "{topic}パーフェクト" },
+    desc: { en: "Earn all {n} ★ in {topic}", ja: "{topic}で★{n}個をすべて獲得" }
+  }
+];
+
+function fillTemplate(template, topicName, n) {
+  return template.split("{topic}").join(topicName).split("{n}").join(n);
+}
+
+// 3 achievements per topic, in topic order (e.g. "equation_warmup", "equation_master", "equation_perfect").
+// Counts come from LEVELS, so the text stays right if a topic gains levels.
+const TOPIC_ACHIEVEMENTS = Object.keys(LEVELS_BY_TOPIC_AND_DIFFICULTY).flatMap(topic => {
+  const levelCount = LEVELS.filter(l => l.topic === topic).length;
+  return TOPIC_ACHIEVEMENT_TYPES.map(type => {
+    const n = type.kind === "perfect" ? levelCount * 3 : levelCount;
+    const localise = field => Object.fromEntries(
+      Object.entries(type[field]).map(([lang, tpl]) =>
+        [lang, fillTemplate(tpl, (TOPIC_NAMES[topic] || {})[lang] || topic, n)])
+    );
+    return {
+      id: `${topic}_${type.kind}`,
+      group: topic,
+      topic,
+      kind: type.kind,
+      name: localise("name"),
+      desc: localise("desc")
+    };
+  });
+});
+
 const ACHIEVEMENTS = [
+  // ---- General ----
   {
     id: "first_steps",
+    group: "general",
     name: { en: "First Steps", ja: "はじめの一歩" },
     desc: { en: "Solve your first problem", ja: "最初の問題を解く" }
   },
   {
     id: "on_a_roll",
+    group: "general",
     name: { en: "On a Roll", ja: "絶好調" },
     desc: { en: "Hit a 3-streak", ja: "3連続正解を達成" }
   },
   {
     id: "blazing",
+    group: "general",
     name: { en: "Blazing", ja: "大絶好調" },
     desc: { en: "Hit a 6-streak", ja: "6連続正解を達成" }
   },
   {
     id: "tier_cleared",
-    name: { en: "Tier Cleared", ja: "クリア" },
+    group: "general",
+    name: { en: "Tier Cleared", ja: "難易度クリア" },
     desc: { en: "Complete a full difficulty tier", ja: "ひとつの難易度を完了" }
   },
   {
     id: "dedicated",
+    group: "general",
     name: { en: "Dedicated", ja: "継続は力なり" },
     desc: { en: "Complete 3 full tier loops", ja: "3周分の難易度を完了" }
   },
   {
     id: "level_up",
+    group: "general",
     name: { en: "Level Up", ja: "レベルアップ" },
-    desc: { en: "Solve a Hard-tier problem", ja: "むずかしいの問題を解く" }
-  }
+    desc: { en: "Solve a Hard-tier problem", ja: "むずかしい問題を解く" }
+  },
+
+  // ---- Mixed Review ----
+  {
+    id: "review_first",
+    group: "review",
+    name: { en: "Mixed Bag", ja: "ミックス初挑戦" },
+    desc: { en: "Finish a Mixed Review session", ja: "ミックス復習を1回完了" }
+  },
+  {
+    id: "review_clean",
+    group: "review",
+    name: { en: "Clean Sweep", ja: "完璧な復習" },
+    desc: { en: "Go 10 / 10 flawless in Mixed Review", ja: "ミックス復習でノーミス10/10を達成" }
+  },
+
+  // ---- Per topic (generated above) ----
+  ...TOPIC_ACHIEVEMENTS
 ];
 
 export { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS };
