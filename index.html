@@ -61,40 +61,53 @@
   </div>
 </div>
 
+<div id="tutorialOverlay" class="intro-overlay">
+  <div class="intro-content">
+    <div class="intro-fade" id="tutFade1">
+      <span class="topic-card-sample" id="tutSample"></span>
+      <h2 id="tutTitle"></h2>
+      <div class="tut-narrator">
+        <div class="buddy-sprite tut-buddy" id="tutBuddy" aria-hidden="true"></div>
+        <p class="tut-speech" id="tutBody"></p>
+      </div>
+    </div>
+
+    <div class="intro-fade" id="tutFade2">
+      <div class="step-progress intro-demo-dots" id="tutStepDots"></div>
+      <div class="equation-card pixel-card intro-demo-card" id="tutEquationCard">
+        <p class="equation intro-demo-eq" id="tutEquation"></p>
+      </div>
+      <p class="expand-prompt" id="tutPrompt" hidden></p>
+      <div class="intro-demo-choices" id="tutChoices"></div>
+    </div>
+
+    <div class="intro-fade" id="tutFade3">
+      <ul class="intro-tips" id="tutTips"></ul>
+      <button class="intro-start-btn" id="tutStartBtn"></button>
+    </div>
+
+    <button class="tut-skip-btn" id="tutSkipBtn"></button>
+  </div>
+</div>
+
 <div id="introOverlay" class="intro-overlay">
   <div class="intro-content">
     <div class="intro-fade" id="introFade1">
       <span class="brand-logo"><img src="core/logo.svg" alt="LLL"></span>
       <p class="intro-brand-title" data-i18n="gameTitle">LLL Algebra</p>
-      <h2 data-i18n="introTitle">How to Solve</h2>
-      <p data-i18n="introBody1">Algebra is about balance. Whatever you do to one side of the equation, you must do to the other — so it stays true.</p>
     </div>
 
     <div class="intro-fade" id="introFade2">
-      <div class="step-progress intro-demo-dots" id="introStepDots"></div>
-      <div class="equation-card pixel-card intro-demo-card" id="introEquationCard">
-        <p class="equation intro-demo-eq" id="introEquation">x + 5 = 12</p>
+      <div class="tut-narrator intro-narrator">
+        <div class="buddy-sprite tut-buddy" id="introBuddy" aria-hidden="true"></div>
+        <p class="tut-speech" id="introSpeech" aria-live="polite"></p>
       </div>
-      <div class="intro-demo-choices" id="introChoices"></div>
+      <div class="intro-visual" id="introVisual"></div>
+      <div class="step-progress" id="introDots"></div>
+      <button class="intro-start-btn" id="introNextBtn"></button>
     </div>
 
-    <div class="intro-fade" id="introFade3">
-      <ul class="intro-tips">
-        <li class="intro-tip">
-          <span class="intro-tip-icon" aria-hidden="true">📚</span>
-          <span class="intro-tip-text" data-i18n="introTipTopics">5 topics: Equations, Inequalities, Brackets, Quadratics and Systems</span>
-        </li>
-        <li class="intro-tip">
-          <span class="intro-tip-icon intro-tip-stars" aria-hidden="true">★★★</span>
-          <span class="intro-tip-text" data-i18n="introTipStars">No hints and no mistakes = 3 stars</span>
-        </li>
-        <li class="intro-tip">
-          <span class="intro-tip-icon" aria-hidden="true">🔓</span>
-          <span class="intro-tip-text" data-i18n="introTipUnlock">Clear a level to unlock the next one</span>
-        </li>
-      </ul>
-      <button class="intro-start-btn" id="introStartBtn" data-i18n="introStartBtn">Let's start</button>
-    </div>
+    <button class="tut-skip-btn" id="introSkipBtn"></button>
   </div>
 </div>
 
@@ -132,6 +145,14 @@
         <div class="daily-card-status" id="reviewCardStatus"></div>
       </div>
     </button>
+
+    <div class="home-buddy">
+      <div class="home-buddy-wrap">
+        <span class="home-tap-hint" id="homeTapHint" data-i18n="homeTapHint" hidden>Tap me!</span>
+        <button class="buddy-sprite home-buddy-sprite" id="homeBuddy" aria-label="Chalky"></button>
+      </div>
+      <p class="buddy-bubble home-bubble show" id="homeBubble" aria-live="polite"></p>
+    </div>
 
     <p class="home-kicker" data-i18n="homeKicker">Choose a topic</p>
 
@@ -188,6 +209,7 @@
   <section class="screen" id="screenLevels" hidden>
     <div class="play-header">
       <button class="back-btn" id="levelsBackBtn"><span aria-hidden="true">←</span> <span data-i18n="backHome">Home</span></button>
+      <button class="howto-btn levels-help-btn" id="levelsHelpBtn" aria-label="How this topic works" data-i18n-aria="tutHelpAria">❔</button>
     </div>
     <div class="levels-head">
       <span class="topic-card-sample" id="levelsSample"></span>
@@ -223,6 +245,10 @@
 
     <div class="controls-row">
       <button class="hint-btn" id="hintBtn" data-i18n="hintBtn">Hint (−2 pts)</button>
+      <div class="buddy">
+        <p class="buddy-bubble" id="buddyBubble" aria-live="polite"></p>
+        <div class="buddy-sprite" id="buddySprite" aria-hidden="true"></div>
+      </div>
     </div>
   </section>
 </main>
@@ -278,14 +304,52 @@
       reviewPractiseBtn: "Practise {topic} →",
       reviewCleanSweep: "Clean sweep!",
       reviewAgainBtn: "Play again",
-      introTitle: "How to Solve",
-      introBody1: "Algebra is about balance. Whatever you do to one side of the equation, you must do to the other — so it stays true.",
-      introTipTopics: "5 topics: Equations, Inequalities, Brackets, Quadratics and Systems",
-      introTipStars: "No hints and no mistakes = 3 stars",
-      introTipUnlock: "Clear a level to unlock the next one",
+      introWelcome: "Hi! I'm Chalky. I'll help you learn algebra, one move at a time.",
+      introAboutMe: "I'm a piece of chalk from a classroom board. I've written more equations than I can count. My favourite letter? x. Finding it is like solving a mystery!",
+      introHowIHelp: "While you play, I'll cheer when you're right, help you bounce back from mistakes, and think it through with you when you tap Hint.",
+      introFaceRight: "Right!",
+      introFaceOops: "Oops!",
+      introFaceHint: "Hint",
+      introTopics: "There are 5 topics to master, from Equations all the way to Systems.",
+      introStars: "Solve with no hints and no mistakes to earn ★★★. Clear a level to unlock the next one.",
+      introModes: "Come back every day for Today's Challenge, and mix things up with Mixed Review.",
+      introReady: "Earn achievements as you go, and tap me on the home screen for tips. Ready?",
+      introNextBtn: "Next ▸",
       introStartBtn: "Let's start",
       soundMuteAria: "Mute sound",
-      soundUnmuteAria: "Turn sound on"
+      soundUnmuteAria: "Turn sound on",
+      tutStartBtn: "Let's go",
+      tutGotItBtn: "Got it",
+      tutSkipBtn: "Skip",
+      tutHelpAria: "How this topic works",
+      topicEquationTutBody: "Do the same to both sides. Undo what's around x, one move at a time, until x is on its own.",
+      topicEquationTutTip1: "Undo + and − first, then × and ÷",
+      topicEquationTutTip2: "Pick the opposite move: + 5 is undone by − 5",
+      topicInequalityTutBody: "Solve it just like an equation — but if you × or ÷ by a negative number, the sign flips.",
+      topicInequalityTutTip1: "÷ (−3) turns > into <",
+      topicInequalityTutTip2: "The answer is a range, like x < 4",
+      topicBracketsTutBody: "Expand the brackets first: multiply everything inside by the number outside. Then solve as normal.",
+      topicBracketsTutTip1: "2(x + 3) becomes 2x + 6",
+      topicBracketsTutTip2: "Multiply both terms inside, not just the first one",
+      topicQuadraticTutBody: "Factorise into two brackets. If two things multiply to 0, one of them must be 0, so you get two answers.",
+      topicQuadraticTutTip1: "x² + 5x + 6 = (x + 2)(x + 3): the two numbers add to 5 and multiply to 6",
+      topicQuadraticTutTip2: "Answers are written smallest first: x = −3, −2",
+      topicQuadraticTutTip3: "Not = 0 yet? Move everything to one side first",
+      topicSystemTutBody: "Add or subtract the two equations so one letter cancels out. Solve for the other letter, then substitute it back.",
+      topicSystemTutTip1: "x + y = 9 and 2x - y = 3: adding them cancels y",
+      topicSystemTutTip2: "Found x? Put it back into either equation to find y",
+      buddyCorrect: "Nice!|That's it!|Good move!|Keep going!",
+      buddyWrong: "Almost! Try again|So close!|Not that one — try another|Mistakes help you learn!",
+      buddyHint: "Here's a clue!|Let's think…|Hmm, look at this",
+      buddySolved: "You did it!|Solved!|Brilliant!",
+      homeFirst: "Pick a topic to start. Equations is a great first step!",
+      homeDaily: "Today's Challenge is ready. One quick problem a day!",
+      homeDailyStreak: "Today's Challenge is waiting. Keep your {n}-day streak going! 🔥",
+      homeReviewSoon: "Just {n} more levels and Mixed Review unlocks!",
+      homeAlmostTier: "Only {n} more to finish {topic} · {tier}!",
+      homeTryTopic: "Ready for something new? Give {topic} a try!",
+      homeCheer: "Every mistake is practice. Keep going!|Little steps add up. You've got this!|Algebra is just balancing, and you're good at it!|One more level? I believe in you!|Tap a topic and let's solve something!",
+      homeTapHint: "Tap me!"
     },
     ja: {
       brand: "LLL 代数",
@@ -332,14 +396,52 @@
       reviewPractiseBtn: "{topic}を練習 →",
       reviewCleanSweep: "パーフェクト！",
       reviewAgainBtn: "もう一度",
-      introTitle: "解き方",
-      introBody1: "代数はバランスが大切です。方程式の片側に行った操作は、もう片方にも行う必要があります。",
-      introTipTopics: "5トピック：方程式・不等式・かっこ・二次方程式・連立方程式",
-      introTipStars: "ヒントなし・ミスなしで★3つ",
-      introTipUnlock: "レベルをクリアすると次のレベルが解放されます",
+      introWelcome: "やあ！チョークのチョーキーだよ。代数を1歩ずつ一緒に学ぼう！",
+      introAboutMe: "ぼくは教室の黒板のチョーク。式をたくさん書いてきたよ。好きな文字はx！見つけるのはなぞ解きみたいでワクワクするんだ。",
+      introHowIHelp: "プレイ中は、正解したら一緒に喜んで、まちがえたら励まして、ヒントを押したら一緒に考えるよ。",
+      introFaceRight: "正解！",
+      introFaceOops: "おしい！",
+      introFaceHint: "ヒント",
+      introTopics: "トピックは全部で5つ。方程式から連立方程式までマスターしよう！",
+      introStars: "ヒントなし・ミスなしで★3つ！レベルをクリアすると次のレベルが解放されるよ。",
+      introModes: "毎日の「今日のチャレンジ」と、全トピックから出る「ミックス復習」もあるよ。",
+      introReady: "実績も集めてね。ホームでぼくをタップするとヒントがもらえるよ。準備はいい？",
+      introNextBtn: "次へ ▸",
       introStartBtn: "はじめる",
       soundMuteAria: "サウンドをオフ",
-      soundUnmuteAria: "サウンドをオン"
+      soundUnmuteAria: "サウンドをオン",
+      tutStartBtn: "はじめる",
+      tutGotItBtn: "OK",
+      tutSkipBtn: "スキップ",
+      tutHelpAria: "このトピックの解き方",
+      topicEquationTutBody: "両辺に同じ操作をしよう。xのまわりにあるものを1つずつ取り除いて、xだけを残します。",
+      topicEquationTutTip1: "まず＋と−を消して、次に×と÷",
+      topicEquationTutTip2: "反対の操作を選ぼう：+ 5 は − 5 で消せます",
+      topicInequalityTutBody: "方程式と同じように解きます。ただし、負の数でかけたり割ったりすると、不等号の向きが逆になります。",
+      topicInequalityTutTip1: "÷ (−3) で > は < に変わります",
+      topicInequalityTutTip2: "答えは x < 4 のような範囲になります",
+      topicBracketsTutBody: "まずかっこを展開します。かっこの外の数を、中のすべての項にかけましょう。そのあとはいつも通りに解きます。",
+      topicBracketsTutTip1: "2(x + 3) は 2x + 6 になります",
+      topicBracketsTutTip2: "最初の項だけでなく、中の両方の項にかけよう",
+      topicQuadraticTutBody: "2つのかっこに因数分解します。かけて0になるなら、どちらかが0なので、答えは2つになります。",
+      topicQuadraticTutTip1: "x² + 5x + 6 = (x + 2)(x + 3)：足して5、かけて6になる2つの数",
+      topicQuadraticTutTip2: "答えは小さい順に書きます：x = −3, −2",
+      topicQuadraticTutTip3: "右辺が0でないときは、まず全部を左辺に移そう",
+      topicSystemTutBody: "2つの式を足すか引いて、文字を1つ消します。残った文字を求めたら、それを代入してもう1つを求めます。",
+      topicSystemTutTip1: "x + y = 9 と 2x - y = 3 を足すと y が消えます",
+      topicSystemTutTip2: "xが分かったら、どちらかの式に代入してyを求めよう",
+      buddyCorrect: "いいね！|その通り！|ナイス！|その調子！",
+      buddyWrong: "おしい！もう一度|あと少し！|それじゃないよ、別のを選ぼう|まちがいも勉強のうち！",
+      buddyHint: "ヒントだよ！|考えてみよう…|ここを見てみて",
+      buddySolved: "できた！|正解！|すごい！",
+      homeFirst: "トピックを選んで始めよう！まずは方程式がおすすめだよ。",
+      homeDaily: "今日のチャレンジが待ってるよ。1日1問、サクッと解こう！",
+      homeDailyStreak: "今日のチャレンジが待ってるよ。{n}日連続を続けよう！🔥",
+      homeReviewSoon: "あと{n}レベルクリアでミックス復習が解放されるよ！",
+      homeAlmostTier: "{topic}・{tier}はあと{n}問でクリア！",
+      homeTryTopic: "新しいことに挑戦してみる？{topic}をやってみよう！",
+      homeCheer: "まちがいも練習のうち。その調子！|小さな一歩が力になるよ。|代数はバランス。きみなら大丈夫！|もう1レベルやってみない？|トピックを選んで、一緒に解こう！",
+      homeTapHint: "タップしてね！"
     }
   };
   document.getElementById("langHost").addEventListener("change", () => {
@@ -348,8 +450,11 @@
     updateReviewCard();
     updateHomeCards();
     updateSoundBtn();
+    if (!$screenHome.hidden) homeSay(false);
     if (!$screenLevels.hidden) renderLevelSelect(location.hash.split("/")[1]);
     if ($achievementsModal.classList.contains("show")) renderAchievementsList();
+    if ($tutorialOverlay.classList.contains("show")) openTutorial(tutTopic, tutAuto);
+    if ($introOverlay.classList.contains("show")) showIntroStep(introStep);
     // Only redraw the game when it's on screen mid-level (a solved level has no current step).
     if ($screenPlay.hidden || !$completeOverlay.hidden || stepIndex >= currentLevel().steps.length) return;
     render();
@@ -414,15 +519,7 @@
   const $reviewCard = document.getElementById("reviewCard");
   const $reviewCardStatus = document.getElementById("reviewCardStatus");
   const $introOverlay = document.getElementById("introOverlay");
-  const $introStartBtn = document.getElementById("introStartBtn");
   const $howtoBtn = document.getElementById("howtoBtn");
-  const $introStepDots = document.getElementById("introStepDots");
-  const $introChoices = document.getElementById("introChoices");
-  const $introEquationCard = document.getElementById("introEquationCard");
-  const $introEquation = document.getElementById("introEquation");
-  const $introFade1 = document.getElementById("introFade1");
-  const $introFade2 = document.getElementById("introFade2");
-  const $introFade3 = document.getElementById("introFade3");
   const $equationCard = document.getElementById("equationCard");
   const $floatingSymbolsLayer = document.getElementById("floatingSymbolsLayer");
   const $screenHome = document.getElementById("screenHome");
@@ -741,6 +838,126 @@
     if (soundOn) sfx.step(1);   // short blip so the player hears sound is back on
   });
   updateSoundBtn();
+
+  // ---------- chalk buddy (companion character) ----------
+  // A chalk stick drawn in code on a 24×24 pixel grid: one SVG per expression, built once.
+  // Sizes per screen are set in brand.css (play, home, tutorial; smaller on narrow phones).
+  // K (outline, feet, arms, thinking dots) follows the theme so it shows on dark backgrounds too;
+  // E (eyes, mouth) stays dark because it always sits on the white chalk.
+  const BUDDY_PAL = { K: "var(--buddy-line)", E: "#2C2C2A", W: "#F4F1EA", S: "#D3D1C7", R: "#C2562F", G: "#E8B44A", C: "#F0997B", L: "#85B7EB", T: "#D85A30" };
+  // Faces are 10×5 blocks placed at (7, 6). `x` = extras drawn around (18, 3): sparkle, sweat drop, thinking dots.
+  const BUDDY_FACES = {
+    idle:        { f: ["..........", "..E....E..", "..E....E..", ".C......C.", "....EE...."] },
+    blink:       { f: ["..........", "..........", "..E....E..", ".C......C.", "....EE...."] },
+    talk:        { f: ["..........", "..E....E..", "..E....E..", ".C..EE..C.", "....EE...."] },
+    happy:       { f: ["..E....E..", ".E.E..E.E.", "..........", ".C.E..E.C.", "....EE...."], x: [[1, 0, "G"], [0, 1, "G"], [1, 1, "G"], [2, 1, "G"], [1, 2, "G"]] },
+    oops:        { f: ["...E..E...", "..E....E..", "..E....E..", "....EE....", "...E..E..."], x: [[1, 0, "L"], [0, 1, "L"], [1, 1, "L"], [2, 1, "L"], [1, 2, "L"]] },
+    thinking:    { f: ["..........", "...E....E.", "...E....E.", "..........", "......EE.."], x: [[0, 1, "K"], [2, 0, "K"], [3, -2, "K"], [4, -2, "K"], [3, -3, "K"], [4, -3, "K"]] },
+    celebrating: { f: ["..E....E..", ".E.E..E.E.", "..........", "..EEEEEE..", "...ETTE..."], arms: true }
+  };
+
+  function buildBuddySvg(expr) {
+    const N = 24;
+    const g = Array.from({ length: N }, () => Array(N).fill(null));
+    const put = (x, y, c) => { if (g[y] && x >= 0 && x < N) g[y][x] = c; };
+    // Body: chalk stick with a shaded right edge and a rust paper band
+    for (let y = 3; y <= 18; y++) {
+      for (let x = 7; x <= 16; x++) g[y][x] = (y >= 14 && y <= 16) ? "R" : (x >= 15 ? "S" : "W");
+    }
+    [[7, 3], [16, 3], [7, 18], [16, 18]].forEach(([x, y]) => { g[y][x] = null; });   // rounded corners
+    // Outline: every empty cell touching the body
+    const body = g.map(r => r.slice());
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      if (!body[y][x] && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => (body[y + dy] || [])[x + dx])) g[y][x] = "K";
+    }
+    [9, 10, 13, 14].forEach(x => put(x, 20, "K"));   // feet
+    const face = BUDDY_FACES[expr];
+    face.f.forEach((row, dy) => [...row].forEach((c, dx) => { if (c !== ".") put(7 + dx, 6 + dy, c); }));
+    if (face.arms) [[5, 10], [4, 9], [3, 8], [18, 10], [19, 9], [20, 8]].forEach(([x, y]) => put(x, y, "K"));
+    (face.x || []).forEach(([dx, dy, c]) => put(18 + dx, 3 + dy, c));
+    let rects = "";
+    g.forEach((row, y) => row.forEach((c, x) => {
+      if (c) rects += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${BUDDY_PAL[c]}"/>`;
+    }));
+    return `<svg viewBox="0 0 24 24" shape-rendering="crispEdges">${rects}</svg>`;
+  }
+
+  const BUDDY_SVG = Object.fromEntries(Object.keys(BUDDY_FACES).map(k => [k, buildBuddySvg(k)]));
+  const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const BUDDY_MOODS = ["idle", "happy", "oops", "thinking", "celebrating"];
+
+  // Random line from a "a|b|c" string in STRINGS
+  function buddyLine(key) {
+    const lines = (LLL_I18N.t(key) || "").split("|").filter(Boolean);
+    return lines[Math.floor(Math.random() * lines.length)] || "";
+  }
+
+  // One buddy per place it appears (play screen, home, tutorial), each with its own mood and timers.
+  // $bubble is optional: the tutorial buddy speaks through the explanation text instead.
+  function makeBuddy($sprite, $bubble, { keepBubble = false } = {}) {
+    let mood = "idle";
+    let timers = [];
+    const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+    const stop = () => { timers.forEach(clearTimeout); timers = []; };   // clearTimeout also clears intervals
+    const face = expr => { $sprite.innerHTML = BUDDY_SVG[expr]; };
+    const animate = cls => {
+      $sprite.classList.remove(...BUDDY_MOODS);
+      void $sprite.offsetWidth;   // restart the animation
+      $sprite.classList.add(cls);
+    };
+
+    // Resting state: idle face, slow bob, a blink every few seconds.
+    function idle() {
+      stop();
+      mood = "idle";
+      if ($bubble && !keepBubble) $bubble.classList.remove("show");   // the home bubble stays up
+      face("idle");
+      animate("idle");
+      timers.push(setInterval(() => {
+        if (mood !== "idle") return;
+        face("blink");
+        setTimeout(() => { if (mood === "idle") face("idle"); }, 140);
+      }, 3200));
+    }
+
+    // A reaction: face + motion + optional speech bubble, then back to idle (unless `stay`).
+    function react(newMood, { line = "", ms = 1200, stay = false } = {}) {
+      stop();
+      mood = newMood;
+      face(newMood);
+      animate(newMood);
+      if ($bubble) {
+        $bubble.textContent = line;
+        $bubble.classList.toggle("show", !!line);
+      }
+      if (!stay) later(idle, ms);
+    }
+
+    // Types `text` into `el` with the mouth moving, then calls onDone.
+    function talk(el, text, onDone) {
+      stop();
+      mood = "talking";
+      animate("idle");
+      if (REDUCED_MOTION) { setMathText(el, text); idle(); if (onDone) onDone(); return; }
+      const chars = [...text];
+      let i = 0, open = false;
+      el.textContent = "";
+      timers.push(setInterval(() => { open = !open; face(open ? "talk" : "idle"); }, 160));
+      timers.push(setInterval(() => {
+        if (i < chars.length) { el.textContent += chars[i++]; return; }
+        setMathText(el, text);   // final pass keeps math runs on one line
+        idle();
+        if (onDone) onDone();
+      }, 30));
+    }
+
+    return { idle, react, talk, stop };
+  }
+
+  // The play-screen buddy (beside the Hint button)
+  const playBuddy = makeBuddy(document.getElementById("buddySprite"), document.getElementById("buddyBubble"));
+  function buddyIdle() { playBuddy.idle(); }
+  function buddyReact(mood, opts) { playBuddy.react(mood, opts); }
 
   // Toasts queue up, so two achievements unlocked by the same solve (e.g. Tier Cleared +
   // a topic Warm-up) show one after the other instead of the second overwriting the first.
@@ -1090,6 +1307,7 @@
       $choices.appendChild(btn);
     });
 
+    if (stepIndex === 0) buddyIdle();   // new level → calm; mid-level steps keep their reaction
     hintUsedThisStep = false;
   }
 
@@ -1115,6 +1333,9 @@
       const totalSteps = currentLevel().steps.length;
       const justSolved = stepIndex >= totalSteps;
       if (justSolved) sfx.solve(); else sfx.step(stepIndex);
+      // Always reacts; only sometimes speaks on a normal correct step, so it doesn't get noisy
+      if (justSolved) buddyReact("celebrating", { line: buddyLine("buddySolved"), stay: true });
+      else buddyReact("happy", { line: Math.random() < 0.35 ? buddyLine("buddyCorrect") : "", ms: 1400 });
       updateStepDots(stepIndex, totalSteps, justSolved);
       if (justSolved) $equationCard.classList.add("solved");
       saveProgress();
@@ -1173,7 +1394,8 @@
       $eq.classList.remove("wrong-shake");
       void $eq.offsetWidth; // restart animation
       $eq.classList.add("wrong-shake");
-      $hintText.textContent = LLL_I18N.t("wrongMsg") || "Not quite — try again.";
+      // The buddy gives the feedback now, so a hint already on screen isn't overwritten
+      buddyReact("oops", { line: buddyLine("buddyWrong"), ms: 1800 });
       setTimeout(() => {
         [...$choices.children].forEach(b => { b.disabled = false; b.classList.remove("wrong"); });
       }, 700);
@@ -1204,6 +1426,7 @@
     const hints = level.hints[lang] || level.hints.en;
     const hint = hints[stepIndex] || hints[hints.length - 1];
     setMathText($hintText, hint);
+    buddyReact("thinking", { line: buddyLine("buddyHint"), ms: 2800 });
     hintUsedThisLevel = true;
     if (!hintUsedThisStep) {
       if (inReviewMode) review.score = Math.max(0, review.score - 2);
@@ -1557,6 +1780,72 @@
     $backBtnLabel.textContent = LLL_I18N.t(key) || fallback;
   }
 
+  // ---------- home Chalky ----------
+  // Lines are built from the player's progress, most useful first; tapping him moves to the next one.
+  const homeBuddy = makeBuddy(document.getElementById("homeBuddy"), document.getElementById("homeBubble"), { keepBubble: true });
+  let homeLines = [];
+  let homeLineIdx = 0;
+
+  function buildHomeLines() {
+    const t = k => LLL_I18N.t(k) || "";
+    const fill = (s, vars) => Object.entries(vars).reduce((acc, [k, v]) => acc.split(`{${k}}`).join(v), s);
+    const lines = [];
+    const cleared = clearedLevels().length;
+
+    if (!cleared) lines.push(t("homeFirst"));
+    if (!isDailyCompletedToday()) {
+      lines.push(dailyStreak > 0 ? fill(t("homeDailyStreak"), { n: dailyStreak }) : t("homeDaily"));
+    }
+    const toUnlock = REVIEW_UNLOCK - cleared;
+    if (cleared && toUnlock > 0 && toUnlock <= 5) lines.push(fill(t("homeReviewSoon"), { n: toUnlock }));
+
+    // One tier that's started and nearly done (1–3 levels left)
+    const almost = Object.keys(TOPIC_LABEL_KEYS).flatMap(topic => TIERS.map(tier => {
+      const list = levelsFor(topic, tier);
+      const done = list.filter(l => levelProgress[l.id]).length;
+      return { topic, tier, done, left: list.length - done };
+    })).find(x => x.done > 0 && x.left > 0 && x.left <= 3);
+    if (almost) {
+      lines.push(fill(t("homeAlmostTier"), {
+        n: almost.left, topic: t(TOPIC_LABEL_KEYS[almost.topic]), tier: t(TIER_LABEL_KEYS[almost.tier])
+      }));
+    }
+
+    // A topic they haven't touched yet, once they've started another
+    const fresh = Object.keys(TOPIC_LABEL_KEYS).find(tp => !topicStats(tp).cleared);
+    if (cleared && fresh) lines.push(fill(t("homeTryTopic"), { topic: t(TOPIC_LABEL_KEYS[fresh]) }));
+
+    lines.push(...shuffled(t("homeCheer").split("|").filter(Boolean)));   // general encouragement as filler
+    return lines.filter(Boolean);
+  }
+
+  // advance = false: rebuild from current progress and say the top line (arriving home, language switch)
+  // advance = true: next line in the list (tapping Chalky)
+  function homeSay(advance) {
+    if (!advance || !homeLines.length) { homeLines = buildHomeLines(); homeLineIdx = 0; }
+    else homeLineIdx = (homeLineIdx + 1) % homeLines.length;
+    homeBuddy.react("happy", { line: homeLines[homeLineIdx], ms: 900 });
+  }
+
+  // "Tap me!" bubble above Chalky's head, shown until the first tap ever (remembered in the browser)
+  const CHALKY_TAPPED_KEY = "lll_algebra_chalky_tapped";
+  const $homeTapHint = document.getElementById("homeTapHint");
+  let chalkyTapped = false;
+  try { chalkyTapped = localStorage.getItem(CHALKY_TAPPED_KEY) === "1"; } catch (e) { /* fail silently */ }
+  $homeTapHint.hidden = chalkyTapped;
+
+  function onChalkyTap() {
+    homeSay(true);
+    if (chalkyTapped) return;
+    chalkyTapped = true;
+    $homeTapHint.hidden = true;
+    try { localStorage.setItem(CHALKY_TAPPED_KEY, "1"); } catch (e) { /* fail silently */ }
+  }
+
+  // Tapping Chalky or his bubble both give the next line
+  document.getElementById("homeBuddy").addEventListener("click", onChalkyTap);
+  document.getElementById("homeBubble").addEventListener("click", onChalkyTap);
+
   // ---------- screens + hash routing ----------
   // Routes: #home · #levels/<topic> · #play/<level id> · #daily · #review
   const LEVELS_BY_ID = Object.fromEntries(LEVELS.map(l => [l.id, l]));
@@ -1603,6 +1892,7 @@
 
   function onRoute() {
     hideCompleteOverlay();
+    if ($tutorialOverlay.classList.contains("show") && !$tutorialOverlay.classList.contains("hiding")) closeTutorial(false);
     const [screen, arg] = location.hash.replace(/^#/, "").split("/");
     if (screen === "play" && LEVELS_BY_ID[arg]) {
       const level = LEVELS_BY_ID[arg];
@@ -1618,6 +1908,8 @@
       leaveReview();
       renderLevelSelect(arg);
       showScreen("levels");
+      // First visit to a topic → its tutorial. Topics already played (from before tutorials existed) are skipped.
+      if (!tutorialsSeen.has(arg) && !topicStats(arg).cleared) openTutorial(arg, true);
     } else if (screen === "daily" && !isDailyCompletedToday()) {
       leaveReview();
       if (!inDailyMode) regularLevelState = { stepIndex, hintUsedThisLevel, wrongThisLevel };
@@ -1642,6 +1934,7 @@
       updateReviewCard();
       updateHomeCards();
       showScreen("home");
+      homeSay(false);
     }
   }
 
@@ -1655,68 +1948,293 @@
 
   $backBtn.addEventListener("click", () => go(inDailyMode || inReviewMode ? "#home" : `#levels/${activeTopic}`));
 
-  // ---------- intro / onboarding (full-screen animated) ----------
+  // ---------- intro: Chalky introduces himself, then the game ----------
+  // Tap-through steps. On each one Chalky "says" his line, then a small visual appears.
+  // Next works any time (even mid-sentence); Skip closes it; the top-bar ❔ replays it.
   const INTRO_SEEN_KEY = "lll_algebra_intro_seen";
+  const INTRO_STEPS = ["introWelcome", "introAboutMe", "introHowIHelp", "introTopics", "introStars", "introModes", "introReady"];
+  const $introFade1 = document.getElementById("introFade1");
+  const $introFade2 = document.getElementById("introFade2");
+  const $introSpeech = document.getElementById("introSpeech");
+  const $introVisual = document.getElementById("introVisual");
+  const $introDots = document.getElementById("introDots");
+  const $introNextBtn = document.getElementById("introNextBtn");
+  const $introSkipBtn = document.getElementById("introSkipBtn");
+  const introBuddy = makeBuddy(document.getElementById("introBuddy"), null);
+  let introStep = 0;
   let introTimers = [];
 
   function introLater(fn, ms) { introTimers.push(setTimeout(fn, ms)); }
   function clearIntroTimers() { introTimers.forEach(clearTimeout); introTimers = []; }
 
-  // A mini round built from the real game pieces: step dot, pixel card, choice buttons.
-  function runIntroDemo() {
-    $introStepDots.innerHTML = '<span class="step-dot"></span>';
-    const dot = $introStepDots.firstChild;
-    $introEquationCard.classList.remove("solved");
-    $introEquation.classList.remove("updating");
-    $introEquation.textContent = "x + 5 = 12";
+  // The small picture under Chalky's line for each step
+  function introVisualHtml(key) {
+    const t = k => LLL_I18N.t(k) || "";
+    if (key === "introAboutMe") {
+      // A little chalkboard he's written on, with his favourite letter picked out
+      return `<div class="intro-chalkboard" aria-hidden="true">
+        <span>2x + 3 = 11</span>
+        <span><span class="chalk-x">x</span> = 4</span>
+      </div>`;
+    }
+    if (key === "introHowIHelp") {
+      // His three faces, so players recognise his reactions in a level
+      const faces = [["happy", "introFaceRight"], ["oops", "introFaceOops"], ["thinking", "introFaceHint"]];
+      return `<div class="intro-faces">${faces.map(([face, label]) => `
+        <div class="intro-face">
+          <span class="intro-face-sprite" aria-hidden="true">${BUDDY_SVG[face]}</span>
+          <span class="intro-face-label">${t(label)}</span>
+        </div>`).join("")}</div>`;
+    }
+    if (key === "introTopics") {
+      return `<div class="intro-topic-list">${Object.keys(TOPIC_LABEL_KEYS).map(tp => `
+        <div class="intro-topic">
+          <span class="topic-card-sample">${TOPIC_SAMPLES[tp].split("\n")[0]}</span>
+          <span class="intro-topic-name">${t(TOPIC_LABEL_KEYS[tp])}</span>
+        </div>`).join("")}</div>`;
+    }
+    if (key === "introStars") return `<div class="intro-big-stars"><span>★</span><span>★</span><span>★</span></div>`;
+    if (key === "introModes") {
+      return `<div class="intro-mode-list">
+        <div class="intro-mode"><span aria-hidden="true">📅</span>${t("dailyTitle")}</div>
+        <div class="intro-mode"><span aria-hidden="true">🔀</span>${t("reviewTitle")}</div>
+      </div>`;
+    }
+    if (key === "introReady") return `<div class="intro-big-icon" aria-hidden="true">🏆</div>`;
+    // Welcome: a mini pixel card with the unknown he's about to help you find
+    return `<div class="equation-card pixel-card intro-welcome-card"><p class="equation">x = ?</p></div>`;
+  }
 
-    $introChoices.innerHTML = "";
-    const [wrongBtn, correctBtn] = [
-      { action: "add", value: 5 },
-      { action: "subtract", value: 5 }
-    ].map(c => {
-      const b = document.createElement("button");
-      b.className = "choice-btn";
-      b.tabIndex = -1;                     // demo only, not interactive
-      b.setAttribute("aria-hidden", "true");
-      b.textContent = actionLabel(c.action, c.value);
-      $introChoices.appendChild(b);
-      return b;
-    });
+  function showIntroStep(i) {
+    clearIntroTimers();
+    introStep = i;
+    const key = INTRO_STEPS[i];
+    const last = i === INTRO_STEPS.length - 1;
+    const t = k => LLL_I18N.t(k) || "";
 
-    introLater(() => correctBtn.classList.add("intro-demo-tap"), 1400);
+    $introDots.innerHTML = INTRO_STEPS.map((_, n) => `<span class="step-dot${n <= i ? " filled" : ""}"></span>`).join("");
+    $introNextBtn.textContent = t(last ? "introStartBtn" : "introNextBtn");
+    $introSkipBtn.textContent = t("tutSkipBtn");
+    $introSkipBtn.hidden = last;
+    $introSpeech.textContent = "";
+    $introVisual.classList.remove("reveal");
+    $introVisual.innerHTML = introVisualHtml(key);
+
+    // Arms up to say hi (first step), a hop for the rest, then he talks and the visual appears
+    introBuddy.react(i === 0 ? "celebrating" : "happy", { ms: 700 });
     introLater(() => {
-      correctBtn.classList.remove("intro-demo-tap");
-      correctBtn.classList.add("correct");
-      $introEquation.classList.add("updating");
-    }, 1900);
-    introLater(() => {
-      $introEquation.textContent = "x = 7";
-      $introEquation.classList.remove("updating");
-      dot.classList.add("filled", "solved");
-      $introEquationCard.classList.add("solved");
-    }, 2150);
+      introBuddy.talk($introSpeech, t(key), () => {
+        $introVisual.classList.add("reveal");
+        if (last) introBuddy.react("celebrating", { stay: true });
+      });
+    }, 600);
   }
 
   function openIntro() {
     clearIntroTimers();
     $introOverlay.classList.remove("hiding");
     $introOverlay.classList.add("show");
-    [$introFade1, $introFade2, $introFade3].forEach(el => el.classList.remove("reveal"));
-    introLater(() => $introFade1.classList.add("reveal"), 200);
-    introLater(() => { $introFade2.classList.add("reveal"); runIntroDemo(); }, 900);
-    introLater(() => $introFade3.classList.add("reveal"), 3600);
+    [$introFade1, $introFade2].forEach(el => el.classList.remove("reveal"));
+    introLater(() => $introFade1.classList.add("reveal"), 150);
+    introLater(() => { $introFade2.classList.add("reveal"); showIntroStep(0); }, 450);
   }
 
   function closeIntro() {
     clearIntroTimers();
+    introBuddy.stop();
     $introOverlay.classList.add("hiding");
     setTimeout(() => $introOverlay.classList.remove("show"), 400);
     try { localStorage.setItem(INTRO_SEEN_KEY, "1"); } catch (e) { /* fail silently */ }
   }
 
-  $introStartBtn.addEventListener("click", closeIntro);
+  $introNextBtn.addEventListener("click", () => {
+    if (introStep < INTRO_STEPS.length - 1) showIntroStep(introStep + 1);
+    else closeIntro();
+  });
+  $introSkipBtn.addEventListener("click", closeIntro);
   $howtoBtn.addEventListener("click", openIntro);
+
+  // ---------- topic tutorials ----------
+  // Shown once per topic on first visit, reopenable from the ❔ on the level-select screen.
+  // Chalky explains the key idea, then a demo level plays step by step using the real game pieces.
+  const TUTORIAL_SEEN_KEY = "lll_algebra_tutorials_seen";
+  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2 };
+  const TUT_STEP_MS = 2600;   // time per demo step
+
+  // Demo level per topic: normally the first Easy level, except where that level skips the
+  // topic's key move. Inequalities demos a sign flip; Quadratics demos factorising (Easy is pre-factored).
+  function tutorialDemoLevel(topic) {
+    if (topic === "inequality") {
+      const flipLevel = LEVELS.find(l => l.topic === topic && l.steps.some(s => s.flip));
+      if (flipLevel) return flipLevel;
+    }
+    if (topic === "quadratic" && levelsFor(topic, "medium").length) return levelsFor(topic, "medium")[0];
+    return levelsFor(topic, "easy")[0];
+  }
+
+  const $tutorialOverlay = document.getElementById("tutorialOverlay");
+  const $tutFade1 = document.getElementById("tutFade1");
+  const $tutFade2 = document.getElementById("tutFade2");
+  const $tutFade3 = document.getElementById("tutFade3");
+  const $tutSample = document.getElementById("tutSample");
+  const $tutTitle = document.getElementById("tutTitle");
+  const $tutBody = document.getElementById("tutBody");
+  const $tutStepDots = document.getElementById("tutStepDots");
+  const $tutEquationCard = document.getElementById("tutEquationCard");
+  const $tutEquation = document.getElementById("tutEquation");
+  const $tutPrompt = document.getElementById("tutPrompt");
+  const $tutChoices = document.getElementById("tutChoices");
+  const $tutTips = document.getElementById("tutTips");
+  const $tutStartBtn = document.getElementById("tutStartBtn");
+  const $tutSkipBtn = document.getElementById("tutSkipBtn");
+  const $levelsHelpBtn = document.getElementById("levelsHelpBtn");
+  const tutBuddy = makeBuddy(document.getElementById("tutBuddy"), null);
+
+  let tutorialsSeen = new Set();
+  try { tutorialsSeen = new Set(JSON.parse(localStorage.getItem(TUTORIAL_SEEN_KEY) || "[]")); } catch (e) { /* fail silently */ }
+  let tutTopic = null;
+  let tutAuto = false;   // true = opened on first visit, so Start goes straight into level 1
+  let tutTimers = [];
+
+  function tutLater(fn, ms) { tutTimers.push(setTimeout(fn, ms)); }
+  function clearTutTimers() { tutTimers.forEach(clearTimeout); tutTimers = []; }
+
+  function markTutorialSeen(topic) {
+    tutorialsSeen.add(topic);
+    try { localStorage.setItem(TUTORIAL_SEEN_KEY, JSON.stringify([...tutorialsSeen])); } catch (e) { /* fail silently */ }
+  }
+
+  // Same pixel ≤ / ≥ handling as the game's equation card, for any element.
+  function setPixelEq(el, text) {
+    el.textContent = "";
+    for (const ch of text) {
+      if (INEQ_SIGN.test(ch)) {
+        const s = document.createElement("span");
+        s.className = "ineq-sign" + (PIXEL_INEQ[ch] ? " pixel-ineq" : "");
+        s.textContent = PIXEL_INEQ[ch] || ch;
+        el.appendChild(s);
+      } else {
+        el.appendChild(document.createTextNode(ch));
+      }
+    }
+  }
+
+  function fillTutorialText(topic) {
+    const t = k => LLL_I18N.t(k) || "";
+    const base = TOPIC_LABEL_KEYS[topic];
+    $tutSample.textContent = TOPIC_SAMPLES[topic];
+    $tutTitle.textContent = t(base);
+    setMathText($tutBody, t(`${base}TutBody`));
+    $tutTips.innerHTML = "";
+    for (let i = 1; i <= TUT_TIP_COUNT[topic]; i++) {
+      const li = document.createElement("li");
+      li.className = "intro-tip";
+      li.innerHTML = '<span class="intro-tip-icon" aria-hidden="true">💡</span><span class="intro-tip-text"></span>';
+      setMathText(li.lastChild, t(`${base}TutTip${i}`));
+      $tutTips.appendChild(li);
+    }
+    $tutStartBtn.textContent = t(tutAuto ? "tutStartBtn" : "tutGotItBtn");
+    $tutSkipBtn.textContent = t("tutSkipBtn");
+  }
+
+  // Plays every step of the level: show a correct + a wrong choice, tap the correct one,
+  // update the equation. Returns how long the whole demo takes (ms).
+  function runTutorialDemo(level) {
+    const steps = level.steps;
+    $tutStepDots.innerHTML = steps.map(() => '<span class="step-dot"></span>').join("");
+    $tutEquationCard.classList.remove("solved");
+    $tutEquationCard.classList.toggle("system-card", level.topic === "system");
+    $tutEquation.classList.remove("updating");
+    setPixelEq($tutEquation, level.equation);
+    $tutChoices.innerHTML = "";
+    $tutPrompt.hidden = true;
+
+    steps.forEach((step, i) => {
+      tutLater(() => {
+        const promptKey = CHOICE_PROMPT_KEYS[step.action] || (level.topic === "quadratic" ? "rearrangePrompt" : null);
+        $tutPrompt.hidden = !promptKey;
+        if (promptKey) $tutPrompt.textContent = LLL_I18N.t(promptKey) || "";
+
+        const wrong = Array.isArray(step.wrong)
+          ? { action: step.action, value: step.wrong[0] }
+          : makeDistractors(step)[0];
+        $tutChoices.innerHTML = "";
+        const [, correctBtn] = [wrong, { action: step.action, value: step.value }].map(c => {
+          const b = document.createElement("button");
+          b.className = "choice-btn";
+          b.tabIndex = -1;                     // demo only, not interactive
+          b.setAttribute("aria-hidden", "true");
+          b.textContent = actionLabel(c.action, c.value);
+          $tutChoices.appendChild(b);
+          return b;
+        });
+
+        tutLater(() => correctBtn.classList.add("intro-demo-tap"), 1000);
+        tutLater(() => {
+          correctBtn.classList.remove("intro-demo-tap");
+          correctBtn.classList.add("correct");
+          $tutEquation.classList.add("updating");
+          // Hop on each correct move; arms up on the last one (stays until the tips appear)
+          const last = i === steps.length - 1;
+          tutBuddy.react(last ? "celebrating" : "happy", { ms: 900, stay: last });
+        }, 1500);
+        tutLater(() => {
+          setPixelEq($tutEquation, step.result);
+          $tutEquation.classList.remove("updating");
+          if (step.flip) {   // same turn-around + accent colour as in the game
+            const sign = $tutEquation.querySelector(".ineq-sign");
+            if (sign) sign.classList.add("flip-cue");
+          }
+          const dot = $tutStepDots.children[i];
+          dot.classList.add("filled");
+          if (i === steps.length - 1) {
+            dot.classList.add("solved");
+            $tutEquationCard.classList.add("solved");
+          }
+        }, 1750);
+      }, i * TUT_STEP_MS);
+    });
+    return steps.length * TUT_STEP_MS;
+  }
+
+  function openTutorial(topic, auto) {
+    clearTutTimers();
+    tutTopic = topic;
+    tutAuto = auto;
+    fillTutorialText(topic);
+    $tutBody.textContent = "";   // typed out by the buddy below
+    tutBuddy.idle();
+    $tutorialOverlay.classList.remove("hiding");
+    $tutorialOverlay.classList.add("show");
+    [$tutFade1, $tutFade2, $tutFade3].forEach(el => el.classList.remove("reveal"));
+    // 1) the buddy explains the key idea  2) the demo plays  3) the tips appear
+    tutLater(() => {
+      $tutFade1.classList.add("reveal");
+      tutBuddy.talk($tutBody, LLL_I18N.t(`${TOPIC_LABEL_KEYS[topic]}TutBody`) || "", () => {
+        tutLater(() => {
+          $tutFade2.classList.add("reveal");
+          const demoMs = runTutorialDemo(tutorialDemoLevel(topic));
+          tutLater(() => { $tutFade3.classList.add("reveal"); tutBuddy.idle(); }, demoMs);
+        }, 300);
+      });
+    }, 400);
+  }
+
+  function closeTutorial(startPlaying) {
+    clearTutTimers();
+    tutBuddy.stop();
+    if (tutTopic) markTutorialSeen(tutTopic);
+    $tutorialOverlay.classList.add("hiding");
+    setTimeout(() => $tutorialOverlay.classList.remove("show", "hiding"), 400);
+    if (startPlaying && tutTopic) go(playHash(levelsFor(tutTopic, "easy")[0]));
+  }
+
+  $tutStartBtn.addEventListener("click", () => closeTutorial(tutAuto));
+  $tutSkipBtn.addEventListener("click", () => closeTutorial(false));
+  $levelsHelpBtn.addEventListener("click", () => {
+    const topic = location.hash.split("/")[1];
+    if (LEVELS_BY_TOPIC_AND_DIFFICULTY[topic]) openTutorial(topic, false);
+  });
 
   initFloatingSymbols();
   setActiveTopic(activeTopic, false);
