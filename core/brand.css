@@ -23,6 +23,7 @@
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
           "Hiragino Sans", "Noto Sans CJK JP", "Noto Sans KR", "Microsoft YaHei", sans-serif;
   --logo-invert: 0;
+  --buddy-line: #2C2C2A;   /* chalk buddy outline */
 }
 
 :root[data-theme="dark"] {
@@ -38,6 +39,7 @@
   --wrong: #e2a06b;
   --on-accent: #14181d;
   --logo-invert: 1;
+  --buddy-line: #9aa0a8;   /* lighter outline so the buddy doesn't melt into the dark background */
   color-scheme: dark;   /* native scrollbars / form controls follow the dark theme */
 }
 
@@ -398,6 +400,42 @@ body {
 .hint-btn:hover { color: var(--accent); border-color: var(--accent); }
 .hint-text { font-size: 14px; color: var(--muted); text-align: center; min-height: 20px; }
 
+/* ---------- Chalk buddy (companion character, right of the Hint button) ---------- */
+.buddy { display: flex; align-items: center; gap: 10px; margin-left: auto; min-width: 0; }
+.buddy-bubble {
+  position: relative; margin: 0;
+  max-width: 220px; padding: 8px 12px;
+  font-family: var(--sans); font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--ink);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+  opacity: 0; transform: translateY(4px);
+  transition: opacity .2s ease, transform .2s ease;
+}
+.buddy-bubble.show { opacity: 1; transform: none; }
+.buddy-bubble::after {             /* little tail pointing at the character */
+  content: ""; position: absolute; right: -6px; top: 50%;
+  width: 9px; height: 9px; background: var(--surface);
+  border-top: 1.5px solid var(--border); border-right: 1.5px solid var(--border);
+  transform: translateY(-50%) rotate(45deg);
+}
+.buddy-sprite { flex: none; width: 84px; height: 84px; transform-origin: 50% 90%; }
+.buddy-sprite svg { display: block; width: 84px; height: 84px; }
+/* Narrow phones: full body, a bit smaller */
+@media (max-width: 420px) {
+  .buddy-sprite, .buddy-sprite svg { width: 60px; height: 60px; }   /* full body, just smaller */
+  .buddy-bubble { font-size: 12px; max-width: 150px; }
+}
+/* Stepped motion to match the pixel look */
+.buddy-sprite.idle { animation: buddyBob 1.6s steps(2, end) infinite; }
+.buddy-sprite.happy { animation: buddyHop .6s steps(3, end); }
+.buddy-sprite.oops { animation: buddyShake .45s steps(2, end); }
+.buddy-sprite.thinking { animation: buddyTilt 1.4s steps(2, end) 2; }
+.buddy-sprite.celebrating { animation: buddyJump .9s steps(2, end); }
+@keyframes buddyBob   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes buddyHop   { 0%, 70%, 100% { transform: translateY(0); } 35% { transform: translateY(-12px); } 85% { transform: translateY(-4px); } }
+@keyframes buddyShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+@keyframes buddyTilt  { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-6deg); } }
+@keyframes buddyJump  { 0%, 50%, 100% { transform: translateY(0); } 25%, 75% { transform: translateY(-16px); } }
+
 /* Keeps a math run like "(x + 2)(x + 3)" on one line in hints and explanations
    (see setMathText() in index.html); the text around it still wraps normally. */
 .nowrap { white-space: nowrap; }
@@ -471,6 +509,8 @@ body {
 }
 .intro-overlay.show { opacity: 1; pointer-events: auto; }
 .intro-overlay.hiding { opacity: 0; }
+/* While the intro or a tutorial is open, only the overlay scrolls (no second scrollbar from the page behind) */
+body:has(.intro-overlay.show) { overflow: hidden; }
 
 .intro-content {
   width: min(460px, 90vw);
@@ -509,9 +549,10 @@ body {
   margin: 0;
 }
 
-/* Live demo inside the intro: a mini round built from the real game pieces
-   (.step-progress, .pixel-card, .choice-btn), so it always matches the game. */
-#introFade2 {
+/* Column layout for the intro's step area and the tutorial demo. The tutorial demo is
+   built from the real game pieces (.step-progress, .pixel-card, .choice-btn). */
+#introFade2,
+#tutFade2 {
   display: flex; flex-direction: column; align-items: center; gap: 16px;
   margin-bottom: 26px;
 }
@@ -525,7 +566,7 @@ body {
   transform: scale(.97);
 }
 
-/* Three quick tips: topics, stars, unlocking */
+/* Tip rows (used by the topic tutorials) */
 .intro-tips {
   list-style: none; margin: 0 0 18px; padding: 0;
   display: flex; flex-direction: column; gap: 8px;
@@ -547,6 +588,101 @@ body {
   padding: 14px; cursor: pointer; margin-top: 8px;
 }
 .intro-start-btn:hover { opacity: 0.9; }
+
+/* ---------- Topic tutorials ----------
+   Reuse the intro overlay's styles; only the extras live here. */
+#tutorialOverlay .intro-content { padding-top: 64px; }   /* room for the Skip button */
+#tutSample { display: block; margin-bottom: 10px; }       /* topic sample on its own line above the title */
+/* "Factorise:" etc. above the demo choices. Restyled here because .intro-fade p would make it grey. */
+#tutPrompt { margin: 0 0 -6px; color: var(--accent); font-size: 13px; line-height: normal; }
+.tut-skip-btn {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top)); right: 16px;
+  font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--muted);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 7px 14px; cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+}
+.tut-skip-btn:hover { color: var(--ink); border-color: var(--accent); }
+
+/* The chalk buddy "speaks" the explanation: sprite on the left, speech bubble on the right.
+   Sized separately from the play/home buddy (64px, 52px on narrow phones). */
+.tut-narrator { display: flex; align-items: flex-start; gap: 12px; text-align: left; }
+.tut-buddy, .tut-buddy svg { width: 64px; height: 64px; }
+.tut-buddy { margin-top: 4px; }
+@media (max-width: 420px) {
+  .tut-buddy, .tut-buddy svg { width: 52px; height: 52px; }
+}
+.intro-fade p.tut-speech {
+  position: relative; flex: 1; min-width: 0;
+  min-height: 4.8em;               /* room for ~3 lines, so the layout doesn't jump while it types */
+  padding: 10px 14px;
+  color: var(--ink);
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
+}
+.tut-speech::before {              /* tail pointing back at the buddy */
+  content: ""; position: absolute; left: -6px; top: 20px;
+  width: 9px; height: 9px; background: var(--surface);
+  border-left: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
+  transform: rotate(45deg);
+}
+
+/* ---------- Intro (Chalky's tour) ----------
+   Reuses the tutorial's narrator, speech bubble, Skip button and step dots. */
+#introOverlay .intro-content { padding-top: 64px; }      /* room for the Skip button */
+.intro-narrator { width: 100%; align-items: center; }
+#introBuddy, #introBuddy svg { width: 112px; height: 112px; }   /* he's the host here, so bigger than in tutorials */
+@media (max-width: 420px) {
+  #introBuddy, #introBuddy svg { width: 80px; height: 80px; }
+}
+.intro-welcome-card { width: auto; padding: 14px 32px; }
+.intro-welcome-card .equation { color: var(--ink); }   /* .intro-fade p was turning it grey */
+.intro-visual {
+  width: 100%; min-height: 110px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: translateY(8px);   /* no transition here: hides instantly when a step changes */
+}
+.intro-visual.reveal {
+  opacity: 1; transform: none;
+  transition: opacity .35s ease, transform .35s ease;   /* fade in only */
+}
+.intro-topic-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.intro-topic {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+}
+.intro-topic .topic-card-sample { font-size: 9px; }
+.intro-topic-name { font-family: var(--sans); font-size: 12px; font-weight: 700; color: var(--ink); }
+.intro-big-stars { display: flex; gap: 10px; font-size: 44px; line-height: 1; color: var(--accent); }
+.intro-mode-list { display: flex; gap: 10px; width: 100%; }
+.intro-mode {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px;
+  font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+}
+.intro-mode span { font-size: 20px; }
+.intro-big-icon { font-size: 48px; line-height: 1; }
+/* Room for ~4 lines, so the longer "about me" line doesn't push Next down while he types */
+#introSpeech { min-height: 6.4em; }
+/* "About me": a little chalkboard (fixed colours, so it looks like a board in both themes) */
+.intro-chalkboard {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 28px;
+  background: #2f4a3a; border: 6px solid #8a5a33; border-radius: 6px;
+  font-family: "Press Start 2P", var(--mono); font-size: 13px; line-height: 1.6; color: #f4f1ea;
+}
+.intro-chalkboard .chalk-x { color: #e8b44a; }
+/* "How I help": his three faces with labels */
+.intro-faces { display: flex; justify-content: center; gap: 12px; }
+.intro-face {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+}
+.intro-face-sprite svg { display: block; width: 56px; height: 56px; }
+.intro-face-label { font-family: var(--sans); font-size: 12px; font-weight: 700; color: var(--ink); }
 
 /* ≤ / ≥ in the pixel equation card: pixel < / > plus a one-pixel-thick bar.
    Press Start 2P is drawn on an 8×8 grid, so 0.125em = one font pixel. */
@@ -583,12 +719,16 @@ body {
   .achievements-modal, .achievements-modal-card { transition: none !important; }
   .daily-card { transition: none !important; }
   .intro-overlay, .intro-fade { transition: none !important; }
+  .intro-visual { transition: none !important; }
+  .tut-skip-btn { transition: none !important; }
   .step-dot { transition: none !important; }
   .equation.wrong-shake { animation: none !important; }
   .pixel-card.solved { animation: none !important; }
   .chalk-dust-piece { animation: none !important; opacity: 0 !important; }
   .floating-symbol { animation: none !important; }
   .ineq-sign.flip-cue { animation: none !important; }
+  .buddy-sprite { animation: none !important; }
+  .buddy-bubble { transition: none !important; }
 }
 /* ---------- Screens (Home / Play) ---------- */
 .screen {
@@ -616,6 +756,36 @@ body {
   letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--accent);
   margin: 0 0 -14px;
+}
+
+/* ---------- Home Chalky ----------
+   Tappable: each tap gives a new line. Sprite size comes from .buddy-sprite (84px, 60px on narrow phones). */
+.home-buddy { display: flex; align-items: center; gap: 14px; width: 100%; max-width: 520px; margin-top: 10px; }   /* room for "Tap me!" above him */
+.home-buddy-sprite { padding: 0; background: none; border: none; cursor: pointer; }
+.home-buddy-sprite:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 8px; }
+.home-buddy-wrap { position: relative; flex: none; }
+.buddy-bubble.home-bubble { flex: 1; max-width: none; cursor: pointer; }
+/* "Tap me!" — Chalky saying it himself: a small accent bubble above his head until the first tap */
+.home-tap-hint {
+  position: absolute; left: 0; bottom: 100%; margin-bottom: 6px;   /* left-aligned, so longer JA text never pokes past the page edge */
+  padding: 3px 9px; white-space: nowrap;
+  font-family: var(--sans); font-size: 11px; font-weight: 700;
+  color: var(--on-accent); background: var(--accent); border-radius: 8px;
+  pointer-events: none;            /* taps go through to Chalky */
+  animation: tapHintBob 1.2s steps(2, end) infinite;
+}
+.home-tap-hint::after {            /* tail pointing down at Chalky */
+  content: ""; position: absolute; left: 24px; top: 100%;          /* over his head at both 84px and 60px */
+  border: 5px solid transparent; border-top-color: var(--accent);
+}
+@keyframes tapHintBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) {
+  .home-tap-hint { animation: none !important; }
+}
+.home-bubble::after {              /* tail on the left, pointing at Chalky */
+  right: auto; left: -6px;
+  border-top: none; border-right: none;
+  border-left: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
 }
 .topic-cards {
   display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
