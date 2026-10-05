@@ -4233,6 +4233,94 @@ const LEVELS_BY_TOPIC_AND_DIFFICULTY = LEVELS.reduce((acc, lvl) => {
   return acc;
 }, {});
 
+// ---------- Tier tips ----------
+// One-time tips from Chalky, shown the first time a player opens a level in a tier
+// that introduces a new move. Keyed by `${topic}_${difficulty}`.
+// Tiers without a tip are left out on purpose: Easy tiers and Equations Medium use moves
+// the player already knows, and Inequalities Medium (the flip) and Quadratics Medium
+// (factorising) are covered by the topic tutorials.
+// `text` is per-language ({ en, ja }), like hints. `demo` is shown in the tip overlay as
+// from → move → to; `from` may be two lines ("\n") for systems, and `move` is per-language.
+const TIER_TIPS = {
+  equation_hard: {
+    text: {
+      en: "x on both sides? Subtract one of the x terms from both sides first, so x is only on one side. Then it's a two-step equation.",
+      ja: "両辺にxがある？まず片方のxの項を両辺から引いて、xを片側だけにしよう。あとはいつもの2ステップだよ。"
+    },
+    demo: {
+      from: "3x + 4 = x + 12",
+      move: { en: "Subtract x from both sides", ja: "両辺からxを引く" },
+      to: "2x + 4 = 12"
+    }
+  },
+  inequality_hard: {
+    text: {
+      en: "x on both sides works the same way here. Just watch the last step: if the x term ends up negative, flip the sign!",
+      ja: "両辺にxがあっても解き方は同じ。最後のステップに注意：xの項が負になったら、不等号の向きを逆に！"
+    },
+    demo: {
+      from: "-2x ≥ -10",
+      move: { en: "Divide both sides by -2, and flip the sign", ja: "両辺を-2で割って、不等号を逆にする" },
+      to: "x ≤ 5"
+    }
+  },
+  brackets_medium: {
+    text: {
+      en: "Careful with the minus! It goes with the number when you multiply: 3 × (-2) = -6.",
+      ja: "マイナスに注意！かけるときは、マイナスも数字と一緒にかけるよ：3 × (-2) = -6。"
+    },
+    demo: {
+      from: "3(x - 2) = 12",
+      move: { en: "Expand: 3 × x and 3 × (-2)", ja: "展開：3 × x と 3 × (-2)" },
+      to: "3x - 6 = 12"
+    }
+  },
+  brackets_hard: {
+    text: {
+      en: "A negative outside the brackets changes the sign of every term inside: -2 × (-3) = +6.",
+      ja: "かっこの外が負の数なら、中のすべての項の符号が変わるよ：-2 × (-3) = +6。"
+    },
+    demo: {
+      from: "-2(x - 3) = 14",
+      move: { en: "Expand: -2 × x and -2 × (-3)", ja: "展開：-2 × x と -2 × (-3)" },
+      to: "-2x + 6 = 14"
+    }
+  },
+  quadratic_hard: {
+    text: {
+      en: "Make one side 0 before you factorise. Never divide by x, or you'll lose the answer x = 0!",
+      ja: "因数分解の前に、片側を0にしよう。xで割るのはダメ — x = 0 の解がなくなるよ！"
+    },
+    demo: {
+      from: "x² = 4x",
+      move: { en: "Subtract 4x from both sides", ja: "両辺から4xを引く" },
+      to: "x² - 4x = 0"
+    }
+  },
+  system_medium: {
+    text: {
+      en: "Same sign? Subtract (top minus bottom). Opposite signs? Add.",
+      ja: "符号が同じなら引く（上の式から下の式を引く）。符号が反対なら足す！"
+    },
+    demo: {
+      from: "3x + y = 14\nx + y = 6",
+      move: { en: "+y and +y: same sign, so subtract", ja: "+y と +y は同じ符号なので引く" },
+      to: "2x = 8"
+    }
+  },
+  system_hard: {
+    text: {
+      en: "No letter matches? Multiply one equation first: every term, including the number.",
+      ja: "そろう文字がない？まず片方の式を何倍かしよう。数字も含めて、すべての項にかけるよ。"
+    },
+    demo: {
+      from: "x + 3y = 7",
+      move: { en: "Multiply every term by 2", ja: "すべての項を2倍する" },
+      to: "2x + 6y = 14"
+    }
+  }
+};
+
 // ---------- Achievements ----------
 // name/desc are per-language objects, matching the levels.js convention above.
 // `group` decides the section in the achievements panel: "general", "review", or a topic key.
@@ -4351,4 +4439,4 @@ const ACHIEVEMENTS = [
   ...TOPIC_ACHIEVEMENTS
 ];
 
-export { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS };
+export { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS, TIER_TIPS };

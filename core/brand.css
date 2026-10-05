@@ -961,6 +961,10 @@ body:has(.intro-overlay.show) { overflow: hidden; }
 }
 .review-row-name { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--ink); }
 .review-row-marks { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+/* Many marks for one topic (e.g. only one topic cleared): name on top, marks get the full width
+   underneath, so 10 marks stay on one line instead of wrapping 9 + 1 */
+.review-row:has(.review-mark:nth-child(7)) { flex-direction: column; align-items: flex-start; gap: 6px; }
+.review-row:has(.review-mark:nth-child(7)) .review-row-marks { justify-content: flex-start; }
 .review-mark {
   width: 20px; height: 20px;
   display: inline-grid; place-items: center;
@@ -981,4 +985,89 @@ body:has(.intro-overlay.show) { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .complete-backdrop, .complete-card { animation: none !important; }
   .complete-stars .big-star { animation: none !important; transform: none !important; }
+}
+
+/* ---------- Tier tip overlay ----------
+   One-time tip from Chalky before the first level of a tier with a new move.
+   Same look as the level-complete card. :not([hidden]) so display:grid never overrides `hidden`. */
+.tip-overlay:not([hidden]) {
+  position: fixed; inset: 0; z-index: 560;   /* above the complete card (550), below confetti (600) + toasts (700) */
+  display: grid; place-items: center; padding: 20px;
+}
+body:has(.tip-overlay:not([hidden])) { overflow: hidden; }   /* no page scroll behind it */
+.tip-backdrop {
+  position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55);
+  animation: completeFade .2s ease;
+}
+.tip-card {
+  position: relative; width: min(400px, 100%);
+  max-height: calc(100dvh - 40px); overflow-y: auto;
+  background: var(--surface);
+  padding: 24px 22px 20px;
+  display: flex; flex-direction: column; gap: 16px;
+  animation: completePop .32s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* Chalky + the tip he types out */
+.tip-head { display: flex; align-items: flex-start; gap: 12px; }
+.tip-buddy, .tip-buddy svg { width: 64px; height: 64px; }
+@media (max-width: 420px) {
+  .tip-buddy, .tip-buddy svg { width: 52px; height: 52px; }
+}
+.tip-head-text {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+}
+.tip-tag {
+  padding: 3px 9px;
+  font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--accent); background: var(--accent-tint); border-radius: 8px;
+}
+.tip-text {
+  margin: 0;
+  min-height: 4.65em;              /* ~3 lines, so the card doesn't grow while he types */
+  font-family: var(--sans); font-size: 15px; line-height: 1.55; color: var(--ink);
+}
+
+/* Mini demo: before → move → after. Keeps its space while hidden, then fades in. */
+.tip-demo {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding-top: 14px; border-top: 1px solid var(--border);
+  opacity: 0; transform: translateY(8px);
+}
+.tip-demo.reveal {
+  opacity: 1; transform: none;
+  transition: opacity .35s ease, transform .35s ease;
+}
+.tip-demo-label {
+  align-self: flex-start; margin: 0;
+  font-family: var(--sans); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+}
+.tip-demo-card { padding: 12px 14px; }
+.tip-demo-card .equation { font-size: clamp(11px, 3vw, 15px); }
+.tip-demo-move {
+  margin: 0; text-align: center;
+  font-family: var(--sans); font-size: 13px; font-weight: 700; color: var(--accent);
+}
+.tip-demo-move::before { content: "↓ "; }
+.tip-ok-btn { width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tip-backdrop, .tip-card { animation: none !important; }
+  .tip-demo { transition: none !important; }
+}
+
+/* ---------- Chalky on the level-complete card ----------
+   Chalky on the left, his line in a bubble on the right (tail pointing back at him). */
+.complete-buddy-row { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; margin: 2px 0; }
+.complete-buddy, .complete-buddy svg { width: 64px; height: 64px; }
+@media (max-width: 420px) {
+  .complete-buddy, .complete-buddy svg { width: 52px; height: 52px; }
+}
+.complete-card .complete-bubble { flex: 0 1 auto; min-width: 0; max-width: none; text-align: left; }
+.complete-bubble::after {
+  right: auto; left: -6px;
+  border-top: none; border-right: none;
+  border-left: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
 }
