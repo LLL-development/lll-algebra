@@ -430,11 +430,13 @@ body {
 .buddy-sprite.oops { animation: buddyShake .45s steps(2, end); }
 .buddy-sprite.thinking { animation: buddyTilt 1.4s steps(2, end) 2; }
 .buddy-sprite.celebrating { animation: buddyJump .9s steps(2, end); }
+.buddy-sprite.nod { animation: buddyNod 1.8s ease-in-out infinite; }   /* dozing idle */
 @keyframes buddyBob   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes buddyHop   { 0%, 70%, 100% { transform: translateY(0); } 35% { transform: translateY(-12px); } 85% { transform: translateY(-4px); } }
 @keyframes buddyShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
 @keyframes buddyTilt  { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-6deg); } }
 @keyframes buddyJump  { 0%, 50%, 100% { transform: translateY(0); } 25%, 75% { transform: translateY(-16px); } }
+@keyframes buddyNod   { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(4px) rotate(-4deg); } }
 
 /* Keeps a math run like "(x + 2)(x + 3)" on one line in hints and explanations
    (see setMathText() in index.html); the text around it still wraps normally. */
