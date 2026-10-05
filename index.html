@@ -30,6 +30,10 @@
     <p class="complete-kicker" id="completeKicker"></p>
     <p class="complete-sub" id="completeSub"></p>
     <div class="complete-stars" id="completeStars"></div>
+    <div class="complete-buddy-row">
+      <div class="buddy-sprite complete-buddy" id="completeBuddy" aria-hidden="true"></div>
+      <p class="buddy-bubble complete-bubble" id="completeBubble" aria-live="polite"></p>
+    </div>
     <p class="complete-best" id="completeBest" hidden></p>
     <p class="complete-points" id="completePoints"></p>
     <p class="complete-bonus" id="completeBonus" hidden></p>
@@ -42,6 +46,27 @@
         <button class="complete-btn secondary" id="completeLevelsBtn"></button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Tier tip overlay: one-time tip from Chalky the first time a tier with a new move is opened -->
+<div class="tip-overlay" id="tipOverlay" hidden>
+  <div class="tip-backdrop"></div>
+  <div class="tip-card pixel-card" role="dialog" aria-modal="true" aria-labelledby="tipTag">
+    <div class="tip-head">
+      <div class="buddy-sprite tip-buddy" id="tipBuddy" aria-hidden="true"></div>
+      <div class="tip-head-text">
+        <span class="tip-tag" id="tipTag"></span>
+        <p class="tip-text" id="tipText" aria-live="polite"></p>
+      </div>
+    </div>
+    <div class="tip-demo" id="tipDemo">
+      <p class="tip-demo-label" id="tipDemoLabel"></p>
+      <div class="equation-card pixel-card tip-demo-card" id="tipFromCard"><p class="equation tip-demo-eq" id="tipFrom"></p></div>
+      <p class="tip-demo-move" id="tipMove"></p>
+      <div class="equation-card pixel-card tip-demo-card"><p class="equation tip-demo-eq" id="tipTo"></p></div>
+    </div>
+    <button class="complete-btn primary tip-ok-btn" id="tipOkBtn"></button>
   </div>
 </div>
 
@@ -255,7 +280,7 @@
 
 <script src="core/i18n.js"></script>
 <script type="module">
-  import { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS } from "./levels.js";
+  import { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS, TIER_TIPS } from "./levels.js";
 
   // ---------- i18n ----------
   const STRINGS = {
@@ -338,6 +363,17 @@
       topicSystemTutBody: "Add or subtract the two equations so one letter cancels out. Solve for the other letter, then substitute it back.",
       topicSystemTutTip1: "x + y = 9 and 2x - y = 3: adding them cancels y",
       topicSystemTutTip2: "Found x? Put it back into either equation to find y",
+      tipTag: "New in {tier}",
+      tipDemoLabel: "Example",
+      tipOkBtn: "Got it, let's go",
+      chalky3Star: "Perfect! ★★★|Flawless, not a single slip!|Three stars! You made that look easy",
+      chalkyFewerStars: "Nice! Try for ★★★ next time|Solved! Can you get ★★★ next time?|You got there! No hints, no slips = ★★★",
+      chalkyTierDone: "You finished {tier}! 🎉|{tier} cleared! On to the next one!",
+      chalkyTopicMastered: "You mastered {topic}! 🏆",
+      chalkyDaily: "Challenge done! See you tomorrow!",
+      chalkyDailyStreak: "{n} days in a row! 🔥|{n}-day streak! Keep it going!",
+      chalkyReview: "Review done! Practice makes it stick.|Nice mix! Every round helps.",
+      chalkyReviewFlawless: "{n} out of {n}, no slips! Amazing!",
       buddyCorrect: "Nice!|That's it!|Good move!|Keep going!",
       buddyWrong: "Almost! Try again|So close!|Not that one — try another|Mistakes help you learn!",
       buddyHint: "Here's a clue!|Let's think…|Hmm, look at this",
@@ -430,6 +466,17 @@
       topicSystemTutBody: "2つの式を足すか引いて、文字を1つ消します。残った文字を求めたら、それを代入してもう1つを求めます。",
       topicSystemTutTip1: "x + y = 9 と 2x - y = 3 を足すと y が消えます",
       topicSystemTutTip2: "xが分かったら、どちらかの式に代入してyを求めよう",
+      tipTag: "「{tier}」の新しいポイント",
+      tipDemoLabel: "例",
+      tipOkBtn: "OK、やってみる！",
+      chalky3Star: "パーフェクト！★★★|ノーミス！すごい！|★3つ！かんたんそうだったね",
+      chalkyFewerStars: "いいね！次は★3つをねらおう|クリア！次は★★★いけるかな？|できたね！ヒントなし・ミスなしで★★★だよ",
+      chalkyTierDone: "「{tier}」クリア！🎉|「{tier}」を全部クリア！次へ行こう！",
+      chalkyTopicMastered: "{topic}をマスターしたね！🏆",
+      chalkyDaily: "チャレンジ達成！また明日ね！",
+      chalkyDailyStreak: "{n}日連続！🔥|{n}日連続！この調子！",
+      chalkyReview: "復習おつかれさま！くり返すと身につくよ。|いいミックス！毎回力になるよ。",
+      chalkyReviewFlawless: "{n}問中{n}問ノーミス！すごい！",
       buddyCorrect: "いいね！|その通り！|ナイス！|その調子！",
       buddyWrong: "おしい！もう一度|あと少し！|それじゃないよ、別のを選ぼう|まちがいも勉強のうち！",
       buddyHint: "ヒントだよ！|考えてみよう…|ここを見てみて",
@@ -455,6 +502,7 @@
     if ($achievementsModal.classList.contains("show")) renderAchievementsList();
     if ($tutorialOverlay.classList.contains("show")) openTutorial(tutTopic, tutAuto);
     if ($introOverlay.classList.contains("show")) showIntroStep(introStep);
+    if (!$tipOverlay.hidden) { fillTierTip(); showTipText(false); }
     // Only redraw the game when it's on screen mid-level (a solved level has no current step).
     if ($screenPlay.hidden || !$completeOverlay.hidden || stepIndex >= currentLevel().steps.length) return;
     render();
@@ -815,7 +863,7 @@
       tone(ctx, NOTE.E6, 0, 0.12, "triangle");
       tone(ctx, NOTE.G6, 0.1, 0.25, "triangle");
     },
-    // Tier complete / Mixed Review clean sweep: plays with the big confetti.
+    // Big moments (tier / topic complete, Today's Challenge, Mixed Review finished): plays with the big confetti.
     fanfare() {
       const ctx = getAudio(); if (!ctx) return;
       [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C6].forEach((f, i) => tone(ctx, f, i * 0.1, 0.1, "square", 0.8));
@@ -1095,16 +1143,17 @@
   $achievementsBackdrop.addEventListener("click", closeAchievementsModal);
   $achievementsCloseBtn.addEventListener("click", closeAchievementsModal);
 
-  function burstGrandConfetti() {
+  // big = topic mastered: twice the pieces, falling for longer, in a wider wave
+  function burstGrandConfetti({ big = false } = {}) {
     sfx.fanfare();
     const colors = ["var(--accent)", "var(--correct)", "var(--muted)"];
-    const pieceCount = 80;
+    const pieceCount = big ? 160 : 80;
     for (let i = 0; i < pieceCount; i++) {
       const piece = document.createElement("span");
       piece.className = "grand-confetti-piece";
       const left = Math.random() * 100;
-      const duration = 2.2 + Math.random() * 1.4;
-      const delay = Math.random() * 0.4;
+      const duration = (big ? 3.2 : 2.2) + Math.random() * 1.4;
+      const delay = Math.random() * (big ? 1.2 : 0.4);
       const rotate = Math.random() * 720 - 360;
       piece.style.left = `${left}vw`;
       piece.style.setProperty("--rotate", `${rotate}deg`);
@@ -1363,7 +1412,7 @@
         const result = {
           hash: location.hash, daily: wasDaily, level,
           basePoints: level.basePoints, streakBonus, streakCount: streak,
-          stars: 0, newBest: false, tierJustCompleted: false
+          stars: 0, newBest: false, tierJustCompleted: false, topicJustMastered: false
         };
         if (wasDaily) {
           const today = getDateKey();
@@ -1374,7 +1423,10 @@
           leaveDaily();
         } else {
           const prevBest = (levelProgress[level.id] || {}).stars || 0;
+          const mastered = () => { const s = topicStats(level.topic); return s.cleared === s.total; };
+          const wasMastered = mastered();
           result.stars = recordLevelResult(level);
+          result.topicJustMastered = !wasMastered && mastered();
           result.newBest = prevBest > 0 && result.stars > prevBest;
           result.tierJustCompleted = !nextLevelInTier(level);
           if (result.tierJustCompleted) completedLoops++;
@@ -1450,6 +1502,15 @@
     return nextTier ? (levelsFor(level.topic, nextTier)[0] || null) : null;
   }
 
+  // Chalky on the level-complete card / Mixed Review summary. keepBubble so his line stays up.
+  const completeBuddy = makeBuddy(document.getElementById("completeBuddy"), document.getElementById("completeBubble"), { keepBubble: true });
+
+  // Random line from `key` with {vars} filled in; he holds that face until the card closes.
+  function completeChalky(mood, key, vars = {}) {
+    const line = Object.entries(vars).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), buddyLine(key));
+    completeBuddy.react(mood, { line, stay: true });   // the card is a still moment, so his face matches his line until it closes
+  }
+
   let completeActions = {};
 
   function showCompleteOverlay(r) {
@@ -1510,11 +1571,18 @@
     $completeKicker.classList.toggle("pixel", /^[\x20-\x7E]*$/.test($completeKicker.textContent));
     $completeOverlay.hidden = false;
     $completePrimaryBtn.focus({ preventScroll: true });
-    if (r.tierJustCompleted) burstGrandConfetti();
-    else if (r.streakBonus) sfx.streak();   // the fanfare already covers a tier completion
+
+    // Biggest moment wins: topic mastered > tier complete > Today's Challenge > normal clear
+    if (r.topicJustMastered) completeChalky("celebrating", "chalkyTopicMastered", { topic: t(TOPIC_LABEL_KEYS[r.level.topic]) });
+    else if (r.tierJustCompleted) completeChalky("celebrating", "chalkyTierDone", { tier: tierName });
+    else if (r.daily) completeChalky("celebrating", dailyStreak > 1 ? "chalkyDailyStreak" : "chalkyDaily", { n: dailyStreak });
+    else completeChalky("happy", r.stars === 3 ? "chalky3Star" : "chalkyFewerStars");
+
+    if (r.topicJustMastered || r.tierJustCompleted || r.daily) burstGrandConfetti({ big: r.topicJustMastered });
+    else if (r.streakBonus) sfx.streak();   // the fanfare already covers the big moments
   }
 
-  function hideCompleteOverlay() { $completeOverlay.hidden = true; }
+  function hideCompleteOverlay() { $completeOverlay.hidden = true; completeBuddy.stop(); }
 
   $completePrimaryBtn.addEventListener("click", () => completeActions.primary && completeActions.primary());
   $completeRetryBtn.addEventListener("click", () => completeActions.retry && completeActions.retry());
@@ -1700,7 +1768,9 @@
     $completeKicker.classList.toggle("pixel", /^[\x20-\x7E]*$/.test($completeKicker.textContent));
     $completeOverlay.hidden = false;
     $completePrimaryBtn.focus({ preventScroll: true });
-    if (flawless === results.length) burstGrandConfetti();
+    const allClean = flawless === results.length;
+    completeChalky("celebrating", allClean ? "chalkyReviewFlawless" : "chalkyReview", { n: results.length });
+    burstGrandConfetti();   // any finished session gets confetti, not only a flawless one
   }
 
   $completeReview.addEventListener("click", (e) => {
@@ -1892,6 +1962,7 @@
 
   function onRoute() {
     hideCompleteOverlay();
+    if (!$tipOverlay.hidden) closeTierTip(false);   // left before reading it, so it shows again next time
     if ($tutorialOverlay.classList.contains("show") && !$tutorialOverlay.classList.contains("hiding")) closeTutorial(false);
     const [screen, arg] = location.hash.replace(/^#/, "").split("/");
     if (screen === "play" && LEVELS_BY_ID[arg]) {
@@ -1903,6 +1974,7 @@
       openLevel(level);
       setBackLabel("backLevels", "Levels");
       showScreen("play");
+      maybeShowTierTip(level);
     } else if (screen === "levels" && LEVELS_BY_TOPIC_AND_DIFFICULTY[arg]) {
       leaveDaily();
       leaveReview();
@@ -2234,6 +2306,87 @@
   $levelsHelpBtn.addEventListener("click", () => {
     const topic = location.hash.split("/")[1];
     if (LEVELS_BY_TOPIC_AND_DIFFICULTY[topic]) openTutorial(topic, false);
+  });
+
+  // ---------- tier tips ----------
+  // One-time tips from Chalky for tiers that introduce a new move (text + demo in levels.js).
+  // Shown the first time the player opens any level in that tier, before they play.
+  // Marked seen only when dismissed, so leaving before reading it shows it again next time.
+  // Not shown in Today's Challenge or Mixed Review.
+  const TIER_TIPS_SEEN_KEY = "lll_algebra_tier_tips_seen";
+  const $tipOverlay = document.getElementById("tipOverlay");
+  const $tipTag = document.getElementById("tipTag");
+  const $tipText = document.getElementById("tipText");
+  const $tipDemo = document.getElementById("tipDemo");
+  const $tipDemoLabel = document.getElementById("tipDemoLabel");
+  const $tipFromCard = document.getElementById("tipFromCard");
+  const $tipFrom = document.getElementById("tipFrom");
+  const $tipMove = document.getElementById("tipMove");
+  const $tipTo = document.getElementById("tipTo");
+  const $tipOkBtn = document.getElementById("tipOkBtn");
+  const tipBuddy = makeBuddy(document.getElementById("tipBuddy"), null);
+
+  let tierTipsSeen = new Set();
+  try { tierTipsSeen = new Set(JSON.parse(localStorage.getItem(TIER_TIPS_SEEN_KEY) || "[]")); } catch (e) { /* fail silently */ }
+  let tipKey = null;     // e.g. "equation_hard" while the overlay is open
+  let tipTimer = null;
+
+  // Everything except the tip text, which Chalky types out
+  function fillTierTip() {
+    const tip = TIER_TIPS[tipKey];
+    const lang = currentLang();
+    const t = k => LLL_I18N.t(k) || "";
+    const tier = tipKey.split("_")[1];
+    $tipTag.textContent = t("tipTag").split("{tier}").join(t(TIER_LABEL_KEYS[tier]));
+    $tipDemoLabel.textContent = t("tipDemoLabel");
+    setPixelEq($tipFrom, tip.demo.from);
+    $tipFromCard.classList.toggle("system-card", tip.demo.from.includes("\n"));
+    setMathText($tipMove, (tip.demo.move[lang] || tip.demo.move.en).replace(/-(?=\d)/g, "−"));
+    setPixelEq($tipTo, tip.demo.to);
+    $tipOkBtn.textContent = t("tipOkBtn");
+  }
+
+  // typed = Chalky types it, then the demo fades in. Otherwise (language switch) it all shows at once.
+  function showTipText(typed) {
+    const tip = TIER_TIPS[tipKey];
+    const text = tip.text[currentLang()] || tip.text.en;
+    if (typed) {
+      tipBuddy.talk($tipText, text, () => $tipDemo.classList.add("reveal"));
+    } else {
+      tipBuddy.idle();
+      setMathText($tipText, text);
+      $tipDemo.classList.add("reveal");
+    }
+  }
+
+  function maybeShowTierTip(level) {
+    const key = `${level.topic}_${level.difficulty}`;
+    if (!TIER_TIPS[key] || tierTipsSeen.has(key)) return;
+    tipKey = key;
+    fillTierTip();
+    $tipText.textContent = "";
+    $tipDemo.classList.remove("reveal");
+    $tipOverlay.hidden = false;
+    $tipOkBtn.focus({ preventScroll: true });
+    tipBuddy.react("happy", { ms: 600 });   // a hop to say "new thing!", then he talks
+    clearTimeout(tipTimer);
+    tipTimer = setTimeout(() => showTipText(true), 500);
+  }
+
+  function closeTierTip(markSeen = true) {
+    clearTimeout(tipTimer);
+    tipBuddy.stop();
+    $tipOverlay.hidden = true;
+    if (markSeen && tipKey) {
+      tierTipsSeen.add(tipKey);
+      try { localStorage.setItem(TIER_TIPS_SEEN_KEY, JSON.stringify([...tierTipsSeen])); } catch (e) { /* fail silently */ }
+    }
+    tipKey = null;
+  }
+
+  $tipOkBtn.addEventListener("click", () => closeTierTip());
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$tipOverlay.hidden) closeTierTip();
   });
 
   initFloatingSymbols();
