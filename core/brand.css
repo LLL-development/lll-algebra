@@ -1141,5 +1141,5 @@ body:has(.tip-overlay:not([hidden])) { overflow: hidden; }   /* no page scroll b
   .complete-card.has-graph > .complete-kicker,
   .complete-card.has-graph > .complete-sub,
   .complete-card.has-graph > .complete-stars { grid-column: 1 / -1; }
-  .complete-card.has-graph > .complete-graph { grid-column: 1; grid-row: 4 / span 6; width: 100%; align-self: start; }
+  .complete-card.has-graph > .complete-graph { grid-column: 1; grid-row: span 6; width: 100%; align-self: start; }
 }
