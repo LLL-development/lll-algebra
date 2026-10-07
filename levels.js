@@ -25,6 +25,9 @@
 //   "scale"       — multiply one equation of a system so a letter will cancel (systems, Hard).
 //                   Authored: `value` is just the scaled equation (e.g. "2x + 6y = 14");
 //                   `result` is the new two-line system with that line replaced.
+//   "simplify"    — combine like terms on ONE side (fractions, after clearing them).
+//                   Authored like "expand": `value` is the combined side (e.g. "5x"),
+//                   `target` is "left" or "right".
 //
 // Systems: `equation` is two lines joined by "\n" (e.g. "x + y = 9\n2x - y = 3"), and
 // `answer` is { x, y }. A step whose result the player must substitute into keeps that
@@ -33,6 +36,10 @@
 // Any step with a `wrong` array is an authored-choice step: the UI shows `value` plus
 // the 3 `wrong` options instead of generating distractors.
 //
+// A + − × ÷ step may instead carry `traps`: 3 wrong numbers for the same move, used in place
+// of generated distractors (fractions: "× 2" or "× 5" when the answer is "× 6"). Traps must
+// never be a common multiple of the denominators — any common multiple also clears the fractions.
+//
 // Authoring rules:
 //   - add/subtract/add_x/subtract_x values are always POSITIVE
 //     ("x - 3 > 5" is { action: "add", value: 3 }, never subtract -3).
@@ -40,8 +47,8 @@
 //   - Inequality steps that multiply/divide by a negative set `flip: true`
 //     (the inequality sign reverses on that step).
 //
-// `topic` is "equation", "inequality", "brackets", "quadratic" or "system". `target` is "both-sides"
-// for every move that changes a side's value; only "expand" rewrites one side,
+// `topic` is "equation", "inequality", "brackets", "quadratic", "system" or "fraction". `target` is "both-sides"
+// for every move that changes a side's value; only "expand" and "simplify" rewrite one side,
 // because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
 // `hints` and `explanation` are per-language objects ({ en, ja }) so the
@@ -4222,6 +4229,916 @@ const LEVELS = [
       en: "Multiplying 2x + y = -1 by 5 makes 5y on both lines. Subtracting cancels y: 3x - 10x = -7x and 9 - (-5) = 14, so x = -2. Then -4 + y = -1 gives y = 3.",
       ja: "2x + y = -1 を5倍すると、どちらも5yになります。引くとyが消えて 3x - 10x = -7x、9 - (-5) = 14 で x = -2。-4 + y = -1 から y = 3 です。"
     }
+  },
+
+  // =====================================================================
+  // FRACTIONS
+  // =====================================================================
+
+  // ---- Easy: a fraction in front of x — clear the fraction first, then divide ----
+  // Fractions are written inline (2x/3), which the pixel font and typewriter reveal already handle.
+  {
+    id: "fraction_easy_01",
+    topic: "fraction",
+    equation: "2x/3 = 8",
+    answer: 12,
+    difficulty: "easy",
+    type: "fraction-coefficient",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 3, target: "both-sides", result: "2x = 24" },
+      { action: "divide",   value: 2, target: "both-sides", result: "x = 12" }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 3.",
+        "Now divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "分数をなくす — 両辺に3をかける。",
+        "次に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "x is multiplied by 2 and divided by 3. Undo the division first: × 3 gives 2x = 24, then ÷ 2 gives x = 12.",
+      ja: "xは2倍されて3で割られています。まず両辺に3をかけて割り算を打ち消すと 2x = 24、次に2で割って x = 12 です。"
+    }
+  },
+  {
+    id: "fraction_easy_02",
+    topic: "fraction",
+    equation: "3x/4 = 6",
+    answer: 8,
+    difficulty: "easy",
+    type: "fraction-coefficient",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 4, target: "both-sides", result: "3x = 24" },
+      { action: "divide",   value: 3, target: "both-sides", result: "x = 8" }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 4.",
+        "Now divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "分数をなくす — 両辺に4をかける。",
+        "次に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Multiply both sides by 4 to clear the fraction: 3x = 24. Then divide by 3 to get x = 8.",
+      ja: "両辺に4をかけて分数をなくすと 3x = 24。3で割って x = 8 です。"
+    }
+  },
+  {
+    id: "fraction_easy_03",
+    topic: "fraction",
+    equation: "2x/5 = 4",
+    answer: 10,
+    difficulty: "easy",
+    type: "fraction-coefficient",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 5, target: "both-sides", result: "2x = 20" },
+      { action: "divide",   value: 2, target: "both-sides", result: "x = 10" }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 5.",
+        "Now divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "分数をなくす — 両辺に5をかける。",
+        "次に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Clearing the fraction first keeps the numbers whole: × 5 gives 2x = 20, then ÷ 2 gives x = 10.",
+      ja: "先に分数をなくすと整数のまま計算できます。5をかけて 2x = 20、2で割って x = 10 です。"
+    }
+  },
+  {
+    id: "fraction_easy_04",
+    topic: "fraction",
+    equation: "5x/2 = 15",
+    answer: 6,
+    difficulty: "easy",
+    type: "fraction-coefficient",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 2, target: "both-sides", result: "5x = 30" },
+      { action: "divide",   value: 5, target: "both-sides", result: "x = 6" }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 2.",
+        "Now divide both sides by 5 to isolate x."
+      ],
+      ja: [
+        "分数をなくす — 両辺に2をかける。",
+        "次に両辺を5で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "The top number is bigger than the bottom this time, but the steps are the same: × 2 gives 5x = 30, then ÷ 5 gives x = 6.",
+      ja: "今回は分子が分母より大きいですが、手順は同じです。2をかけて 5x = 30、5で割って x = 6 です。"
+    }
+  },
+  {
+    id: "fraction_easy_05",
+    topic: "fraction",
+    equation: "3x/2 = -9",
+    answer: -6,
+    difficulty: "easy",
+    type: "fraction-coefficient",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 2, target: "both-sides", result: "3x = -18" },
+      { action: "divide",   value: 3, target: "both-sides", result: "x = -6" }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 2.",
+        "Now divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "分数をなくす — 両辺に2をかける。",
+        "次に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "× 2 gives 3x = -18, then ÷ 3 gives x = -6. The right side is negative, so the answer is too.",
+      ja: "2をかけて 3x = -18、3で割って x = -6 です。右辺が負の数なので、答えも負の数になります。"
+    }
+  },
+  {
+    id: "fraction_easy_06",
+    topic: "fraction",
+    equation: "4x/3 = 12",
+    answer: 9,
+    difficulty: "easy",
+    type: "fraction-coefficient",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 3, target: "both-sides", result: "4x = 36" },
+      { action: "divide",   value: 4, target: "both-sides", result: "x = 9" }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 3.",
+        "Now divide both sides by 4 to isolate x."
+      ],
+      ja: [
+        "分数をなくす — 両辺に3をかける。",
+        "次に両辺を4で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Multiply both sides by 3 to get 4x = 36, then divide by 4 to get x = 9.",
+      ja: "両辺に3をかけて 4x = 36、4で割って x = 9 です。"
+    }
+  },
+  {
+    id: "fraction_easy_07",
+    topic: "fraction",
+    equation: "2x/7 = 2",
+    answer: 7,
+    difficulty: "easy",
+    type: "fraction-coefficient",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 7, target: "both-sides", result: "2x = 14" },
+      { action: "divide",   value: 2, target: "both-sides", result: "x = 7" }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 7.",
+        "Now divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "分数をなくす — 両辺に7をかける。",
+        "次に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying both sides by 7 multiplies the right side too: 2 × 7 = 14, so 2x = 14 and x = 7.",
+      ja: "両辺に7をかけると右辺にもかかります：2 × 7 = 14 なので 2x = 14、x = 7 です。"
+    }
+  },
+  {
+    id: "fraction_easy_08",
+    topic: "fraction",
+    equation: "3x/5 = -6",
+    answer: -10,
+    difficulty: "easy",
+    type: "fraction-coefficient",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 5, target: "both-sides", result: "3x = -30" },
+      { action: "divide",   value: 3, target: "both-sides", result: "x = -10" }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 5.",
+        "Now divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "分数をなくす — 両辺に5をかける。",
+        "次に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "× 5 gives 3x = -30, then ÷ 3 gives x = -10.",
+      ja: "5をかけて 3x = -30、3で割って x = -10 です。"
+    }
+  },
+  {
+    id: "fraction_easy_09",
+    topic: "fraction",
+    equation: "5x/4 = 10",
+    answer: 8,
+    difficulty: "easy",
+    type: "fraction-coefficient",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 4, target: "both-sides", result: "5x = 40" },
+      { action: "divide",   value: 5, target: "both-sides", result: "x = 8" }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 4.",
+        "Now divide both sides by 5 to isolate x."
+      ],
+      ja: [
+        "分数をなくす — 両辺に4をかける。",
+        "次に両辺を5で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "Multiply both sides by 4 to get 5x = 40, then divide by 5 to get x = 8.",
+      ja: "両辺に4をかけて 5x = 40、5で割って x = 8 です。"
+    }
+  },
+  {
+    id: "fraction_easy_10",
+    topic: "fraction",
+    equation: "-2x/3 = 4",
+    answer: -6,
+    difficulty: "easy",
+    type: "fraction-coefficient",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 3,  target: "both-sides", result: "-2x = 12" },
+      { action: "divide",   value: -2, target: "both-sides", result: "x = -6" }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 3.",
+        "Now divide both sides by -2 — watch the negative sign!"
+      ],
+      ja: [
+        "分数をなくす — 両辺に3をかける。",
+        "次に両辺を-2で割る — マイナスの符号に注意！"
+      ]
+    },
+    explanation: {
+      en: "× 3 gives -2x = 12. Divide by -2, including its negative sign: x = -6.",
+      ja: "3をかけて -2x = 12。マイナスも含めて-2で割ると x = -6 です。"
+    }
+  },
+
+  // ---- Medium: two fractions — multiply by the LCD, then combine the x terms ----
+  // Levels 4, 7 and 9: the LCD is NOT the two denominators multiplied together.
+  // Levels 2 and 7: combining leaves just x, so there's no divide step.
+  {
+    id: "fraction_medium_01",
+    topic: "fraction",
+    equation: "x/2 + x/3 = 5",
+    answer: 6,
+    difficulty: "medium",
+    type: "lcd",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: 6, traps: [2, 3, 5], target: "both-sides", result: "3x + 2x = 30" },
+      { action: "simplify", value: "5x", wrong: ["6x", "x", "5x²"], target: "left", result: "5x = 30" },
+      { action: "divide",   value: 5, target: "both-sides", result: "x = 6" }
+    ],
+    hints: {
+      en: [
+        "Clear both fractions at once — multiply both sides by 6, the smallest number 2 and 3 both go into.",
+        "Combine the x terms: 3x + 2x.",
+        "Now divide both sides by 5 to isolate x."
+      ],
+      ja: [
+        "分数をまとめてなくす — 2でも3でも割り切れる一番小さい数、6を両辺にかける。",
+        "xの項をまとめる：3x + 2x。",
+        "次に両辺を5で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "6 is the smallest number both 2 and 3 go into (the LCD). × 6 turns x/2 into 3x and x/3 into 2x, and the 5 becomes 30. Then 5x = 30, so x = 6.",
+      ja: "6は2でも3でも割り切れる一番小さい数（分母の最小公倍数）です。6をかけると x/2 は 3x、x/3 は 2x に、右辺の5は30になります。5x = 30 なので x = 6 です。"
+    }
+  },
+  {
+    id: "fraction_medium_02",
+    topic: "fraction",
+    equation: "x/2 - x/3 = 2",
+    answer: 12,
+    difficulty: "medium",
+    type: "lcd",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: 6, traps: [2, 3, 5], target: "both-sides", result: "3x - 2x = 12" },
+      { action: "simplify", value: "x", wrong: ["5x", "-x", "6x"], target: "left", result: "x = 12" }
+    ],
+    hints: {
+      en: [
+        "Clear both fractions at once — multiply both sides by 6, the smallest number 2 and 3 both go into.",
+        "Combine the x terms: 3x - 2x."
+      ],
+      ja: [
+        "分数をまとめてなくす — 2でも3でも割り切れる一番小さい数、6を両辺にかける。",
+        "xの項をまとめる：3x - 2x。"
+      ]
+    },
+    explanation: {
+      en: "× 6 gives 3x - 2x = 12. 3x take away 2x leaves just x, so x = 12 — no dividing needed.",
+      ja: "6をかけると 3x - 2x = 12。3xから2xを引くとxだけが残るので x = 12 です。割る必要はありません。"
+    }
+  },
+  {
+    id: "fraction_medium_03",
+    topic: "fraction",
+    equation: "x/3 + x/4 = 7",
+    answer: 12,
+    difficulty: "medium",
+    type: "lcd",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: 12, traps: [3, 4, 7], target: "both-sides", result: "4x + 3x = 84" },
+      { action: "simplify", value: "7x", wrong: ["12x", "x", "7x²"], target: "left", result: "7x = 84" },
+      { action: "divide",   value: 7, target: "both-sides", result: "x = 12" }
+    ],
+    hints: {
+      en: [
+        "Clear both fractions at once — multiply both sides by 12, the smallest number 3 and 4 both go into.",
+        "Combine the x terms: 4x + 3x.",
+        "Now divide both sides by 7 to isolate x."
+      ],
+      ja: [
+        "分数をまとめてなくす — 3でも4でも割り切れる一番小さい数、12を両辺にかける。",
+        "xの項をまとめる：4x + 3x。",
+        "次に両辺を7で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "The LCD of 3 and 4 is 12. × 12 gives 4x + 3x = 84, so 7x = 84 and x = 12.",
+      ja: "3と4の最小公倍数は12です。12をかけると 4x + 3x = 84、7x = 84 なので x = 12 です。"
+    }
+  },
+  {
+    id: "fraction_medium_04",
+    topic: "fraction",
+    equation: "x/2 + x/4 = 3",
+    answer: 4,
+    difficulty: "medium",
+    type: "lcd",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: 4, traps: [2, 3, 6], target: "both-sides", result: "2x + x = 12" },
+      { action: "simplify", value: "3x", wrong: ["2x", "x", "3x²"], target: "left", result: "3x = 12" },
+      { action: "divide",   value: 3, target: "both-sides", result: "x = 4" }
+    ],
+    hints: {
+      en: [
+        "Clear both fractions at once — multiply both sides by 4. 2 goes into 4 too!",
+        "Combine the x terms: 2x + x. Remember x is 1x.",
+        "Now divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "分数をまとめてなくす — 両辺に4をかける。4は2でも割り切れるよ！",
+        "xの項をまとめる：2x + x。xは1xと同じ。",
+        "次に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "4 already goes into 4, and 2 goes into 4 too, so the LCD is 4, not 8. × 4 gives 2x + x = 12 — x counts as 1x — so 3x = 12 and x = 4.",
+      ja: "4は2でも4でも割り切れるので、最小公倍数は8ではなく4です。4をかけると 2x + x = 12。xは1xなので 3x = 12、x = 4 です。"
+    }
+  },
+  {
+    id: "fraction_medium_05",
+    topic: "fraction",
+    equation: "x/3 - x/5 = 2",
+    answer: 15,
+    difficulty: "medium",
+    type: "lcd",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: 15, traps: [3, 5, 8], target: "both-sides", result: "5x - 3x = 30" },
+      { action: "simplify", value: "2x", wrong: ["8x", "-2x", "15x"], target: "left", result: "2x = 30" },
+      { action: "divide",   value: 2, target: "both-sides", result: "x = 15" }
+    ],
+    hints: {
+      en: [
+        "Clear both fractions at once — multiply both sides by 15, the smallest number 3 and 5 both go into.",
+        "Combine the x terms: 5x - 3x.",
+        "Now divide both sides by 2 to isolate x."
+      ],
+      ja: [
+        "分数をまとめてなくす — 3でも5でも割り切れる一番小さい数、15を両辺にかける。",
+        "xの項をまとめる：5x - 3x。",
+        "次に両辺を2で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "The LCD of 3 and 5 is 15. × 15 gives 5x - 3x = 30, so 2x = 30 and x = 15.",
+      ja: "3と5の最小公倍数は15です。15をかけると 5x - 3x = 30、2x = 30 なので x = 15 です。"
+    }
+  },
+  {
+    id: "fraction_medium_06",
+    topic: "fraction",
+    equation: "x/2 + x/5 = 7",
+    answer: 10,
+    difficulty: "medium",
+    type: "lcd",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: 10, traps: [2, 5, 7], target: "both-sides", result: "5x + 2x = 70" },
+      { action: "simplify", value: "7x", wrong: ["10x", "3x", "7x²"], target: "left", result: "7x = 70" },
+      { action: "divide",   value: 7, target: "both-sides", result: "x = 10" }
+    ],
+    hints: {
+      en: [
+        "Clear both fractions at once — multiply both sides by 10, the smallest number 2 and 5 both go into.",
+        "Combine the x terms: 5x + 2x.",
+        "Now divide both sides by 7 to isolate x."
+      ],
+      ja: [
+        "分数をまとめてなくす — 2でも5でも割り切れる一番小さい数、10を両辺にかける。",
+        "xの項をまとめる：5x + 2x。",
+        "次に両辺を7で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "The LCD of 2 and 5 is 10. × 10 gives 5x + 2x = 70, so 7x = 70 and x = 10.",
+      ja: "2と5の最小公倍数は10です。10をかけると 5x + 2x = 70、7x = 70 なので x = 10 です。"
+    }
+  },
+  {
+    id: "fraction_medium_07",
+    topic: "fraction",
+    equation: "x/4 - x/6 = 1",
+    answer: 12,
+    difficulty: "medium",
+    type: "lcd",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: 12, traps: [4, 6, 10], target: "both-sides", result: "3x - 2x = 12" },
+      { action: "simplify", value: "x", wrong: ["5x", "-x", "6x"], target: "left", result: "x = 12" }
+    ],
+    hints: {
+      en: [
+        "Clear both fractions at once — multiply both sides by 12, the smallest number 4 and 6 both go into.",
+        "Combine the x terms: 3x - 2x."
+      ],
+      ja: [
+        "分数をまとめてなくす — 4でも6でも割り切れる一番小さい数、12を両辺にかける。",
+        "xの項をまとめる：3x - 2x。"
+      ]
+    },
+    explanation: {
+      en: "4 × 6 = 24 would work too, but the LCD is 12 — the smallest number both 4 and 6 go into — and it keeps the numbers small. × 12 gives 3x - 2x = 12, so x = 12.",
+      ja: "4 × 6 = 24 でも解けますが、最小公倍数は12です。小さい数の方が計算が楽になります。12をかけると 3x - 2x = 12 なので x = 12 です。"
+    }
+  },
+  {
+    id: "fraction_medium_08",
+    topic: "fraction",
+    equation: "x/2 + x/3 = -10",
+    answer: -12,
+    difficulty: "medium",
+    type: "lcd",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: 6, traps: [2, 3, 5], target: "both-sides", result: "3x + 2x = -60" },
+      { action: "simplify", value: "5x", wrong: ["6x", "x", "5x²"], target: "left", result: "5x = -60" },
+      { action: "divide",   value: 5, target: "both-sides", result: "x = -12" }
+    ],
+    hints: {
+      en: [
+        "Clear both fractions at once — multiply both sides by 6, the smallest number 2 and 3 both go into.",
+        "Combine the x terms: 3x + 2x.",
+        "Now divide both sides by 5 to isolate x."
+      ],
+      ja: [
+        "分数をまとめてなくす — 2でも3でも割り切れる一番小さい数、6を両辺にかける。",
+        "xの項をまとめる：3x + 2x。",
+        "次に両辺を5で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "× 6 multiplies the right side too: -10 × 6 = -60. Then 3x + 2x = 5x, so 5x = -60 and x = -12.",
+      ja: "6をかけると右辺にもかかります：-10 × 6 = -60。3x + 2x = 5x なので 5x = -60、x = -12 です。"
+    }
+  },
+  {
+    id: "fraction_medium_09",
+    topic: "fraction",
+    equation: "x/3 + x/6 = 4",
+    answer: 8,
+    difficulty: "medium",
+    type: "lcd",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: 6, traps: [2, 3, 9], target: "both-sides", result: "2x + x = 24" },
+      { action: "simplify", value: "3x", wrong: ["2x", "x", "3x²"], target: "left", result: "3x = 24" },
+      { action: "divide",   value: 3, target: "both-sides", result: "x = 8" }
+    ],
+    hints: {
+      en: [
+        "Clear both fractions at once — multiply both sides by 6. 3 goes into 6 too!",
+        "Combine the x terms: 2x + x. Remember x is 1x.",
+        "Now divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "分数をまとめてなくす — 両辺に6をかける。6は3でも割り切れるよ！",
+        "xの項をまとめる：2x + x。xは1xと同じ。",
+        "次に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "6 is already a multiple of 3, so the LCD is 6, not 18. × 6 gives 2x + x = 24, so 3x = 24 and x = 8.",
+      ja: "6は3の倍数なので、最小公倍数は18ではなく6です。6をかけると 2x + x = 24、3x = 24 なので x = 8 です。"
+    }
+  },
+  {
+    id: "fraction_medium_10",
+    topic: "fraction",
+    equation: "2x/3 - x/4 = 5",
+    answer: 12,
+    difficulty: "medium",
+    type: "lcd",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: 12, traps: [3, 4, 7], target: "both-sides", result: "8x - 3x = 60" },
+      { action: "simplify", value: "5x", wrong: ["11x", "-5x", "24x"], target: "left", result: "5x = 60" },
+      { action: "divide",   value: 5, target: "both-sides", result: "x = 12" }
+    ],
+    hints: {
+      en: [
+        "Clear both fractions at once — multiply both sides by 12, the smallest number 3 and 4 both go into.",
+        "Combine the x terms: 8x - 3x.",
+        "Now divide both sides by 5 to isolate x."
+      ],
+      ja: [
+        "分数をまとめてなくす — 3でも4でも割り切れる一番小さい数、12を両辺にかける。",
+        "xの項をまとめる：8x - 3x。",
+        "次に両辺を5で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "× 12 turns 2x/3 into 8x (12 ÷ 3 = 4, and 4 × 2x = 8x) and x/4 into 3x. Then 8x - 3x = 5x, so 5x = 60 and x = 12.",
+      ja: "12をかけると、2x/3 は 8x（12 ÷ 3 = 4、4 × 2x = 8x）、x/4 は 3x になります。8x - 3x = 5x なので 5x = 60、x = 12 です。"
+    }
+  },
+
+  // ---- Hard: fractions on both sides ----
+  // Levels 1-5: plain numbers too — multiply EVERY term by the LCD.
+  // Levels 6-10: a bracket on top — keep the brackets after × LCD, then expand (both sides in 6-8 and 10).
+  // The bigger x term always lands on the left, so x ends up positive without a ÷ (-1) step.
+  {
+    id: "fraction_hard_01",
+    topic: "fraction",
+    equation: "x/2 + 1 = x/3 + 3",
+    answer: 12,
+    difficulty: "hard",
+    type: "lcd-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "multiply",   value: 6, traps: [2, 3, 5], target: "both-sides", result: "3x + 6 = 2x + 18" },
+      { action: "subtract_x", value: 2, target: "both-sides", result: "x + 6 = 18" },
+      { action: "subtract",   value: 6, target: "both-sides", result: "x = 12" }
+    ],
+    hints: {
+      en: [
+        "Clear the fractions — multiply every term by 6, the plain numbers too.",
+        "Combine the x terms — subtract 2x from both sides.",
+        "Now remove the constant — subtract 6 from both sides."
+      ],
+      ja: [
+        "分数をなくす — すべての項に6をかける。ただの数にもかける。",
+        "xの項をまとめる — 両辺から2xを引く。",
+        "次に定数項を消す — 両辺から6を引く。"
+      ]
+    },
+    explanation: {
+      en: "× 6 turns every term into a whole number: x/2 → 3x, 1 → 6, x/3 → 2x and 3 → 18. Don't forget the plain numbers! Then subtract 2x and 6 to get x = 12.",
+      ja: "6をかけるとすべての項が整数になります：x/2 → 3x、1 → 6、x/3 → 2x、3 → 18。ただの数にもかけ忘れないように！その後2xと6を引いて x = 12 です。"
+    }
+  },
+  {
+    id: "fraction_hard_02",
+    topic: "fraction",
+    equation: "x/3 - 2 = x/4",
+    answer: 24,
+    difficulty: "hard",
+    type: "lcd-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "multiply",   value: 12, traps: [3, 4, 7], target: "both-sides", result: "4x - 24 = 3x" },
+      { action: "subtract_x", value: 3,  target: "both-sides", result: "x - 24 = 0" },
+      { action: "add",        value: 24, target: "both-sides", result: "x = 24" }
+    ],
+    hints: {
+      en: [
+        "Clear the fractions — multiply every term by 12, the plain numbers too.",
+        "Combine the x terms — subtract 3x from both sides.",
+        "Now remove the constant — add 24 to both sides."
+      ],
+      ja: [
+        "分数をなくす — すべての項に12をかける。ただの数にもかける。",
+        "xの項をまとめる — 両辺から3xを引く。",
+        "次に定数項を消す — 両辺に24を足す。"
+      ]
+    },
+    explanation: {
+      en: "× 12 gives 4x - 24 = 3x — the -2 becomes -24 too. Subtract 3x to get x - 24 = 0, then add 24: x = 24.",
+      ja: "12をかけると 4x - 24 = 3x。-2も-24になります。3xを引くと x - 24 = 0、24を足して x = 24 です。"
+    }
+  },
+  {
+    id: "fraction_hard_03",
+    topic: "fraction",
+    equation: "x/2 + 3 = x/5 + 6",
+    answer: 10,
+    difficulty: "hard",
+    type: "lcd-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "multiply",   value: 10, traps: [2, 5, 7], target: "both-sides", result: "5x + 30 = 2x + 60" },
+      { action: "subtract_x", value: 2,  target: "both-sides", result: "3x + 30 = 60" },
+      { action: "subtract",   value: 30, target: "both-sides", result: "3x = 30" },
+      { action: "divide",     value: 3,  target: "both-sides", result: "x = 10" }
+    ],
+    hints: {
+      en: [
+        "Clear the fractions — multiply every term by 10, the plain numbers too.",
+        "Combine the x terms — subtract 2x from both sides.",
+        "Now remove the constant — subtract 30 from both sides.",
+        "Finally divide both sides by 3 to isolate x."
+      ],
+      ja: [
+        "分数をなくす — すべての項に10をかける。ただの数にもかける。",
+        "xの項をまとめる — 両辺から2xを引く。",
+        "次に定数項を消す — 両辺から30を引く。",
+        "最後に両辺を3で割ってxを求める。"
+      ]
+    },
+    explanation: {
+      en: "× 10 gives 5x + 30 = 2x + 60. Subtract 2x, subtract 30, then divide by 3: x = 10.",
+      ja: "10をかけると 5x + 30 = 2x + 60。2xを引き、30を引いて、3で割ると x = 10 です。"
+    }
+  },
+  {
+    id: "fraction_hard_04",
+    topic: "fraction",
+    equation: "x/4 - 1 = x/6 + 1",
+    answer: 24,
+    difficulty: "hard",
+    type: "lcd-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "multiply",   value: 12, traps: [4, 6, 10], target: "both-sides", result: "3x - 12 = 2x + 12" },
+      { action: "subtract_x", value: 2,  target: "both-sides", result: "x - 12 = 12" },
+      { action: "add",        value: 12, target: "both-sides", result: "x = 24" }
+    ],
+    hints: {
+      en: [
+        "Clear the fractions — multiply every term by 12, the smallest number 4 and 6 both go into.",
+        "Combine the x terms — subtract 2x from both sides.",
+        "Now remove the constant — add 12 to both sides."
+      ],
+      ja: [
+        "分数をなくす — 4でも6でも割り切れる一番小さい数、12をすべての項にかける。",
+        "xの項をまとめる — 両辺から2xを引く。",
+        "次に定数項を消す — 両辺に12を足す。"
+      ]
+    },
+    explanation: {
+      en: "The LCD of 4 and 6 is 12, not 24. × 12 gives 3x - 12 = 2x + 12. Subtract 2x, then add 12: x = 24.",
+      ja: "4と6の最小公倍数は24ではなく12です。12をかけると 3x - 12 = 2x + 12。2xを引いて12を足すと x = 24 です。"
+    }
+  },
+  {
+    id: "fraction_hard_05",
+    topic: "fraction",
+    equation: "x/2 + 5 = x/3 + 2",
+    answer: -18,
+    difficulty: "hard",
+    type: "lcd-both-sides",
+    basePoints: 30,
+    steps: [
+      { action: "multiply",   value: 6,  traps: [2, 3, 5], target: "both-sides", result: "3x + 30 = 2x + 12" },
+      { action: "subtract_x", value: 2,  target: "both-sides", result: "x + 30 = 12" },
+      { action: "subtract",   value: 30, target: "both-sides", result: "x = -18" }
+    ],
+    hints: {
+      en: [
+        "Clear the fractions — multiply every term by 6, the plain numbers too.",
+        "Combine the x terms — subtract 2x from both sides.",
+        "Now remove the constant — subtract 30 from both sides."
+      ],
+      ja: [
+        "分数をなくす — すべての項に6をかける。ただの数にもかける。",
+        "xの項をまとめる — 両辺から2xを引く。",
+        "次に定数項を消す — 両辺から30を引く。"
+      ]
+    },
+    explanation: {
+      en: "× 6 gives 3x + 30 = 2x + 12. Subtract 2x to get x + 30 = 12, then subtract 30: x = -18.",
+      ja: "6をかけると 3x + 30 = 2x + 12。2xを引くと x + 30 = 12、30を引いて x = -18 です。"
+    }
+  },
+  {
+    id: "fraction_hard_06",
+    topic: "fraction",
+    equation: "(x + 1)/2 = (x - 2)/3",
+    answer: -7,
+    difficulty: "hard",
+    type: "lcd-brackets",
+    basePoints: 30,
+    steps: [
+      { action: "multiply",   value: 6, traps: [2, 3, 5], target: "both-sides", result: "3(x + 1) = 2(x - 2)" },
+      { action: "expand",     value: "3x + 3", wrong: ["3x + 1", "x + 3", "3x + 4"], target: "left", result: "3x + 3 = 2(x - 2)" },
+      { action: "expand",     value: "2x - 4", wrong: ["2x - 2", "2x + 4", "x - 4"], target: "right", result: "3x + 3 = 2x - 4" },
+      { action: "subtract_x", value: 2, target: "both-sides", result: "x + 3 = -4" },
+      { action: "subtract",   value: 3, target: "both-sides", result: "x = -7" }
+    ],
+    hints: {
+      en: [
+        "Clear the fractions — multiply both sides by 6. Keep the brackets: 6 × (x + 1)/2 = 3(x + 1).",
+        "Expand the left side: 3 × x and 3 × 1.",
+        "Expand the right side: 2 × x and 2 × (-2).",
+        "Combine the x terms — subtract 2x from both sides.",
+        "Now remove the constant — subtract 3 from both sides."
+      ],
+      ja: [
+        "分数をなくす — 両辺に6をかける。かっこは残す：6 × (x + 1)/2 = 3(x + 1)。",
+        "左辺を展開する：3 × x と 3 × 1。",
+        "右辺を展開する：2 × x と 2 ×（-2）。",
+        "xの項をまとめる — 両辺から2xを引く。",
+        "次に定数項を消す — 両辺から3を引く。"
+      ]
+    },
+    explanation: {
+      en: "× 6 cancels both bottoms: 6 ÷ 2 = 3 goes in front of (x + 1), and 6 ÷ 3 = 2 in front of (x - 2). The whole top gets multiplied, so keep the brackets, then expand: 3x + 3 = 2x - 4, so x = -7.",
+      ja: "6をかけると両方の分母が消えます：6 ÷ 2 = 3 が (x + 1) の前に、6 ÷ 3 = 2 が (x - 2) の前につきます。分子全体にかかるのでかっこは残し、展開すると 3x + 3 = 2x - 4、x = -7 です。"
+    }
+  },
+  {
+    id: "fraction_hard_07",
+    topic: "fraction",
+    equation: "(x + 2)/2 = (x + 4)/3",
+    answer: 2,
+    difficulty: "hard",
+    type: "lcd-brackets",
+    basePoints: 30,
+    steps: [
+      { action: "multiply",   value: 6, traps: [2, 3, 5], target: "both-sides", result: "3(x + 2) = 2(x + 4)" },
+      { action: "expand",     value: "3x + 6", wrong: ["3x + 2", "x + 6", "3x + 5"], target: "left", result: "3x + 6 = 2(x + 4)" },
+      { action: "expand",     value: "2x + 8", wrong: ["2x + 4", "x + 8", "2x + 6"], target: "right", result: "3x + 6 = 2x + 8" },
+      { action: "subtract_x", value: 2, target: "both-sides", result: "x + 6 = 8" },
+      { action: "subtract",   value: 6, target: "both-sides", result: "x = 2" }
+    ],
+    hints: {
+      en: [
+        "Clear the fractions — multiply both sides by 6. Keep the brackets.",
+        "Expand the left side: 3 × x and 3 × 2.",
+        "Expand the right side: 2 × x and 2 × 4.",
+        "Combine the x terms — subtract 2x from both sides.",
+        "Now remove the constant — subtract 6 from both sides."
+      ],
+      ja: [
+        "分数をなくす — 両辺に6をかける。かっこは残す。",
+        "左辺を展開する：3 × x と 3 × 2。",
+        "右辺を展開する：2 × x と 2 × 4。",
+        "xの項をまとめる — 両辺から2xを引く。",
+        "次に定数項を消す — 両辺から6を引く。"
+      ]
+    },
+    explanation: {
+      en: "× 6 gives 3(x + 2) = 2(x + 4). Expanding gives 3x + 6 = 2x + 8, then subtract 2x and 6: x = 2.",
+      ja: "6をかけると 3(x + 2) = 2(x + 4)。展開すると 3x + 6 = 2x + 8、2xと6を引いて x = 2 です。"
+    }
+  },
+  {
+    id: "fraction_hard_08",
+    topic: "fraction",
+    equation: "(x - 1)/3 = (x + 1)/4",
+    answer: 7,
+    difficulty: "hard",
+    type: "lcd-brackets",
+    basePoints: 30,
+    steps: [
+      { action: "multiply",   value: 12, traps: [3, 4, 7], target: "both-sides", result: "4(x - 1) = 3(x + 1)" },
+      { action: "expand",     value: "4x - 4", wrong: ["4x - 1", "4x + 4", "x - 4"], target: "left", result: "4x - 4 = 3(x + 1)" },
+      { action: "expand",     value: "3x + 3", wrong: ["3x + 1", "x + 3", "3x + 4"], target: "right", result: "4x - 4 = 3x + 3" },
+      { action: "subtract_x", value: 3, target: "both-sides", result: "x - 4 = 3" },
+      { action: "add",        value: 4, target: "both-sides", result: "x = 7" }
+    ],
+    hints: {
+      en: [
+        "Clear the fractions — multiply both sides by 12. Keep the brackets.",
+        "Expand the left side: 4 × x and 4 × (-1).",
+        "Expand the right side: 3 × x and 3 × 1.",
+        "Combine the x terms — subtract 3x from both sides.",
+        "Now remove the constant — add 4 to both sides."
+      ],
+      ja: [
+        "分数をなくす — 両辺に12をかける。かっこは残す。",
+        "左辺を展開する：4 × x と 4 ×（-1）。",
+        "右辺を展開する：3 × x と 3 × 1。",
+        "xの項をまとめる — 両辺から3xを引く。",
+        "次に定数項を消す — 両辺に4を足す。"
+      ]
+    },
+    explanation: {
+      en: "× 12 gives 4(x - 1) = 3(x + 1). Expanding gives 4x - 4 = 3x + 3, then subtract 3x and add 4: x = 7.",
+      ja: "12をかけると 4(x - 1) = 3(x + 1)。展開すると 4x - 4 = 3x + 3、3xを引いて4を足すと x = 7 です。"
+    }
+  },
+  {
+    id: "fraction_hard_09",
+    topic: "fraction",
+    equation: "(x + 3)/2 = (x + 1)/4",
+    answer: -5,
+    difficulty: "hard",
+    type: "lcd-brackets",
+    basePoints: 30,
+    steps: [
+      { action: "multiply",   value: 4, traps: [2, 3, 6], target: "both-sides", result: "2(x + 3) = x + 1" },
+      { action: "expand",     value: "2x + 6", wrong: ["2x + 3", "x + 6", "2x + 5"], target: "left", result: "2x + 6 = x + 1" },
+      { action: "subtract_x", value: 1, target: "both-sides", result: "x + 6 = 1" },
+      { action: "subtract",   value: 6, target: "both-sides", result: "x = -5" }
+    ],
+    hints: {
+      en: [
+        "Clear the fractions — multiply both sides by 4. 2 goes into 4 too!",
+        "Expand the left side: 2 × x and 2 × 3.",
+        "Combine the x terms — subtract x from both sides.",
+        "Now remove the constant — subtract 6 from both sides."
+      ],
+      ja: [
+        "分数をなくす — 両辺に4をかける。4は2でも割り切れるよ！",
+        "左辺を展開する：2 × x と 2 × 3。",
+        "xの項をまとめる — 両辺からxを引く。",
+        "次に定数項を消す — 両辺から6を引く。"
+      ]
+    },
+    explanation: {
+      en: "The LCD of 2 and 4 is 4. × 4 gives 2(x + 3) on the left, and on the right 4 ÷ 4 = 1, so it just becomes x + 1. Then 2x + 6 = x + 1, so x = -5.",
+      ja: "2と4の最小公倍数は4です。4をかけると左辺は 2(x + 3)、右辺は 4 ÷ 4 = 1 なので x + 1 のままです。2x + 6 = x + 1 から x = -5 です。"
+    }
+  },
+  {
+    id: "fraction_hard_10",
+    topic: "fraction",
+    equation: "(2x - 1)/3 = (x + 3)/2",
+    answer: 11,
+    difficulty: "hard",
+    type: "lcd-brackets",
+    basePoints: 30,
+    steps: [
+      { action: "multiply",   value: 6, traps: [2, 3, 5], target: "both-sides", result: "2(2x - 1) = 3(x + 3)" },
+      { action: "expand",     value: "4x - 2", wrong: ["4x - 1", "2x - 2", "4x + 2"], target: "left", result: "4x - 2 = 3(x + 3)" },
+      { action: "expand",     value: "3x + 9", wrong: ["3x + 3", "x + 9", "3x + 6"], target: "right", result: "4x - 2 = 3x + 9" },
+      { action: "subtract_x", value: 3, target: "both-sides", result: "x - 2 = 9" },
+      { action: "add",        value: 2, target: "both-sides", result: "x = 11" }
+    ],
+    hints: {
+      en: [
+        "Clear the fractions — multiply both sides by 6. Keep the brackets.",
+        "Expand the left side: 2 × 2x and 2 × (-1).",
+        "Expand the right side: 3 × x and 3 × 3.",
+        "Combine the x terms — subtract 3x from both sides.",
+        "Now remove the constant — add 2 to both sides."
+      ],
+      ja: [
+        "分数をなくす — 両辺に6をかける。かっこは残す。",
+        "左辺を展開する：2 × 2x と 2 ×（-1）。",
+        "右辺を展開する：3 × x と 3 × 3。",
+        "xの項をまとめる — 両辺から3xを引く。",
+        "次に定数項を消す — 両辺に2を足す。"
+      ]
+    },
+    explanation: {
+      en: "× 6 gives 2(2x - 1) = 3(x + 3). Careful when expanding: 2 × 2x = 4x. Then 4x - 2 = 3x + 9, so x = 11.",
+      ja: "6をかけると 2(2x - 1) = 3(x + 3)。展開に注意：2 × 2x = 4x。4x - 2 = 3x + 9 なので x = 11 です。"
+    }
   }
 ];
 
@@ -4318,6 +5235,28 @@ const TIER_TIPS = {
       move: { en: "Multiply every term by 2", ja: "すべての項を2倍する" },
       to: "2x + 6y = 14"
     }
+  },
+  fraction_medium: {
+    text: {
+      en: "Two fractions? Multiply both sides by the LCD — the smallest number both bottoms go into. Every fraction disappears at once.",
+      ja: "分数が2つ？両辺に分母の最小公倍数（どちらの分母でも割り切れる一番小さい数）をかけよう。分数が一度に全部消えるよ。"
+    },
+    demo: {
+      from: "x/2 + x/3 = 5",
+      move: { en: "Multiply both sides by 6", ja: "両辺に6をかける" },
+      to: "3x + 2x = 30"
+    }
+  },
+  fraction_hard: {
+    text: {
+      en: "Multiply EVERY term by the LCD — plain numbers too. If a top is a bracket, keep the brackets and expand after.",
+      ja: "最小公倍数はすべての項にかけよう — ただの数にもね。分子がかっこなら、かっこのまま残して、あとで展開するよ。"
+    },
+    demo: {
+      from: "(x + 1)/2 = (x - 2)/3",
+      move: { en: "Multiply both sides by 6", ja: "両辺に6をかける" },
+      to: "3(x + 1) = 2(x - 2)"
+    }
   }
 };
 
@@ -4332,7 +5271,8 @@ const TOPIC_NAMES = {
   inequality: { en: "Inequalities", ja: "不等式" },
   brackets:   { en: "Brackets",     ja: "かっこ" },
   quadratic:  { en: "Quadratics",   ja: "二次方程式" },
-  system:     { en: "Systems",      ja: "連立方程式" }
+  system:     { en: "Systems",      ja: "連立方程式" },
+  fraction:   { en: "Fractions",    ja: "分数" }
 };
 
 // One template per per-topic achievement type. {topic} = topic name, {n} = level or star count.

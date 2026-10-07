@@ -1,11 +1,13 @@
 // LLL Algebra — choice buttons: the label for a move and the 3 generated wrong options.
-// Authored-choice steps (expand/factor/roots/combine/substitute/scale) bring their own
-// `wrong` options in levels.js; makeDistractors() is for the + − × ÷ moves.
+// Authored-choice steps (expand/factor/roots/combine/substitute/scale/simplify) bring their own
+// `wrong` options in levels.js; makeDistractors() is for the + − × ÷ moves. A + − × ÷ step
+// may also carry authored `traps` (numbers), used as its wrong options instead of generated ones.
 
 // Steps that show their own authored choices get a short prompt above the buttons.
 const CHOICE_PROMPT_KEYS = {
   expand: "expandPrompt", factor: "factorPrompt", roots: "rootsPrompt",
-  combine: "combinePrompt", substitute: "substitutePrompt", scale: "scalePrompt"
+  combine: "combinePrompt", substitute: "substitutePrompt", scale: "scalePrompt",
+  simplify: "simplifyPrompt"
 };
 
 function actionLabel(action, value) {
@@ -23,6 +25,12 @@ function actionLabel(action, value) {
 }
 
 function makeDistractors(correctStep) {
+  // Authored traps: the step names its own wrong numbers for the same move
+  // (fractions: × one denominator, or × the sum of the denominators, instead of × the LCD).
+  if (Array.isArray(correctStep.traps)) {
+    return correctStep.traps.map(v => ({ action: correctStep.action, value: v }));
+  }
+
   const isXAction = correctStep.action === "add_x" || correctStep.action === "subtract_x";
   const actions = isXAction ? ["add_x", "subtract_x"] : ["add", "subtract", "multiply", "divide"];
   const pool = [];
