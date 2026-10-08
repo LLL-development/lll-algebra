@@ -391,6 +391,12 @@ body {
 .choice-btn.correct { border-color: var(--correct); background: var(--correct-tint); color: var(--correct); }
 .choice-btn.wrong { border-color: var(--wrong); background: var(--accent-tint); color: var(--wrong); }
 .choice-btn:disabled { cursor: default; }
+/* Narrow phones (~344px): each button is only ~147px wide, so "× 5 both sides" at 15px
+   wrapped onto two lines. A slightly smaller font and less side padding keep it on one. */
+@media (max-width: 420px) {
+  .choices { gap: 8px; }
+  .choice-btn { font-size: 13px; padding: 12px 6px; }
+}
 /* "Expand the brackets:" label above the choices on expand steps */
 .expand-prompt {
   align-self: flex-start;
@@ -1150,3 +1156,24 @@ body:has(.tip-overlay:not([hidden])) { overflow: hidden; }   /* no page scroll b
   .complete-card.has-graph > .complete-stars { grid-column: 1 / -1; }
   .complete-card.has-graph > .complete-graph { grid-column: 1; grid-row: span 6; width: 100%; align-self: start; }
 }
+
+/* ---------- Inequalities number line on the level-complete card ----------
+   Drawn by showNumberLine() in graph.js: the solution side in the "correct" green,
+   open dot for < / >, filled dot for ≤ / ≥. Short and wide, so it stays in the normal
+   single-column card (no .has-graph layout). :not([hidden]) so display:flex never overrides `hidden`. */
+.complete-numberline:not([hidden]) {
+  width: min(300px, 100%);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  margin: 2px 0;
+}
+.complete-numberline-svg { display: block; width: 100%; height: auto; }
+.complete-numberline-label { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--correct); }
+.nl-axis, .nl-tick { stroke: var(--muted); stroke-width: 1.5; }
+.graph-tick.nl-tick-main { fill: var(--ink); font-weight: 600; }   /* the boundary number */
+.nl-ray { stroke: var(--correct); stroke-width: 5; }
+.nl-arrow { fill: var(--correct); }
+.nl-dot {
+  fill: var(--surface); stroke: var(--correct); stroke-width: 3;   /* open: < / > */
+  transform-box: fill-box; transform-origin: center;
+}
+.nl-dot.filled { fill: var(--correct); }                          /* filled: ≤ / ≥ */

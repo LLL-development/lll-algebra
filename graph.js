@@ -1,6 +1,7 @@
-// LLL Algebra — Systems graph on the level-complete card
-// Both lines of a system, read from its equation text, drawn crossing at the answer.
-// index.html calls showSystemGraph() / clearSystemGraph() / afterGraphDrawn().
+// LLL Algebra — graphs on the level-complete card
+// Systems: both lines of a system, read from its equation text, drawn crossing at the answer.
+// Inequalities: the answer (e.g. "x < -4") on a number line.
+// index.html calls showSystemGraph() / clearSystemGraph() / showNumberLine() / clearNumberLine() / afterGraphDrawn().
 
 const $completeGraph = document.getElementById("completeGraph");
 const $completeGraphSvg = document.getElementById("completeGraphSvg");
@@ -211,9 +212,86 @@ function showSystemGraph(level) {
   return true;
 }
 
-// Runs fn once the graph has finished drawing (cancelled by clearSystemGraph if the card closes first)
-function afterGraphDrawn(fn) {
-  graphTimer = setTimeout(fn, GRAPH_DONE_MS);
+// ---------- Inequalities: number line ----------
+// The boundary sits in the middle (ticks from boundary − 5 to + 5). The dot pops in,
+// then a thick ray draws out to the solution side and ends in an arrowhead.
+const $completeNumberLine = document.getElementById("completeNumberLine");
+const $completeNumberLineSvg = document.getElementById("completeNumberLineSvg");
+const $completeNumberLineLabel = document.getElementById("completeNumberLineLabel");
+const NL_W = 280, NL_PAD = 14, NL_Y = 22;
+const NL_DONE_MS = 1500;   // when the arrowhead has appeared and Chalky speaks
+let nlAnims = [];
+
+// "x ≤ -4" → { sign: "≤", v: -4 }. null for anything else (the card then skips the number line).
+function parseInequalityAnswer(text) {
+  const m = String(text || "").replace(/\s+/g, "").replace(/−/g, "-").match(/^x([<>≤≥])(-?\d+)$/);
+  return m ? { sign: m[1], v: Number(m[2]) } : null;
 }
 
-export { showSystemGraph, clearSystemGraph, afterGraphDrawn };
+function clearNumberLine() {
+  clearTimeout(graphTimer);
+  graphTimer = null;
+  nlAnims.forEach(a => a.cancel());
+  nlAnims = [];
+  $completeNumberLine.hidden = true;
+}
+
+// Draws the number line for an inequality level; returns false (and stays hidden) if the answer can't be read.
+function showNumberLine(level) {
+  clearNumberLine();
+  const ans = parseInequalityAnswer(level.answer);
+  if (!ans) return false;
+  const { sign, v } = ans;
+  const right = sign === ">" || sign === "≥";
+  const filled = sign === "≤" || sign === "≥";
+  const fmt = n => (n < 0 ? "−" + Math.abs(n) : String(n));
+  const lo = v - 6, hi = v + 6;   // one unit of room past the outer ticks for the arrowhead
+  const X = n => NL_PAD + (n - lo) / (hi - lo) * (NL_W - 2 * NL_PAD);
+
+  const svg = $completeNumberLineSvg;
+  svg.replaceChildren();
+  svgEl("line", { x1: NL_PAD, y1: NL_Y, x2: NL_W - NL_PAD, y2: NL_Y, class: "nl-axis" }, svg);
+  for (let n = v - 5; n <= v + 5; n++) {
+    svgEl("line", { x1: X(n), y1: NL_Y - 5, x2: X(n), y2: NL_Y + 5, class: "nl-tick" }, svg);
+    // Every other number, always including the boundary
+    if ((n - v) % 2 === 0) {
+      svgEl("text", { x: X(n), y: NL_Y + 21, "text-anchor": "middle", class: n === v ? "graph-tick nl-tick-main" : "graph-tick" }, svg)
+        .textContent = fmt(n);
+    }
+  }
+
+  // Solution side: ray from the boundary to near the edge, then an arrowhead (x goes on forever that way)
+  const x0 = X(v);
+  const tip = right ? NL_W - NL_PAD : NL_PAD;
+  const xEnd = right ? tip - 10 : tip + 10;
+  const ray = svgEl("line", { x1: x0, y1: NL_Y, x2: xEnd, y2: NL_Y, class: "nl-ray" }, svg);
+  const arrow = svgEl("polygon", { points: `${tip},${NL_Y} ${xEnd},${NL_Y - 7} ${xEnd},${NL_Y + 7}`, class: "nl-arrow" }, svg);
+  // Drawn last so it sits on top of the ray (an open dot hides the ray's start)
+  const dot = svgEl("circle", { cx: x0, cy: NL_Y, r: 7, class: "nl-dot" + (filled ? " filled" : "") }, svg);
+
+  const text = `x ${sign} ${fmt(v)}`;
+  $completeNumberLineLabel.textContent = text;   // IBM Plex Mono has ≤ / ≥ and −
+  svg.setAttribute("aria-label", text);
+  $completeNumberLine.hidden = false;
+
+  if (!REDUCED_MOTION) {
+    const len = Math.abs(xEnd - x0);
+    ray.style.strokeDasharray = len;
+    nlAnims.push(
+      dot.animate([{ transform: "scale(0)" }, { transform: "scale(1.35)", offset: 0.65 }, { transform: "scale(1)" }],
+        { duration: 380, delay: 250, easing: "ease-out", fill: "both" }),
+      ray.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+        { duration: 700, delay: 550, easing: "cubic-bezier(.45,.05,.35,1)", fill: "both" }),
+      arrow.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 1200, fill: "both" })
+    );
+  }
+  return true;
+}
+
+// Runs fn once the graph or number line has finished drawing
+// (cancelled by clearSystemGraph / clearNumberLine if the card closes first)
+function afterGraphDrawn(fn) {
+  graphTimer = setTimeout(fn, $completeNumberLine.hidden ? GRAPH_DONE_MS : NL_DONE_MS);
+}
+
+export { showSystemGraph, clearSystemGraph, showNumberLine, clearNumberLine, afterGraphDrawn };
