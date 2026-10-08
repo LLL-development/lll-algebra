@@ -34,6 +34,10 @@
       <svg class="complete-graph-svg" id="completeGraphSvg" viewBox="0 0 280 280" role="img"></svg>
       <div class="complete-graph-legend" id="completeGraphLegend"></div>
     </div>
+    <div class="complete-numberline" id="completeNumberLine" hidden>
+      <svg class="complete-numberline-svg" id="completeNumberLineSvg" viewBox="0 0 280 50" role="img"></svg>
+      <p class="complete-numberline-label" id="completeNumberLineLabel"></p>
+    </div>
     <div class="complete-buddy-row">
       <div class="buddy-sprite complete-buddy" id="completeBuddy" aria-hidden="true"></div>
       <p class="buddy-bubble complete-bubble" id="completeBubble" aria-live="polite"></p>
@@ -296,7 +300,7 @@
   import { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS, TIER_TIPS } from "./levels.js";
   import { STRINGS } from "./strings.js";
   import { sfx, updateSoundBtn } from "./sound.js";
-  import { showSystemGraph, clearSystemGraph, afterGraphDrawn } from "./graph.js";
+  import { showSystemGraph, clearSystemGraph, showNumberLine, clearNumberLine, afterGraphDrawn } from "./graph.js";
   import { setMathText } from "./mathtext.js";
   import { BUDDY_SVG, CHALKY_IDLES, buddyLine, makeBuddy } from "./chalky.js";
   import { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors } from "./choices.js";
@@ -1012,6 +1016,9 @@
 
     // Systems levels (Today's Challenge too): graph both lines meeting at the answer
     const graphShown = r.level.topic === "system" && showSystemGraph(r.level);
+    // Inequality levels (Today's Challenge too): the answer on a number line
+    const lineShown = r.level.topic === "inequality" && showNumberLine(r.level);
+    const graphLineKey = graphShown ? "chalkyLinesMeet" : "chalkyNumberLine";
 
     // Buttons: primary = Next level (or Level select / Home when there's nothing next)
     const next = r.daily ? null : nextLevelAfter(r.level);
@@ -1044,18 +1051,18 @@
     if (r.topicJustMastered) completeChalky("celebrating", "chalkyTopicMastered", { topic: t(TOPIC_LABEL_KEYS[r.level.topic]) }, "celebratingHat");
     else if (r.tierJustCompleted) completeChalky("celebrating", "chalkyTierDone", { tier: tierName });
     else if (r.daily) completeChalky("celebrating", dailyStreak > 1 ? "chalkyDailyStreak" : "chalkyDaily", { n: dailyStreak });
-    else if (graphShown && !REDUCED_MOTION) {
-      completeBuddy.react("thinking", { stay: true });   // watches the lines draw, then points out the crossing
-      afterGraphDrawn(() => completeChalky("happy", "chalkyLinesMeet"));
+    else if ((graphShown || lineShown) && !REDUCED_MOTION) {
+      completeBuddy.react("thinking", { stay: true });   // watches it draw, then points out the answer
+      afterGraphDrawn(() => completeChalky("happy", graphLineKey));
     }
-    else if (graphShown) completeChalky("happy", "chalkyLinesMeet");
+    else if (graphShown || lineShown) completeChalky("happy", graphLineKey);
     else completeChalky("happy", r.stars === 3 ? "chalky3Star" : "chalkyFewerStars");
 
     if (r.topicJustMastered || r.tierJustCompleted || r.daily) burstGrandConfetti({ big: r.topicJustMastered });
     else if (r.streakBonus) sfx.streak();   // the fanfare already covers the big moments
   }
 
-  function hideCompleteOverlay() { $completeOverlay.hidden = true; completeBuddy.stop(); clearSystemGraph(); }
+  function hideCompleteOverlay() { $completeOverlay.hidden = true; completeBuddy.stop(); clearSystemGraph(); clearNumberLine(); }
 
   $completePrimaryBtn.addEventListener("click", () => completeActions.primary && completeActions.primary());
   $completeRetryBtn.addEventListener("click", () => completeActions.retry && completeActions.retry());
@@ -1199,6 +1206,7 @@
     $completeBonus.hidden = true;
     $completeExplanation.hidden = true;
     clearSystemGraph();
+    clearNumberLine();
 
     // One row per topic that came up, in home-screen order: ✓ = flawless, ✗ = hint or wrong move
     const marksByTopic = {};
