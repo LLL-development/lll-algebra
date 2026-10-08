@@ -269,11 +269,17 @@ body {
   );
 }
 
+/* Equations stay on one line and shrink only when they wouldn't fit.
+   Press Start 2P is fixed-width (1em per character), so the card's width ÷ the longest
+   line's length (--eq-len, set in index.html) is the biggest size that fits. Short
+   equations keep the normal size. Not on the intro's "x = ?" card, which sizes to its text. */
+.equation-card.pixel-card:not(.intro-welcome-card) { container-type: inline-size; }
 .pixel-card .equation {
   font-family: "Press Start 2P", var(--mono);
-  font-size: clamp(15px, 3.6vw, 24px);
+  font-size: min(clamp(15px, 3.6vw, 24px), calc(100cqi / (var(--eq-len, 1) + 0.5)));
   line-height: 1.8;
   letter-spacing: 0;
+  white-space: pre;               /* never wraps inside an equation; "\n" still splits Systems lines */
 }
 /* Systems: reserve two lines so the card doesn't shrink between steps;
    one-line steps (e.g. "3x = 12") sit in the middle. */
@@ -400,6 +406,7 @@ body {
   font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--muted);
   background: transparent; border: 1px dashed var(--border); border-radius: 10px;
   padding: 10px 16px; cursor: pointer;
+  white-space: nowrap; flex: none;   /* "Hint (−2 pts)" never wraps; Chalky's bubble gives way instead */
 }
 .hint-btn:hover { color: var(--accent); border-color: var(--accent); }
 .hint-text { font-size: 14px; color: var(--muted); text-align: center; min-height: 20px; }
@@ -1051,7 +1058,7 @@ body:has(.tip-overlay:not([hidden])) { overflow: hidden; }   /* no page scroll b
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
 }
 .tip-demo-card { padding: 12px 14px; }
-.tip-demo-card .equation { font-size: clamp(11px, 3vw, 15px); }
+.tip-demo-card .equation { font-size: min(clamp(11px, 3vw, 15px), calc(100cqi / (var(--eq-len, 1) + 0.5))); }
 .tip-demo-move {
   margin: 0; text-align: center;
   font-family: var(--sans); font-size: 13px; font-weight: 700; color: var(--accent);

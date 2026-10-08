@@ -231,6 +231,15 @@
           <span class="topic-card-count"></span>
         </span>
       </button>
+      <button class="topic-card" data-topic="fraction">
+        <span class="topic-card-sample">x/2 + x/3 = 5</span>
+        <span class="topic-card-title" data-i18n="topicFraction">Fractions</span>
+        <span class="topic-card-desc" data-i18n="topicFractionDesc">Clear the fractions, then solve for x</span>
+        <span class="topic-card-progress" data-progress="fraction">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -457,7 +466,7 @@
     return Math.floor(diff / 86400000);
   }
 
-  // Rotates through the topics day by day (Equations → Inequalities → … → Systems → Equations),
+  // Rotates through the topics day by day (Equations → Inequalities → … → Fractions → Equations),
   // stepping through each topic's Easy + Medium levels. Hard is left out because
   // Today's Challenge isn't locked behind progress.
   function getTodaysLevel() {
@@ -715,6 +724,12 @@
     if (sign) sign.classList.replace("flip-pending", "flip-cue");
   }
 
+  // Longest line of an equation, in characters. Press Start 2P is fixed-width, so brand.css
+  // uses this (--eq-len) to shrink a long equation until it fits the card on one line.
+  function setEqLen(el, text) {
+    el.style.setProperty("--eq-len", Math.max(...text.split("\n").map(line => [...line].length)));
+  }
+
   function renderEqText(text) {
     $eq.textContent = "";
     for (const ch of text) appendEqChar(ch);
@@ -725,6 +740,7 @@
     displayedEquationText = text;
 
     if (firstRender) {
+      setEqLen($eq, text);
       renderEqText(text);
       firstRender = false;
       if (onDone) onDone();
@@ -733,6 +749,7 @@
     $eq.classList.add("updating");
     setTimeout(() => {
       $eq.classList.remove("updating");
+      setEqLen($eq, text);   // the full text's size from the start, so it doesn't change while typing
       typewriterReveal(text, onDone);
     }, 220);
   }
@@ -1238,8 +1255,8 @@
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
-  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem" };
-  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5" };
 
   // Levels unlock in order within a tier; the first level of every tier is always open.
   function isUnlocked(level) {
@@ -1594,7 +1611,7 @@
   // Shown once per topic on first visit, reopenable from the ❔ on the level-select screen.
   // Chalky explains the key idea, then a demo level plays step by step using the real game pieces.
   const TUTORIAL_SEEN_KEY = "lll_algebra_tutorials_seen";
-  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2 };
+  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2 };
   const TUT_STEP_MS = 2600;   // time per demo step
 
   // Demo level per topic: normally the first Easy level, except where that level skips the
@@ -1642,6 +1659,7 @@
 
   // Same pixel ≤ / ≥ handling as the game's equation card, for any element.
   function setPixelEq(el, text) {
+    setEqLen(el, text);
     el.textContent = "";
     for (const ch of text) {
       if (INEQ_SIGN.test(ch)) {
