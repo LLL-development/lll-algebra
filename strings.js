@@ -1,6 +1,6 @@
 // LLL Algebra — UI strings (EN / JA)
 // Passed to LLL_I18N.init() in index.html. Chalky's lines use "a|b|c" for random picks
-// (see buddyLine() in index.html); {name} placeholders are filled in at runtime.
+// (see buddyLine() in chalky.js); {name} placeholders are filled in at runtime.
 
 const STRINGS = {
   en: {
@@ -108,6 +108,21 @@ const STRINGS = {
     buddyHint: "Here's a clue!|Let's think…|Hmm, look at this",
     buddySolved: "You did it!|Solved!|Brilliant!",
     buddyDoze: "Zzz… stuck? Try a hint!",
+    // Chalky's "why that's wrong" lines (mistakeLine() in index.html). Nudges only, never the answer.
+    mistakeWrongWay: "Wrong way! That doesn't undo it|That piles more on. Undo it!",
+    mistakeWrongKind: "Check how the number's joined to x|Is it added, or multiplied?",
+    mistakeWrongNumber: "Right idea, check the number!|Close! Look at the number again",
+    mistakeForgotSign: "Don't forget the minus sign!|Watch the minus!",
+    mistakeForgotSignIneq: "Keep the minus, the sign flips!",
+    mistakeNotLcd: "That won't clear every fraction|Find a number all bottoms go into",
+    mistakeTipExpand: "Multiply every term, signs too!",
+    mistakeTipFactor: "Do they add and multiply right?",
+    mistakeTipRoots: "Which x makes each bracket 0?|Careful with the signs!",
+    mistakeTipCombine: "Which letter would cancel?",
+    mistakeTipSubstitute: "Put your answer back in carefully",
+    mistakeTipScale: "Which letter can you line up?",
+    mistakeTipSimplify: "Add up the x parts carefully",
+    mistakeTipRearrange: "Which move makes one side 0?",
     homeFirst: "Pick a topic to start. Equations is a great first step!",
     homeDaily: "Today's Challenge is ready. One quick problem a day!",
     homeDailyStreak: "Today's Challenge is waiting. Keep your {n}-day streak going! 🔥",
@@ -222,6 +237,20 @@ const STRINGS = {
     buddyHint: "ヒントだよ！|考えてみよう…|ここを見てみて",
     buddySolved: "できた！|正解！|すごい！",
     buddyDoze: "Zzz… 迷ったらヒントを使ってみよう！",
+    mistakeWrongWay: "向きが逆だよ！|それだと元に戻らないよ",
+    mistakeWrongKind: "数とxのつながり方を見て！|足し算？かけ算？よく見て",
+    mistakeWrongNumber: "操作はOK、数を確かめて！|おしい！数をもう一度見て",
+    mistakeForgotSign: "マイナスを忘れずに！|マイナスに注意！",
+    mistakeForgotSignIneq: "マイナスも忘れずに！向きが変わるよ",
+    mistakeNotLcd: "それだと分数が残るよ|分母が全部消える数は？",
+    mistakeTipExpand: "符号も含めて全部にかけよう！",
+    mistakeTipFactor: "足して？かけて？確かめよう",
+    mistakeTipRoots: "かっこが0になるxは？|符号に気をつけて！",
+    mistakeTipCombine: "どの文字が消えるかな？",
+    mistakeTipSubstitute: "求めた値をていねいに代入！",
+    mistakeTipScale: "どの文字の係数をそろえる？",
+    mistakeTipSimplify: "xの項を正しくまとめよう",
+    mistakeTipRearrange: "右辺が0になる操作は？",
     homeFirst: "トピックを選んで始めよう！まずは方程式がおすすめだよ。",
     homeDaily: "今日のチャレンジが待ってるよ。1日1問、サクッと解こう！",
     homeDailyStreak: "今日のチャレンジが待ってるよ。{n}日連続を続けよう！🔥",

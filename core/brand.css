@@ -99,6 +99,18 @@ body {
   border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
 }
 .trophy-btn:hover { background: var(--accent-tint); }
+/* "New unlock" dot: on while there's an achievement the player hasn't seen in the panel yet */
+.trophy-btn { position: relative; }
+.trophy-dot:not([hidden]) {
+  position: absolute; top: -3px; right: -3px;
+  display: block; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--bg);
+  animation: trophyDotPop .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes trophyDotPop { from { transform: scale(0); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .trophy-dot { animation: none !important; }
+}
 
 /* Narrow phones (~344px): 4 controls + brand don't fit on one row, so compact the bar.
    The logo already carries the Live Laugh Love wordmark, so the text name can go. */
@@ -236,6 +248,12 @@ body {
 .achievement-item-name { font-family: var(--sans); font-weight: 700; font-size: 14px; color: var(--ink); }
 .achievement-item-desc { font-family: var(--sans); font-size: 12px; color: var(--muted); }
 .achievement-item-progress { margin-top: 3px; font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); }
+/* Marks achievements unlocked since the panel was last opened */
+.achievement-new-tag {
+  margin-left: 6px; padding: 1px 6px; vertical-align: 1px;
+  font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--on-accent); background: var(--accent); border-radius: 6px;
+}
 
 /* ---------- Equation display ---------- */
 .equation-card {
@@ -440,6 +458,12 @@ body {
 @media (max-width: 420px) {
   .buddy-sprite, .buddy-sprite svg { width: 60px; height: 60px; }   /* full body, just smaller */
   .buddy-bubble { font-size: 12px; max-width: 150px; }
+  /* Play screen: Hint + Chalky leave the bubble only ~90px, so Chalky's mistake lines broke
+     after 5 characters ("向きが逆だ / よ！"). Tighter padding and gaps give the text ~100px. */
+  .controls-row { gap: 8px; }
+  .hint-btn { padding: 8px 10px; font-size: 13px; }
+  .controls-row .buddy { gap: 6px; }
+  .controls-row .buddy-bubble { padding: 6px 8px; }
 }
 /* Stepped motion to match the pixel look */
 .buddy-sprite.idle { animation: buddyBob 1.6s steps(2, end) infinite; }

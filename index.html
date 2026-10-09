@@ -151,7 +151,7 @@
   </div>
   <div class="topbar-controls">
     <button class="howto-btn" id="howtoBtn" aria-label="How to play">❔</button>
-    <button class="trophy-btn" id="trophyBtn" aria-label="Achievements">🏆</button>
+    <button class="trophy-btn" id="trophyBtn" aria-label="Achievements">🏆<span class="trophy-dot" id="trophyDot" hidden></span></button>
     <button class="howto-btn sound-btn" id="soundBtn" aria-label="Mute sound">🔊</button>
     <div id="langHost"></div>
     <div id="themeHost"></div>
@@ -360,6 +360,7 @@
   let inReviewMode = false;
   let review = null;        // { levels, index, score, results: [{ topic, clean }] } — current Mixed Review session
   let reviewBest = 0;       // best Mixed Review session score
+  let newAchievements = new Set();   // unlocked but not yet seen in the panel (lights the 🏆 dot)
 
   const $eq = document.getElementById("equationText");
   const $choices = document.getElementById("choicesGrid");
@@ -372,6 +373,7 @@
   const $achievementToast = document.getElementById("achievementToast");
   const $achievementToastText = document.getElementById("achievementToastText");
   const $trophyBtn = document.getElementById("trophyBtn");
+  const $trophyDot = document.getElementById("trophyDot");
   const $achievementsModal = document.getElementById("achievementsModal");
   const $achievementsBackdrop = document.getElementById("achievementsBackdrop");
   const $achievementsCloseBtn = document.getElementById("achievementsCloseBtn");
@@ -425,7 +427,8 @@
         stepIndex: reg.stepIndex, hintUsedThisLevel: reg.hintUsedThisLevel, wrongThisLevel: reg.wrongThisLevel,
         levelProgress,
         unlockedAchievements: [...unlockedAchievements], totalSolves,
-        dailyStreak, lastDailySolvedDate, reviewBest
+        dailyStreak, lastDailySolvedDate, reviewBest,
+        newAchievements: [...newAchievements]
       }));
     } catch (e) { /* localStorage unavailable — fail silently */ }
   }
@@ -450,6 +453,7 @@
         dailyStreak = saved.dailyStreak || 0;
         lastDailySolvedDate = saved.lastDailySolvedDate || null;
         reviewBest = saved.reviewBest || 0;
+        newAchievements = new Set(saved.newAchievements || []);
         hintUsedThisLevel = !!saved.hintUsedThisLevel;
         wrongThisLevel = saved.wrongThisLevel || 0;
         levelProgress = (saved.levelProgress && typeof saved.levelProgress === "object") ? saved.levelProgress : {};
@@ -598,6 +602,8 @@
     if (achievement && !silent) {
       const lang = currentLang();
       showAchievementToast(achievement.name[lang] || achievement.name.en);
+      newAchievements.add(id);
+      updateTrophyDot();
     }
     saveProgress();
   }
@@ -677,7 +683,7 @@
         item.innerHTML = `
           <span class="achievement-item-icon">${unlocked ? "🏆" : "🔒"}</span>
           <div class="achievement-item-text">
-            <div class="achievement-item-name">${name}</div>
+            <div class="achievement-item-name">${name}${modalNewIds.has(a.id) ? '<span class="achievement-new-tag">NEW</span>' : ""}</div>
             <div class="achievement-item-desc">${desc}</div>
             ${progress}
           </div>`;
@@ -690,9 +696,19 @@
     $achievementsTotal.textContent = `${unlockedTotal} / ${ACHIEVEMENTS.length}`;
   }
 
+  // What the open panel marks NEW. Kept separately, so a language switch while it's open keeps the tags.
+  let modalNewIds = new Set();
+  function updateTrophyDot() { $trophyDot.hidden = !newAchievements.size; }
+
   function openAchievementsModal() {
+    modalNewIds = new Set(newAchievements);
     renderAchievementsList();
     $achievementsModal.classList.add("show");
+    if (newAchievements.size) {   // seen now, so the dot goes
+      newAchievements.clear();
+      saveProgress();
+      updateTrophyDot();
+    }
   }
 
   function closeAchievementsModal() {
@@ -705,6 +721,30 @@
 
   // initFloatingSymbols() and burstGrandConfetti() live in effects.js.
   // CHOICE_PROMPT_KEYS, actionLabel() and makeDistractors() live in choices.js.
+
+  // ---------- Chalky's "why that's wrong" feedback ----------
+  // A wrong tap gets a line about the mistake, never the correct move.
+  // Generated options carry a `kind` (choices.js); authored options (expand, factor, …)
+  // get a tip for that step's move. Anything else falls back to the generic buddyWrong lines.
+  const MISTAKE_KEYS = {
+    notLcd: "mistakeNotLcd", forgotSign: "mistakeForgotSign", wrongWay: "mistakeWrongWay",
+    wrongKind: "mistakeWrongKind", wrongNumber: "mistakeWrongNumber"
+  };
+  const AUTHORED_TIP_KEYS = {
+    expand: "mistakeTipExpand", factor: "mistakeTipFactor", roots: "mistakeTipRoots",
+    combine: "mistakeTipCombine", substitute: "mistakeTipSubstitute", scale: "mistakeTipScale",
+    simplify: "mistakeTipSimplify"
+  };
+  const MISTAKE_MS = 3500;   // longer than the old 1800 ms, so there's time to read the reason
+
+  function mistakeLine(choice, step) {
+    let key = MISTAKE_KEYS[choice.kind] || AUTHORED_TIP_KEYS[step.action];
+    // Inequalities: dropping the minus sign also means the sign wouldn't flip
+    if (choice.kind === "forgotSign" && currentLevel().topic === "inequality") key = "mistakeForgotSignIneq";
+    // Quadratics' rearrange steps: the number isn't joined to x, it's being moved so one side is 0
+    if (choice.kind === "wrongKind" && currentLevel().topic === "quadratic") key = "mistakeTipRearrange";
+    return (key && buddyLine(key)) || buddyLine("buddyWrong");
+  }
   
   // Press Start 2P has no ≤ / ≥ glyphs, so draw them as the pixel < / > with an underline bar.
   const PIXEL_INEQ = { "≤": "<", "≥": ">" };
@@ -912,8 +952,8 @@
       $eq.classList.remove("wrong-shake");
       void $eq.offsetWidth; // restart animation
       $eq.classList.add("wrong-shake");
-      // The buddy gives the feedback now, so a hint already on screen isn't overwritten
-      buddyReact("oops", { line: buddyLine("buddyWrong"), ms: 1800 });
+      // Chalky says what went wrong (not the answer), so a hint already on screen isn't overwritten
+      buddyReact("oops", { line: mistakeLine(choice, correctStep), ms: MISTAKE_MS });
       setTimeout(() => {
         [...$choices.children].forEach(b => { b.disabled = false; b.classList.remove("wrong"); });
       }, 700);
@@ -1886,6 +1926,7 @@
   // (Clean Sweep can't be backfilled — flawless sessions weren't tracked before.)
   checkTopicAchievements({ silent: true });
   if (reviewBest > 0) unlockAchievement("review_first", { silent: true });
+  updateTrophyDot();
   updateDailyCard();
   onRoute();
 
