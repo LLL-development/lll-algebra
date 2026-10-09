@@ -24,11 +24,30 @@ function actionLabel(action, value) {
   return `${verbs[action]} ${shown} ${suffix}`;
 }
 
-function makeDistractors(correctStep) {
+// What kind of mistake a wrong option represents, compared with the correct move.
+// Chalky reads this (choice.kind) to explain a wrong tap. Generated options only;
+// authored traps are tagged "notLcd" where they're made.
+const OPPOSITE_ACTION = {
+  add: "subtract", subtract: "add", add_x: "subtract_x", subtract_x: "add_x",
+  multiply: "divide", divide: "multiply"
+};
+const ADD_FAMILY = new Set(["add", "subtract", "add_x", "subtract_x"]);
+
+function mistakeKindFor(choice, correctStep) {
+  if (choice.action === correctStep.action) {
+    // Same operation: either the minus sign got dropped (÷ 3 for ÷ (−3)) or the number is off
+    return choice.value === -correctStep.value ? "forgotSign" : "wrongNumber";
+  }
+  if (choice.action === OPPOSITE_ACTION[correctStep.action]) return "wrongWay";   // + ↔ −, × ↔ ÷
+  if (ADD_FAMILY.has(choice.action) !== ADD_FAMILY.has(correctStep.action)) return "wrongKind";   // +/− vs ×/÷
+  return "generic";
+}
+
+function buildDistractors(correctStep) {
   // Authored traps: the step names its own wrong numbers for the same move
   // (fractions: × one denominator, or × the sum of the denominators, instead of × the LCD).
   if (Array.isArray(correctStep.traps)) {
-    return correctStep.traps.map(v => ({ action: correctStep.action, value: v }));
+    return correctStep.traps.map(v => ({ action: correctStep.action, value: v, kind: "notLcd" }));
   }
 
   const isXAction = correctStep.action === "add_x" || correctStep.action === "subtract_x";
@@ -91,6 +110,11 @@ function makeDistractors(correctStep) {
     return [signFlip, ...pool.slice(0, 2)];
   }
   return pool.slice(0, 3);
+}
+
+// Same options as before, each with a `kind` (see mistakeKindFor) so Chalky can explain a wrong tap.
+function makeDistractors(correctStep) {
+  return buildDistractors(correctStep).map(d => d.kind ? d : { ...d, kind: mistakeKindFor(d, correctStep) });
 }
 
 export { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors };
