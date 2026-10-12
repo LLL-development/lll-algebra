@@ -409,6 +409,13 @@ body {
 .choice-btn.correct { border-color: var(--correct); background: var(--correct-tint); color: var(--correct); }
 .choice-btn.wrong { border-color: var(--wrong); background: var(--accent-tint); color: var(--wrong); }
 .choice-btn:disabled { cursor: default; }
+/* "Show me" replay: every option dims and can't be tapped, then the correct one pulses
+   (same pulse as the tutorial demo) and turns green. Keyed off the banner, so no extra class is needed. */
+#screenPlay:has(#replayBanner:not([hidden])) .choice-btn { pointer-events: none; }
+#screenPlay:has(#replayBanner:not([hidden])) .choice-btn:not(.correct):not(.intro-demo-tap) { opacity: .4; }
+.choices .choice-btn.intro-demo-tap { border-color: var(--accent); transform: scale(.97); }
+/* Emptied at the end of a replay, so it shouldn't take a gap in the screen's column */
+.choices:empty { display: none; }
 /* Narrow phones (~344px): each button is only ~147px wide, so "× 5 both sides" at 15px
    wrapped onto two lines. A slightly smaller font and less side padding keep it on one. */
 @media (max-width: 420px) {
@@ -433,6 +440,16 @@ body {
   white-space: nowrap; flex: none;   /* "Hint (−2 pts)" never wraps; Chalky's bubble gives way instead */
 }
 .hint-btn:hover { color: var(--accent); border-color: var(--accent); }
+/* Hint + "Show me" side by side; Chalky's bubble still gives way */
+.hint-group { display: flex; align-items: center; gap: 8px; flex: none; }
+/* Appears after 2 wrong taps on one step, so it's solid accent instead of dashed */
+.show-me-btn {
+  color: var(--accent); background: var(--accent-tint);
+  border: 1.5px solid var(--accent);
+  animation: showMePop .3s cubic-bezier(.34,1.56,.64,1);
+}
+.show-me-btn:hover { color: var(--on-accent); background: var(--accent); }
+@keyframes showMePop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .hint-text { font-size: 14px; color: var(--muted); text-align: center; min-height: 20px; }
 
 /* ---------- Chalk buddy (companion character, right of the Hint button) ---------- */
@@ -464,6 +481,8 @@ body {
   .hint-btn { padding: 8px 10px; font-size: 13px; }
   .controls-row .buddy { gap: 6px; }
   .controls-row .buddy-bubble { padding: 6px 8px; }
+  /* Hint + Show me + Chalky on one row would leave the bubble ~30px, so stack the two buttons */
+  .hint-group { flex-direction: column; align-items: stretch; gap: 6px; }
 }
 /* Stepped motion to match the pixel look */
 .buddy-sprite.idle { animation: buddyBob 1.6s steps(2, end) infinite; }
@@ -1201,3 +1220,29 @@ body:has(.tip-overlay:not([hidden])) { overflow: hidden; }   /* no page scroll b
   transform-box: fill-box; transform-origin: center;
 }
 .nl-dot.filled { fill: var(--correct); }                          /* filled: ≤ / ≥ */
+
+/* ---------- "Show me" replay ----------
+   Plays on the real play screen (index.html). :not([hidden]) so display never overrides `hidden`. */
+.replay-banner:not([hidden]) {
+  display: block; width: 100%;
+  margin: 0 0 -14px;               /* sits close to the step dots (the screen's gap is 28px) */
+  padding: 6px 10px; text-align: center;
+  font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--accent);
+  background: var(--accent-tint); border: 1.5px dashed var(--accent); border-radius: 10px;
+}
+.replay-end:not([hidden]) {
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.replay-end-note { margin: 0; font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; }
+.replay-end-actions { display: flex; gap: 10px; width: 100%; }
+.replay-end-actions .complete-btn { flex: 1; }
+@media (max-width: 420px) {
+  .replay-end-actions { flex-direction: column; }
+}
+/* Level-complete card: quieter than Next / Try again, accent text so it reads as an extra */
+.complete-btn.complete-watch-btn { color: var(--accent); border-style: dashed; }
+@media (prefers-reduced-motion: reduce) {
+  .show-me-btn { animation: none !important; }
+  .choices .choice-btn.intro-demo-tap { transform: none; }
+}
