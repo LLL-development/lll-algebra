@@ -53,6 +53,7 @@
         <button class="complete-btn secondary" id="completeRetryBtn"></button>
         <button class="complete-btn secondary" id="completeLevelsBtn"></button>
       </div>
+      <button class="complete-btn secondary complete-watch-btn" id="completeWatchBtn" hidden></button>
     </div>
   </div>
 </div>
@@ -273,6 +274,8 @@
       <span data-i18n="levelLabel">Level</span>&nbsp;<strong id="hudLevel">1 / 1</strong>
     </div>
 
+    <p class="replay-banner" id="replayBanner" hidden></p>
+
     <div class="step-progress" id="stepProgress"></div>
 
     <div class="equation-card pixel-card" id="equationCard">
@@ -283,10 +286,21 @@
 
     <div class="choices" id="choicesGrid"></div>
 
+    <div class="replay-end" id="replayEnd" hidden>
+      <p class="replay-end-note" id="replayEndNote"></p>
+      <div class="replay-end-actions">
+        <button class="complete-btn primary" id="replayTryBtn"></button>
+        <button class="complete-btn secondary" id="replayLevelsBtn"></button>
+      </div>
+    </div>
+
     <div class="hint-text" id="hintText"></div>
 
     <div class="controls-row">
-      <button class="hint-btn" id="hintBtn" data-i18n="hintBtn">Hint (−2 pts)</button>
+      <div class="hint-group">
+        <button class="hint-btn" id="hintBtn" data-i18n="hintBtn">Hint (−2 pts)</button>
+        <button class="hint-btn show-me-btn" id="showMeBtn" data-i18n="showMeBtn" hidden>Show me</button>
+      </div>
       <div class="buddy">
         <p class="buddy-bubble" id="buddyBubble" aria-live="polite"></p>
         <div class="buddy-sprite" id="buddySprite" aria-hidden="true"></div>
@@ -319,6 +333,8 @@
     if ($tutorialOverlay.classList.contains("show")) openTutorial(tutTopic, tutAuto);
     if ($introOverlay.classList.contains("show")) showIntroStep(introStep);
     if (!$tipOverlay.hidden) { fillTierTip(); showTipText(false); }
+    fillReplayText();
+    if (replaying) return;   // the replay keeps playing; redrawing would restart its step
     // Only redraw the game when it's on screen mid-level (a solved level has no current step).
     if ($screenPlay.hidden || !$completeOverlay.hidden || stepIndex >= currentLevel().steps.length) return;
     render();
@@ -361,6 +377,11 @@
   let review = null;        // { levels, index, score, results: [{ topic, clean }] } — current Mixed Review session
   let reviewBest = 0;       // best Mixed Review session score
   let newAchievements = new Set();   // unlocked but not yet seen in the panel (lights the 🏆 dot)
+  let wrongThisStep = 0;        // wrong taps on the current step (2 → "Show me" appears)
+  let wrongStepKey = null;      // "level id:step" the counter belongs to, so a re-render doesn't reset it
+  let watchedLevelId = null;    // level whose solution was watched; its next solve is capped at 1★
+  let replaying = false;        // true while "Show me" is playing the solution
+  let replayCapped = true;      // false when replaying a ★★★ level from the complete card (free practice)
 
   const $eq = document.getElementById("equationText");
   const $choices = document.getElementById("choicesGrid");
@@ -409,6 +430,13 @@
   const $levelsTitle = document.getElementById("levelsTitle");
   const $levelsSummary = document.getElementById("levelsSummary");
   const $levelsTiers = document.getElementById("levelsTiers");
+  const $showMeBtn = document.getElementById("showMeBtn");
+  const $replayBanner = document.getElementById("replayBanner");
+  const $replayEnd = document.getElementById("replayEnd");
+  const $replayEndNote = document.getElementById("replayEndNote");
+  const $replayTryBtn = document.getElementById("replayTryBtn");
+  const $replayLevelsBtn = document.getElementById("replayLevelsBtn");
+  const $completeWatchBtn = document.getElementById("completeWatchBtn");
 
   let achievementToastTimeout;
   const loadStart = performance.now();
@@ -428,7 +456,8 @@
         levelProgress,
         unlockedAchievements: [...unlockedAchievements], totalSolves,
         dailyStreak, lastDailySolvedDate, reviewBest,
-        newAchievements: [...newAchievements]
+        newAchievements: [...newAchievements],
+        watchedLevelId
       }));
     } catch (e) { /* localStorage unavailable — fail silently */ }
   }
@@ -454,6 +483,7 @@
         lastDailySolvedDate = saved.lastDailySolvedDate || null;
         reviewBest = saved.reviewBest || 0;
         newAchievements = new Set(saved.newAchievements || []);
+        watchedLevelId = saved.watchedLevelId || null;
         hintUsedThisLevel = !!saved.hintUsedThisLevel;
         wrongThisLevel = saved.wrongThisLevel || 0;
         levelProgress = (saved.levelProgress && typeof saved.levelProgress === "object") ? saved.levelProgress : {};
@@ -565,7 +595,7 @@
     idles: {
       delay: () => 10000,
       pick: () => CHALKY_IDLES.dozeNudge,
-      canPlay: () => !$screenPlay.hidden && $completeOverlay.hidden && $tipOverlay.hidden && !document.hidden
+      canPlay: () => !$screenPlay.hidden && $completeOverlay.hidden && $tipOverlay.hidden && !replaying && !document.hidden
     }
   });
   function buddyIdle() { playBuddy.idle(); }
@@ -817,7 +847,16 @@
 
   function render() {
     const level = currentLevel();
-    if (stepIndex === 0) { hintUsedThisLevel = false; wrongThisLevel = 0; }
+    // Starting a level: a watched solution still counts as a hint (1★ max), including after "Try it yourself"
+    // Mixed Review keeps its own per-question flag, so watching there never caps the level in normal play
+    if (stepIndex === 0) {
+      hintUsedThisLevel = inReviewMode
+        ? review.watchedIndex === review.index
+        : !inDailyMode && watchedLevelId === level.id;
+      wrongThisLevel = 0;
+    }
+    const stepKey = `${level.id}:${stepIndex}`;
+    if (stepKey !== wrongStepKey) { wrongStepKey = stepKey; wrongThisStep = 0; }
     // Derive the text from the level + step, so resuming mid-level (after a refresh,
     // Today's Challenge, or another screen) always shows the right intermediate step.
     currentEquationText = stepIndex === 0 ? level.equation : level.steps[stepIndex - 1].result;
@@ -858,12 +897,14 @@
       const btn = document.createElement("button");
       btn.className = "choice-btn";
       btn.textContent = actionLabel(choice.action, choice.value);
+      if (choice.action === step.action && choice.value === step.value) btn.dataset.correct = "1";
       btn.addEventListener("click", () => handleChoice(choice, btn, step));
       $choices.appendChild(btn);
     });
 
     if (stepIndex === 0) buddyIdle();   // new level → calm; mid-level steps keep their reaction
     hintUsedThisStep = false;
+    updateShowMeBtn();
   }
 
   function handleChoice(choice, btn, correctStep) {
@@ -872,6 +913,7 @@
 
     if (isCorrect) {
       btn.classList.add("correct");
+      $showMeBtn.hidden = true;   // this step's done
       const prevText = currentEquationText;
       currentEquationText = correctStep.result;
       flipPending = !!correctStep.flip;
@@ -892,7 +934,11 @@
       if (justSolved) buddyReact("celebrating", { line: buddyLine("buddySolved"), stay: true });
       else buddyReact("happy", { line: Math.random() < 0.35 ? buddyLine("buddyCorrect") : "", ms: 1400 });
       updateStepDots(stepIndex, totalSteps, justSolved);
-      if (justSolved) $equationCard.classList.add("solved");
+      if (justSolved) {
+        $equationCard.classList.add("solved");
+        // Only the capped solve of that same level uses the flag up (not a Mixed Review / Today's Challenge solve)
+        if (!inReviewMode && !inDailyMode && watchedLevelId === currentLevel().id) watchedLevelId = null;
+      }
       saveProgress();
 
       if (justSolved && inReviewMode) {
@@ -943,11 +989,13 @@
         // (longer on a sign flip, so the flip animation and message can be seen).
         setTimeout(() => showCompleteOverlay(result), correctStep.flip ? 1500 : 900);
       } else {
-        setTimeout(render, 600);
+        setTimeout(() => { if (!replaying) render(); }, 600);
       }
     } else {
       btn.classList.add("wrong");
       wrongThisLevel++;
+      wrongThisStep++;
+      updateShowMeBtn();
       sfx.wrong();
       $eq.classList.remove("wrong-shake");
       void $eq.offsetWidth; // restart animation
@@ -955,6 +1003,7 @@
       // Chalky says what went wrong (not the answer), so a hint already on screen isn't overwritten
       buddyReact("oops", { line: mistakeLine(choice, correctStep), ms: MISTAKE_MS });
       setTimeout(() => {
+        if (replaying) return;   // "Show me" was tapped meanwhile; its buttons stay locked
         [...$choices.children].forEach(b => { b.disabled = false; b.classList.remove("wrong"); });
       }, 700);
     }
@@ -993,6 +1042,156 @@
       hintUsedThisStep = true;
     }
   });
+
+  // ---------- "Show me" replay ----------
+  // Plays the solution on the real play screen (same card, step dots and choice buttons), with Chalky narrating.
+  // Offered after 2 wrong taps on one step (plays from that step) and on the level-complete card (from the start).
+  // Watching counts as a hint: −2 pts once, and that level's next solve is capped at 1★ (watchedLevelId),
+  // which carries through "Try it yourself". Not offered in Today's Challenge.
+  const REPLAY_STEP_MS = 2800;   // time per step
+  const REPLAY_TAP_MS = 1100;    // the correct button pulses
+  const REPLAY_MOVE_MS = 1600;   // the move is made
+  let replayTimers = [];
+
+  function replayLater(fn, ms) { replayTimers.push(setTimeout(fn, ms)); }
+  function clearReplayTimers() { replayTimers.forEach(clearTimeout); replayTimers = []; }
+
+  function updateShowMeBtn() {
+    $showMeBtn.hidden = inDailyMode || replaying || wrongThisStep < 2;
+  }
+
+  function fillReplayText() {
+    const t = (k, fb) => LLL_I18N.t(k) || fb;
+    // A ★★★ level replayed from the complete card is free practice, so no cap is mentioned
+    // Mixed Review has no stars: watching costs the −2 and the ✓ on the summary instead
+    $replayBanner.textContent = inReviewMode
+      ? t("replayBannerReview", "Replay · this one won't count as flawless")
+      : replayCapped
+        ? t("replayBanner", "Replay · this level is capped at 1★")
+        : t("replayBannerFree", "Replay · your ★★★ is safe");
+    $replayEndNote.textContent = inReviewMode
+      ? t("replayEndNoteReview", "You watched the solution · this one won't count as flawless")
+      : replayCapped
+        ? t("replayEndNote", "Watched the solution · this try earns up to 1★")
+        : t("replayEndNoteFree", "You've already got ★★★ here, so this one's just practice");
+    $replayTryBtn.textContent = t("replayTryBtn", "Try it yourself");
+    $replayLevelsBtn.textContent = t("levelSelectBtn", "Level select");
+    $completeWatchBtn.textContent = t("completeWatchBtn", "See how it's solved");
+  }
+
+  function setReplayUi(on) {
+    replaying = on;
+    $replayBanner.hidden = !on;
+    $hintBtn.hidden = on;
+    $replayEnd.hidden = true;
+    updateShowMeBtn();
+  }
+
+  // charge = take the −2 pts (not when watching from the complete card, the level's already scored)
+  // cap = the level's next solve is capped at 1★ (off for a ★★★ level, there's nothing left to protect)
+  function startReplay(fromStep, { charge = true, cap = true } = {}) {
+    const level = currentLevel();
+    if (fromStep >= level.steps.length) return;   // already solved
+    const alreadyWatched = inReviewMode ? review.watchedIndex === review.index : watchedLevelId === level.id;
+    if (charge && !alreadyWatched) {
+      if (inReviewMode) review.score = Math.max(0, review.score - 2);
+      else score = Math.max(0, score - 2);
+    }
+    replayCapped = cap;
+    if (cap) {
+      if (inReviewMode) review.watchedIndex = review.index;   // this question only
+      else watchedLevelId = level.id;
+      hintUsedThisLevel = true;
+    }
+    // Mid-level: the step's buttons are already on screen, so the replay keeps them
+    const keepChoices = fromStep === stepIndex && $choices.children.length > 0;
+    clearReplayTimers();
+    fillReplayText();
+    setReplayUi(true);
+    stepIndex = fromStep;
+    saveProgress();
+    playReplayStep(level, keepChoices);
+  }
+
+  function playReplayStep(level, keepChoices = false) {
+    if (keepChoices) {
+      // Same options the player was stuck on; just show the −2 and clear the wrong-tap marks
+      $hudScore.textContent = inReviewMode ? review.score : score;
+      [...$choices.children].forEach(b => b.classList.remove("wrong"));
+    } else {
+      render();   // this step's real choices, with the correct one marked
+    }
+    const step = currentStep();
+    [...$choices.children].forEach(b => { b.disabled = true; b.tabIndex = -1; });
+    const correctBtn = $choices.querySelector('[data-correct="1"]');
+
+    // The step's hint explains the move; Chalky says which move it is
+    const hints = level.hints[currentLang()] || level.hints.en;
+    setMathText($hintText, hints[stepIndex] || hints[hints.length - 1]);
+    const line = (buddyLine("replayStepLine") || "Step {n}: {move}")
+      .split("{n}").join(stepIndex + 1)
+      .split("{move}").join(correctBtn ? correctBtn.textContent : "");
+    buddyReact("thinking", { line, stay: true });
+
+    replayLater(() => correctBtn && correctBtn.classList.add("intro-demo-tap"), REPLAY_TAP_MS);
+    replayLater(() => {
+      if (correctBtn) { correctBtn.classList.remove("intro-demo-tap"); correctBtn.classList.add("correct"); }
+      flipPending = !!step.flip;
+      currentEquationText = step.result;
+      setEquationText(step.result, step.flip ? playFlipCue : null);
+      burstChalkDust();
+      stepIndex++;
+      const done = stepIndex >= level.steps.length;
+      updateStepDots(stepIndex, level.steps.length, done);
+      sfx.step(stepIndex);
+      if (done) {
+        $equationCard.classList.add("solved");
+        finishReplay();
+      } else {
+        replayLater(() => playReplayStep(level), REPLAY_STEP_MS - REPLAY_MOVE_MS);
+      }
+    }, REPLAY_MOVE_MS);
+  }
+
+  function finishReplay() {
+    replayLater(() => {
+      $choices.innerHTML = "";
+      $expandPrompt.hidden = true;
+      $hintText.textContent = "";
+      $replayEnd.hidden = false;
+      $replayLevelsBtn.hidden = inReviewMode;   // in Mixed Review the only way on is to try it
+      $replayTryBtn.focus({ preventScroll: true });
+      buddyReact("celebrating", { line: buddyLine("replayDoneLine") || "That's the whole route. Your turn!", stay: true });
+    }, 900);
+  }
+
+  // Leaving mid-replay goes back to the start of the level, so a replay can't be used to skip steps
+  function cancelReplay() {
+    if (!replaying) return;
+    clearReplayTimers();
+    setReplayUi(false);
+    stepIndex = 0;
+  }
+
+  function watchFromComplete() {
+    const best = (levelProgress[currentLevel().id] || {}).stars || 0;
+    hideCompleteOverlay();
+    startReplay(0, { charge: false, cap: best < 3 });
+  }
+
+  $showMeBtn.addEventListener("click", () => startReplay(stepIndex));
+
+  $replayTryBtn.addEventListener("click", () => {
+    clearReplayTimers();
+    setReplayUi(false);
+    stepIndex = 0;
+    wrongStepKey = null;
+    saveProgress();
+    render();
+    buddyReact("happy", { line: buddyLine("replayTryLine") || "Same steps, your taps.", ms: 2200 });
+  });
+
+  $replayLevelsBtn.addEventListener("click", () => go(`#levels/${currentLevel().topic}`));
 
   // ---------- Systems graph (level-complete card) ----------
   // Drawn by graph.js (showSystemGraph / clearSystemGraph / afterGraphDrawn).
@@ -1075,12 +1274,15 @@
     }
     completeActions.retry = () => go(playHash(r.level));
     completeActions.levels = toLevels;
+    completeActions.watch = watchFromComplete;
 
     $completeRetryBtn.textContent = t("retryBtn") || "Try again";
     $completeLevelsBtn.textContent = t("levelSelectBtn") || "Level select";
     $completeRetryBtn.hidden = r.daily || r.stars === 3;
     $completeLevelsBtn.hidden = r.daily || !next;
     $completeRetryBtn.parentElement.hidden = $completeRetryBtn.hidden && $completeLevelsBtn.hidden;
+    $completeWatchBtn.textContent = t("completeWatchBtn") || "See how it's solved";
+    $completeWatchBtn.hidden = r.daily;
 
     // Press Start 2P has no Japanese glyphs — use it only for ASCII titles.
     $completeKicker.classList.toggle("pixel", /^[\x20-\x7E]*$/.test($completeKicker.textContent));
@@ -1107,6 +1309,7 @@
   $completePrimaryBtn.addEventListener("click", () => completeActions.primary && completeActions.primary());
   $completeRetryBtn.addEventListener("click", () => completeActions.retry && completeActions.retry());
   $completeLevelsBtn.addEventListener("click", () => completeActions.levels && completeActions.levels());
+  $completeWatchBtn.addEventListener("click", () => completeActions.watch && completeActions.watch());
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !$completeOverlay.hidden && completeActions.escape) completeActions.escape();
   });
@@ -1286,6 +1489,7 @@
     $completeLevelsBtn.hidden = false;
     $completeLevelsBtn.textContent = t("homeBtn", "Home");
     $completeRetryBtn.parentElement.hidden = false;
+    $completeWatchBtn.hidden = true;
 
     $completeKicker.classList.toggle("pixel", /^[\x20-\x7E]*$/.test($completeKicker.textContent));
     $completeOverlay.hidden = false;
@@ -1490,6 +1694,7 @@
   }
 
   function onRoute() {
+    cancelReplay();
     hideCompleteOverlay();
     if (!$tipOverlay.hidden) closeTierTip(false);   // left before reading it, so it shows again next time
     if ($tutorialOverlay.classList.contains("show") && !$tutorialOverlay.classList.contains("hiding")) closeTutorial(false);
