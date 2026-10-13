@@ -1246,3 +1246,65 @@ body:has(.tip-overlay:not([hidden])) { overflow: hidden; }   /* no page scroll b
   .show-me-btn { animation: none !important; }
   .choices .choice-btn.intro-demo-tap { transform: none; }
 }
+
+/* ---------- Tricky spots ----------
+   Home card (under Mixed Review), the session banner on the play screen, and the
+   practice summary rows. :not([hidden]) so display never overrides `hidden`. */
+.tricky-card:not([hidden]) {
+  display: flex; flex-direction: column; gap: 10px;
+  width: 100%; max-width: 520px;
+  margin-top: -16px;               /* 12px below Mixed Review, like the review card */
+  background: var(--surface); border: 1px solid var(--accent); border-radius: 14px;
+  padding: 14px 18px;
+}
+.tricky-head { display: flex; align-items: center; gap: 12px; }
+.tricky-rows { display: flex; flex-direction: column; }
+.tricky-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--border);
+}
+.tricky-row-label { font-family: var(--sans); font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--ink); }
+.tricky-row-count {
+  margin-left: 4px; white-space: nowrap;
+  font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--muted);
+}
+.tricky-btn {
+  flex: none; white-space: nowrap;
+  font-family: var(--sans); font-size: 13px; font-weight: 700; color: var(--ink);
+  background: transparent; border: 1px solid var(--border); border-radius: 10px;
+  padding: 7px 12px; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+.tricky-btn:hover:not(:disabled) { border-color: var(--accent); }
+/* The top row's button stands out, so the biggest slip is the obvious one to practise */
+.tricky-btn.top { color: var(--accent); background: var(--accent-tint); border-color: var(--accent); }
+.tricky-btn.top:hover:not(:disabled) { color: var(--on-accent); background: var(--accent); }
+/* "Clear more levels": fewer than 3 cleared levels where this slip can come up */
+.tricky-btn:disabled {
+  color: var(--muted); background: transparent;
+  border-color: var(--border); border-style: dashed;
+  cursor: default;
+}
+.tricky-none {
+  margin: 0; padding-top: 9px;
+  border-top: 1px solid var(--border);
+  font-family: var(--sans); font-size: 13px; color: var(--muted);
+}
+@media (max-width: 420px) {
+  .tricky-card:not([hidden]) { padding: 12px 14px; }
+  .tricky-row-label { font-size: 13px; }
+  .tricky-btn { font-size: 12px; padding: 6px 10px; }
+}
+
+/* Session banner: same shape as the replay banner, but solid, so the two read as different things */
+.replay-banner.tricky-banner:not([hidden]) { border-style: solid; }
+
+/* Practice summary: one row per question, with the equation in mono */
+.review-row-name.tricky-q { font-family: var(--mono); font-weight: 500; }
+/* The practice summary has no points line, so an empty one shouldn't leave a gap */
+.complete-points:empty { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tricky-btn { transition: none !important; }
+}

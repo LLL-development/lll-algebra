@@ -180,6 +180,17 @@
       </div>
     </button>
 
+    <div class="tricky-card" id="trickyCard" hidden>
+      <div class="tricky-head">
+        <span class="daily-card-icon">🎯</span>
+        <div class="daily-card-text">
+          <div class="daily-card-title" data-i18n="trickyTitle">Your tricky spots</div>
+          <div class="daily-card-status" data-i18n="trickySub">Slips that keep coming back</div>
+        </div>
+      </div>
+      <div class="tricky-rows" id="trickyRows"></div>
+    </div>
+
     <div class="home-buddy">
       <div class="home-buddy-wrap">
         <span class="home-tap-hint" id="homeTapHint" data-i18n="homeTapHint" hidden>Tap me!</span>
@@ -275,6 +286,7 @@
     </div>
 
     <p class="replay-banner" id="replayBanner" hidden></p>
+    <p class="replay-banner tricky-banner" id="trickyBanner" hidden></p>
 
     <div class="step-progress" id="stepProgress"></div>
 
@@ -317,7 +329,7 @@
   import { showSystemGraph, clearSystemGraph, showNumberLine, clearNumberLine, afterGraphDrawn } from "./graph.js";
   import { setMathText } from "./mathtext.js";
   import { BUDDY_SVG, CHALKY_IDLES, buddyLine, makeBuddy } from "./chalky.js";
-  import { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors } from "./choices.js";
+  import { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors, practiceKinds } from "./choices.js";
   import { initFloatingSymbols, burstGrandConfetti } from "./effects.js";
 
   // ---------- i18n ----------
@@ -326,6 +338,7 @@
     updateDailyCard();
     updateReviewCard();
     updateHomeCards();
+    updateTrickyCard();
     updateSoundBtn();
     if (!$screenHome.hidden) homeSay(false);
     if (!$screenLevels.hidden) renderLevelSelect(location.hash.split("/")[1]);
@@ -382,6 +395,10 @@
   let watchedLevelId = null;    // level whose solution was watched; its next solve is capped at 1★
   let replaying = false;        // true while "Show me" is playing the solution
   let replayCapped = true;      // false when replaying a ★★★ level from the complete card (free practice)
+  let mistakes = {};            // Tricky spots: { [kind]: { n, clean } } — n = slip count, clean = clean passes toward fading one
+  let totalSlips = 0;           // all slips ever counted (unlocks the Tricky spots card at 10)
+  let slipsThisStep = new Set();   // kinds already counted on the current step (once per step)
+  let stepKinds = new Set();       // kinds offered as wrong options on the current step
 
   const $eq = document.getElementById("equationText");
   const $choices = document.getElementById("choicesGrid");
@@ -437,6 +454,9 @@
   const $replayTryBtn = document.getElementById("replayTryBtn");
   const $replayLevelsBtn = document.getElementById("replayLevelsBtn");
   const $completeWatchBtn = document.getElementById("completeWatchBtn");
+  const $trickyCard = document.getElementById("trickyCard");
+  const $trickyRows = document.getElementById("trickyRows");
+  const $trickyBanner = document.getElementById("trickyBanner");
 
   let achievementToastTimeout;
   const loadStart = performance.now();
@@ -457,7 +477,8 @@
         unlockedAchievements: [...unlockedAchievements], totalSolves,
         dailyStreak, lastDailySolvedDate, reviewBest,
         newAchievements: [...newAchievements],
-        watchedLevelId
+        watchedLevelId,
+        mistakes, totalSlips
       }));
     } catch (e) { /* localStorage unavailable — fail silently */ }
   }
@@ -484,6 +505,8 @@
         reviewBest = saved.reviewBest || 0;
         newAchievements = new Set(saved.newAchievements || []);
         watchedLevelId = saved.watchedLevelId || null;
+        mistakes = (saved.mistakes && typeof saved.mistakes === "object") ? saved.mistakes : {};
+        totalSlips = saved.totalSlips || 0;
         hintUsedThisLevel = !!saved.hintUsedThisLevel;
         wrongThisLevel = saved.wrongThisLevel || 0;
         levelProgress = (saved.levelProgress && typeof saved.levelProgress === "object") ? saved.levelProgress : {};
@@ -775,6 +798,103 @@
     if (choice.kind === "wrongKind" && currentLevel().topic === "quadratic") key = "mistakeTipRearrange";
     return (key && buddyLine(key)) || buddyLine("buddyWrong");
   }
+
+  // ---------- Tricky spots: mistake tracking ----------
+  // Each wrong tap records its mistake kind (once per kind per step). Getting a step right where
+  // a kind was on offer, without slipping on it, is a clean pass; every 3 clean passes fade one slip.
+  // Replays never count (their buttons can't be tapped).
+  const MISTAKE_FADE_EVERY = 3;
+
+  // The kind to track for a wrong option: authored-choice steps use "tip_<action>";
+  // generated options use their kind, except "generic", which has nothing useful to practise.
+  function trackedKind(choice, step) {
+    if (Array.isArray(step.wrong)) return `tip_${step.action}`;
+    return choice.kind && choice.kind !== "generic" ? choice.kind : null;
+  }
+
+  function recordSlip(kind) {
+    if (!kind || slipsThisStep.has(kind)) return;
+    slipsThisStep.add(kind);
+    const m = mistakes[kind] || (mistakes[kind] = { n: 0, clean: 0 });
+    m.n++;
+    m.clean = 0;   // a fresh slip restarts the fade
+    totalSlips++;
+    saveProgress();
+  }
+
+  // Called on a correct tap: every kind offered on this step that wasn't slipped on is a clean pass.
+  function fadeMistakes() {
+    stepKinds.forEach(kind => {
+      const m = mistakes[kind];
+      if (!m || slipsThisStep.has(kind)) return;
+      if (++m.clean >= MISTAKE_FADE_EVERY) {
+        m.clean = 0;
+        if (--m.n <= 0) delete mistakes[kind];
+      }
+    });
+  }
+
+  // ---------- Tricky spots: home card ----------
+  // Appears once 10 slips have ever been counted. Lists the top 3 kinds by count, each with its own
+  // practice button. A button needs 3+ cleared levels where that kind can come up (practiceKinds in choices.js).
+  const TRICKY_UNLOCK = 10;     // totalSlips needed before the card appears
+  const TRICKY_ROWS = 3;        // kinds shown on the card
+  const PRACTICE_LENGTH = 5;    // questions per session (fewer if the pool is small)
+  const PRACTICE_MIN = 3;       // cleared matching levels needed to offer practice
+  const TRICKY_ANNOUNCED_KEY = "lll_algebra_tricky_announced";
+  let trickyAnnounced = false;
+  try { trickyAnnounced = localStorage.getItem(TRICKY_ANNOUNCED_KEY) === "1"; } catch (e) { /* fail silently */ }
+
+  // forgotSign → trickyForgotSign · tip_expand → trickyTipExpand
+  function trickyLabel(kind) {
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const key = kind.startsWith("tip_") ? `trickyTip${cap(kind.slice(4))}` : `tricky${cap(kind)}`;
+    return LLL_I18N.t(key) || kind;
+  }
+
+  // Cleared levels with at least one step where this kind of slip is on offer
+  function practicePool(kind) {
+    return clearedLevels().filter(l => l.steps.some(s => [...practiceKinds(s)].includes(kind)));
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function updateTrickyCard() {
+    const t = (k, fb) => LLL_I18N.t(k) || fb;
+    $trickyCard.hidden = totalSlips < TRICKY_UNLOCK;
+    if ($trickyCard.hidden) return;
+    const top = Object.entries(mistakes)
+      .filter(([, m]) => m.n > 0)
+      .sort((a, b) => b[1].n - a[1].n)
+      .slice(0, TRICKY_ROWS);
+    if (!top.length) {
+      $trickyRows.innerHTML = `<p class="tricky-none">${t("trickyNone", "No tricky spots right now. Nice work!")}</p>`;
+      return;
+    }
+    const rows = top.map(([kind, m]) => {
+      const poolSize = practicePool(kind).length;
+      return { kind, m, poolSize, ready: poolSize >= PRACTICE_MIN };
+    });
+    const accentKind = (rows.find(r => r.ready) || {}).kind;   // first row that can be practised
+    $trickyRows.innerHTML = rows.map(({ kind, m, poolSize, ready }) => {
+      const btnText = ready
+        ? t("trickyPractiseBtn", "Practise {n}").split("{n}").join(Math.min(PRACTICE_LENGTH, poolSize))
+        : t("trickyMoreBtn", "Clear more levels");
+      return `
+        <div class="tricky-row">
+          <span class="tricky-row-label">${trickyLabel(kind)}
+            <span class="tricky-row-count">${t("trickyCount", "{n}×").split("{n}").join(m.n)}</span></span>
+          <button class="tricky-btn${kind === accentKind ? " top" : ""}" data-kind="${kind}"${ready ? "" : " disabled"}>${btnText}</button>
+        </div>`;
+    }).join("");
+  }
+
+  $trickyRows.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tricky-btn");
+    if (btn && !btn.disabled) go(`#tricky/${btn.dataset.kind}`);
+  });
   
   // Press Start 2P has no ≤ / ≥ glyphs, so draw them as the pixel < / > with an underline bar.
   const PIXEL_INEQ = { "≤": "<", "≥": ">" };
@@ -856,7 +976,7 @@
       wrongThisLevel = 0;
     }
     const stepKey = `${level.id}:${stepIndex}`;
-    if (stepKey !== wrongStepKey) { wrongStepKey = stepKey; wrongThisStep = 0; }
+    if (stepKey !== wrongStepKey) { wrongStepKey = stepKey; wrongThisStep = 0; slipsThisStep = new Set(); }
     // Derive the text from the level + step, so resuming mid-level (after a refresh,
     // Today's Challenge, or another screen) always shows the right intermediate step.
     currentEquationText = stepIndex === 0 ? level.equation : level.steps[stepIndex - 1].result;
@@ -869,6 +989,11 @@
     $playLevelLabel.textContent =
       `${LLL_I18N.t(TOPIC_LABEL_KEYS[level.topic]) || level.topic} · ${LLL_I18N.t(TIER_LABEL_KEYS[level.difficulty]) || level.difficulty}`;
     $hudScore.textContent = inReviewMode ? review.score : score;
+    const practice = inReviewMode && review.practice;
+    $trickyBanner.hidden = !practice || replaying;
+    if (practice) {
+      $trickyBanner.textContent = `🎯 ${LLL_I18N.t("trickyTitleShort") || "Tricky spots"} · ${trickyLabel(practice.kind)} · ${review.index + 1} / ${review.levels.length}`;
+    }
     $hintText.textContent = "";
     buildStepDots(level.steps.length);
     updateStepDots(stepIndex, level.steps.length, false);
@@ -886,6 +1011,7 @@
     const distractors = isAuthored
       ? step.wrong.map(w => ({ action: step.action, value: w }))
       : makeDistractors(step);
+    stepKinds = new Set(distractors.map(d => trackedKind(d, step)).filter(Boolean));
     const choices = [{ action: step.action, value: step.value }, ...distractors];
     for (let i = choices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -914,6 +1040,7 @@
     if (isCorrect) {
       btn.classList.add("correct");
       $showMeBtn.hidden = true;   // this step's done
+      fadeMistakes();             // saved by the saveProgress() further down
       const prevText = currentEquationText;
       currentEquationText = correctStep.result;
       flipPending = !!correctStep.flip;
@@ -996,6 +1123,10 @@
       wrongThisLevel++;
       wrongThisStep++;
       updateShowMeBtn();
+      const slipKind = trackedKind(choice, correctStep);
+      recordSlip(slipKind);
+      // Practice summary: ✗ only for a slip of the kind being practised
+      if (inReviewMode && review.practice && slipKind === review.practice.kind) review.slipped.add(review.index);
       sfx.wrong();
       $eq.classList.remove("wrong-shake");
       void $eq.offsetWidth; // restart animation
@@ -1064,12 +1195,18 @@
     const t = (k, fb) => LLL_I18N.t(k) || fb;
     // A ★★★ level replayed from the complete card is free practice, so no cap is mentioned
     // Mixed Review has no stars: watching costs the −2 and the ✓ on the summary instead
-    $replayBanner.textContent = inReviewMode
+    // Practice only marks slips of its own kind, so watching costs the −2 and nothing else
+    const practice = inReviewMode && review && review.practice;
+    $replayBanner.textContent = practice
+      ? t("replayBannerPractice", "Replay · just watching")
+      : inReviewMode
       ? t("replayBannerReview", "Replay · this one won't count as flawless")
       : replayCapped
         ? t("replayBanner", "Replay · this level is capped at 1★")
         : t("replayBannerFree", "Replay · your ★★★ is safe");
-    $replayEndNote.textContent = inReviewMode
+    $replayEndNote.textContent = practice
+      ? t("replayEndNotePractice", "You watched the solution · now try it yourself")
+      : inReviewMode
       ? t("replayEndNoteReview", "You watched the solution · this one won't count as flawless")
       : replayCapped
         ? t("replayEndNote", "Watched the solution · this try earns up to 1★")
@@ -1082,6 +1219,7 @@
   function setReplayUi(on) {
     replaying = on;
     $replayBanner.hidden = !on;
+    if (on) $trickyBanner.hidden = true;   // one banner at a time; render() brings it back after
     $hintBtn.hidden = on;
     $replayEnd.hidden = true;
     updateShowMeBtn();
@@ -1427,6 +1565,7 @@
       if (review !== session) return;   // player left or restarted in the meantime
       review.index++;
       if (review.index < review.levels.length) { stepIndex = 0; render(); }
+      else if (review.practice) showPracticeSummary();
       else showReviewSummary();
     }, correctStep.flip ? 1500 : 900);
   }
@@ -1503,6 +1642,70 @@
     const btn = e.target.closest(".review-practise-btn");
     if (btn) go(`#levels/${btn.dataset.topic}`);
   });
+
+  // ---------- Tricky spots: practice sessions ----------
+  // A Mixed Review round with a `practice` field: no stars, hint and "Show me" still work.
+  // Never touches reviewBest or the Mixed Review achievements.
+  function startPractice(kind) {
+    review = {
+      levels: buildReviewQueue(practicePool(kind), PRACTICE_LENGTH),
+      index: 0, score: 0, results: [],
+      practice: { kind, startN: (mistakes[kind] || {}).n || 0 },
+      slipped: new Set()   // question indexes with a slip of the practised kind
+    };
+    stepIndex = 0;
+    render();
+    buddyReact("happy", { line: buddyLine("trickyStartLine"), ms: 3200 });   // one line at the start only
+  }
+
+  function showPracticeSummary() {
+    const t = (k, fb) => LLL_I18N.t(k) || fb;
+    const { kind, startN } = review.practice;
+    const total = review.levels.length;
+    const clean = total - review.slipped.size;
+    const endN = (mistakes[kind] || {}).n || 0;
+
+    $completeKicker.textContent = t("trickyDone", "Practice done!");
+    $completeSub.textContent = trickyLabel(kind);
+    $completeStars.hidden = true;
+    $completeBest.hidden = true;
+    $completePoints.textContent = "";
+    $completeBonus.hidden = true;
+    $completeExplanation.hidden = true;
+    clearSystemGraph();
+    clearNumberLine();
+
+    const rows = review.levels.map((l, i) => {
+      const ok = !review.slipped.has(i);
+      return `
+      <div class="review-row">
+        <span class="review-row-name tricky-q">${i + 1}. ${escapeHtml(l.equation.split("\n").join(", "))}</span>
+        <span class="review-row-marks"><span class="review-mark ${ok ? "ok" : "slip"}">${ok ? "✓" : "✗"}</span></span>
+      </div>`;
+    }).join("");
+    $completeReview.innerHTML = `
+      <p class="review-flawless">${t("trickyClean", "{n} / {total} without that slip")
+        .split("{n}").join(clean).split("{total}").join(total)}</p>
+      <div class="review-rows">${rows}</div>
+      <p class="review-nudge">${t("trickySlipCount", "Slip count: {from} → {to}")
+        .split("{from}").join(startN).split("{to}").join(endN)}</p>`;
+    $completeReview.hidden = false;
+
+    completeActions = { primary: () => go(`#tricky/${kind}`), levels: () => go("#home"), escape: () => go("#home") };
+    $completePrimaryBtn.textContent = t("trickyAgainBtn", "Practise again");
+    $completeRetryBtn.hidden = true;
+    $completeLevelsBtn.hidden = false;
+    $completeLevelsBtn.textContent = t("homeBtn", "Home");
+    $completeRetryBtn.parentElement.hidden = false;
+    $completeWatchBtn.hidden = true;
+
+    $completeKicker.classList.toggle("pixel", /^[\x20-\x7E]*$/.test($completeKicker.textContent));
+    $completeOverlay.hidden = false;
+    $completePrimaryBtn.focus({ preventScroll: true });
+    const allClean = clean === total;
+    completeChalky(allClean ? "celebrating" : "happy", allClean ? "chalkyTrickyClean" : "chalkyTricky");
+    if (allClean) burstGrandConfetti();
+  }
 
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
@@ -1595,6 +1798,12 @@
     const lines = [];
     const cleared = clearedLevels().length;
 
+    // The first time the Tricky spots card appears, Chalky points it out (once ever)
+    if (!$trickyCard.hidden && !trickyAnnounced) {
+      lines.push(t("homeTrickyNew"));
+      trickyAnnounced = true;
+      try { localStorage.setItem(TRICKY_ANNOUNCED_KEY, "1"); } catch (e) { /* fail silently */ }
+    }
     if (!cleared) lines.push(t("homeFirst"));
     if (!isDailyCompletedToday()) {
       lines.push(dailyStreak > 0 ? fill(t("homeDailyStreak"), { n: dailyStreak }) : t("homeDaily"));
@@ -1732,6 +1941,13 @@
       startReview();   // always a fresh session, including "Play again" and a page refresh
       setBackLabel("backHome", "Home");
       showScreen("play");
+    } else if (screen === "tricky" && practicePool(arg).length >= PRACTICE_MIN) {
+      leaveDaily();
+      if (!inReviewMode) regularLevelState = { stepIndex, hintUsedThisLevel, wrongThisLevel };
+      inReviewMode = true;
+      startPractice(arg);   // always a fresh session, including "Practise again" and a page refresh
+      setBackLabel("backHome", "Home");
+      showScreen("play");
     } else {
       if (location.hash !== "#home") history.replaceState(null, "", "#home");
       leaveDaily();
@@ -1739,6 +1955,7 @@
       updateDailyCard();
       updateReviewCard();
       updateHomeCards();
+      updateTrickyCard();   // before homeSay(), so Chalky can announce it the first time
       showScreen("home");
       homeSay(false);
     }

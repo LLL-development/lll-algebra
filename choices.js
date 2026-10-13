@@ -117,4 +117,22 @@ function makeDistractors(correctStep) {
   return buildDistractors(correctStep).map(d => d.kind ? d : { ...d, kind: mistakeKindFor(d, correctStep) });
 }
 
-export { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors };
+// Mistake kinds a step will offer as a wrong option, from the guaranteed picks in buildDistractors().
+// Used by Tricky spots to find practice levels for a mistake. Authored-choice steps count as
+// "tip_<action>" (e.g. tip_expand). wrongNumber isn't guaranteed, but nearly every generated
+// step offers a nearby number, so any generated step can practise it.
+function practiceKinds(step) {
+  if (Array.isArray(step.wrong)) return [`tip_${step.action}`];
+  if (Array.isArray(step.traps)) return ["notLcd"];
+  const v = step.value;
+  if (ADD_FAMILY.has(step.action)) {
+    const isXAction = step.action === "add_x" || step.action === "subtract_x";
+    return isXAction || v === 1 ? ["wrongWay", "wrongNumber"] : ["wrongWay", "wrongKind", "wrongNumber"];
+  }
+  if (step.action === "multiply" || step.action === "divide") {
+    return v > 0 ? ["wrongWay", "wrongKind", "wrongNumber"] : ["forgotSign", "wrongNumber"];
+  }
+  return [];
+}
+
+export { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors, practiceKinds };
