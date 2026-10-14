@@ -256,6 +256,15 @@
           <span class="topic-card-count"></span>
         </span>
       </button>
+      <button class="topic-card" data-topic="subject">
+        <span class="topic-card-sample">y = 2x + 1</span>
+        <span class="topic-card-title" data-i18n="topicSubject">Formulas</span>
+        <span class="topic-card-desc" data-i18n="topicSubjectDesc">Make a different letter the subject</span>
+        <span class="topic-card-progress" data-progress="subject">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -527,7 +536,7 @@
     return Math.floor(diff / 86400000);
   }
 
-  // Rotates through the topics day by day (Equations → Inequalities → … → Fractions → Equations),
+  // Rotates through the topics day by day (Equations → Inequalities → … → Formulas → Equations),
   // stepping through each topic's Easy + Medium levels. Hard is left out because
   // Today's Challenge isn't locked behind progress.
   function getTodaysLevel() {
@@ -796,6 +805,9 @@
     if (choice.kind === "forgotSign" && currentLevel().topic === "inequality") key = "mistakeForgotSignIneq";
     // Quadratics' rearrange steps: the number isn't joined to x, it's being moved so one side is 0
     if (choice.kind === "wrongKind" && currentLevel().topic === "quadratic") key = "mistakeTipRearrange";
+    // Formulas' letter moves: talk about the letter, not "the number"
+    if (step.moves && choice.kind === "wrongNumber") key = "mistakeWrongLetter";
+    if (step.moves && choice.kind === "wrongKind") key = "mistakeWrongKindLetter";
     return (key && buddyLine(key)) || buddyLine("buddyWrong");
   }
 
@@ -965,6 +977,15 @@
     typeChar();
   }
 
+  // Text above the choices: the step's own prompt ("Factorise:"), Quadratics' "To make one side 0:",
+  // or the Formulas topic's "Make x the subject:" (letter from level.subject). Empty when there's none.
+  function choicePrompt(level, step) {
+    const key = CHOICE_PROMPT_KEYS[step.action]
+      || (level.topic === "quadratic" ? "rearrangePrompt" : null)
+      || (level.subject ? "subjectPrompt" : null);
+    return key ? (LLL_I18N.t(key) || "").split("{letter}").join(level.subject || "") : "";
+  }
+
   function render() {
     const level = currentLevel();
     // Starting a level: a watched solution still counts as a hint (1★ max), including after "Try it yourself"
@@ -1004,10 +1025,9 @@
     // Authored-choice steps (expand, factor, roots) carry their own wrong options;
     // every other step gets generated distractors.
     const isAuthored = Array.isArray(step.wrong);
-    // Quadratics' non-authored steps are always "move terms so one side is 0", so label them too.
-    const promptKey = CHOICE_PROMPT_KEYS[step.action] || (level.topic === "quadratic" ? "rearrangePrompt" : null);
-    $expandPrompt.hidden = !promptKey;
-    if (promptKey) $expandPrompt.textContent = LLL_I18N.t(promptKey) || "";
+    const prompt = choicePrompt(level, step);
+    $expandPrompt.hidden = !prompt;
+    $expandPrompt.textContent = prompt;
     const distractors = isAuthored
       ? step.wrong.map(w => ({ action: step.action, value: w }))
       : makeDistractors(step);
@@ -1710,8 +1730,8 @@
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
-  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction" };
-  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1" };
 
   // Levels unlock in order within a tier; the first level of every tier is always open.
   function isUnlocked(level) {
@@ -1859,7 +1879,7 @@
   document.getElementById("homeBubble").addEventListener("click", onChalkyTap);
 
   // ---------- screens + hash routing ----------
-  // Routes: #home · #levels/<topic> · #play/<level id> · #daily · #review
+  // Routes: #home · #levels/<topic> · #play/<level id> · #daily · #review · #tricky/<kind>
   const LEVELS_BY_ID = Object.fromEntries(LEVELS.map(l => [l.id, l]));
   const SCREENS = { home: $screenHome, levels: $screenLevels, play: $screenPlay };
 
@@ -2081,7 +2101,7 @@
   // Shown once per topic on first visit, reopenable from the ❔ on the level-select screen.
   // Chalky explains the key idea, then a demo level plays step by step using the real game pieces.
   const TUTORIAL_SEEN_KEY = "lll_algebra_tutorials_seen";
-  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2 };
+  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2 };
   const TUT_STEP_MS = 2600;   // time per demo step
 
   // Demo level per topic: normally the first Easy level, except where that level skips the
@@ -2092,6 +2112,11 @@
       if (flipLevel) return flipLevel;
     }
     if (topic === "quadratic" && levelsFor(topic, "medium").length) return levelsFor(topic, "medium")[0];
+    // Formulas: a two-step level, so the demo shows why (y - 1) stays in brackets
+    if (topic === "subject") {
+      const twoStep = levelsFor(topic, "easy").find(l => l.steps.length === 2);
+      if (twoStep) return twoStep;
+    }
     return levelsFor(topic, "easy")[0];
   }
 
@@ -2175,9 +2200,9 @@
 
     steps.forEach((step, i) => {
       tutLater(() => {
-        const promptKey = CHOICE_PROMPT_KEYS[step.action] || (level.topic === "quadratic" ? "rearrangePrompt" : null);
-        $tutPrompt.hidden = !promptKey;
-        if (promptKey) $tutPrompt.textContent = LLL_I18N.t(promptKey) || "";
+        const prompt = choicePrompt(level, step);
+        $tutPrompt.hidden = !prompt;
+        $tutPrompt.textContent = prompt;
 
         const wrong = Array.isArray(step.wrong)
           ? { action: step.action, value: step.wrong[0] }
