@@ -2,6 +2,8 @@
 // Authored-choice steps (expand/factor/roots/combine/substitute/scale/simplify) bring their own
 // `wrong` options in levels.js; makeDistractors() is for the + − × ÷ moves. A + − × ÷ step
 // may also carry authored `traps` (numbers), used as its wrong options instead of generated ones.
+// A + − × ÷ step whose value is a letter term (Formulas, e.g. "÷ m") carries authored `moves`
+// instead: full wrong moves { action, value, kind }, since letters can't be generated like numbers.
 
 // Steps that show their own authored choices get a short prompt above the buttons.
 const CHOICE_PROMPT_KEYS = {
@@ -11,11 +13,13 @@ const CHOICE_PROMPT_KEYS = {
 };
 
 function actionLabel(action, value) {
-  // Authored choices (expand/factor/roots) are strings, shown as-is with a proper minus sign
-  // e.g. "2x + 6", "(x + 2)(x - 3)", "x = -2, -3"
-  if (typeof value === "string") return value.replace(/-/g, "−");
   const verbs = { add: "+", subtract: "−", multiply: "×", divide: "÷", add_x: "+", subtract_x: "−" };
   const suffix = LLL_I18N.t("bothSidesLabel") || "both sides";
+  // A letter term on a + − × ÷ move (Formulas): "÷ m both sides", "− 2b both sides"
+  if (typeof value === "string" && verbs[action]) return `${verbs[action]} ${value} ${suffix}`;
+  // Authored choices (expand/factor/roots/…) are strings, shown as-is with a proper minus sign
+  // e.g. "2x + 6", "(x + 2)(x - 3)", "x = -2, -3"
+  if (typeof value === "string") return value.replace(/-/g, "−");
   if (action === "add_x" || action === "subtract_x") {
     const xTerm = value === 1 ? "x" : `${value}x`;
     return `${verbs[action]} ${xTerm} ${suffix}`;
@@ -25,8 +29,8 @@ function actionLabel(action, value) {
 }
 
 // What kind of mistake a wrong option represents, compared with the correct move.
-// Chalky reads this (choice.kind) to explain a wrong tap. Generated options only;
-// authored traps are tagged "notLcd" where they're made.
+// Chalky reads this (choice.kind) to explain a wrong tap. Generated options only:
+// authored traps are tagged "notLcd" where they're made, and authored letter moves carry their own kind.
 const OPPOSITE_ACTION = {
   add: "subtract", subtract: "add", add_x: "subtract_x", subtract_x: "add_x",
   multiply: "divide", divide: "multiply"
@@ -44,6 +48,9 @@ function mistakeKindFor(choice, correctStep) {
 }
 
 function buildDistractors(correctStep) {
+  // Authored letter moves (Formulas): full wrong moves, each already tagged with its kind
+  if (Array.isArray(correctStep.moves)) return correctStep.moves.map(m => ({ ...m }));
+
   // Authored traps: the step names its own wrong numbers for the same move
   // (fractions: × one denominator, or × the sum of the denominators, instead of × the LCD).
   if (Array.isArray(correctStep.traps)) {
@@ -123,6 +130,7 @@ function makeDistractors(correctStep) {
 // step offers a nearby number, so any generated step can practise it.
 function practiceKinds(step) {
   if (Array.isArray(step.wrong)) return [`tip_${step.action}`];
+  if (Array.isArray(step.moves)) return [...new Set(step.moves.map(m => m.kind))];
   if (Array.isArray(step.traps)) return ["notLcd"];
   const v = step.value;
   if (ADD_FAMILY.has(step.action)) {

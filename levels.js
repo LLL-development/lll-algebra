@@ -40,6 +40,10 @@
 // of generated distractors (fractions: "× 2" or "× 5" when the answer is "× 6"). Traps must
 // never be a common multiple of the denominators — any common multiple also clears the fractions.
 //
+// A + − × ÷ step whose `value` is a letter term (Formulas Medium/Hard, e.g. "m" or "2b") carries
+// `moves`: 3 authored wrong moves { action, value, kind }, kind = "wrongWay" (opposite move),
+// "wrongKind" (+/− vs ×/÷) or "wrongNumber" (another letter from the formula).
+//
 // Authoring rules:
 //   - add/subtract/add_x/subtract_x values are always POSITIVE
 //     ("x - 3 > 5" is { action: "add", value: 3 }, never subtract -3).
@@ -47,7 +51,11 @@
 //   - Inequality steps that multiply/divide by a negative set `flip: true`
 //     (the inequality sign reverses on that step).
 //
-// `topic` is "equation", "inequality", "brackets", "quadratic", "system" or "fraction". `target` is "both-sides"
+// `subject` (subject topic only) is the letter to make the subject, e.g. "x". It drives the
+// "Make x the subject:" prompt. Earlier steps keep the formula's layout (y - 1 = 2x); only the
+// final step's result puts the subject on the left (x = (y - 1)/2), so no "swap sides" move is needed.
+//
+// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction" or "subject". `target` is "both-sides"
 // for every move that changes a side's value; only "expand" and "simplify" rewrite one side,
 // because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
@@ -5139,6 +5147,911 @@ const LEVELS = [
       en: "× 6 gives 2(2x - 1) = 3(x + 3). Careful when expanding: 2 × 2x = 4x. Then 4x - 2 = 3x + 9, so x = 11.",
       ja: "6をかけると 2(2x - 1) = 3(x + 3)。展開に注意：2 × 2x = 4x。4x - 2 = 3x + 9 なので x = 11 です。"
     }
+  },
+
+  // =====================================================================
+  // CHANGING THE SUBJECT (topic "subject", shown as "Formulas")
+  // =====================================================================
+
+  // ---- Easy: y and numbers only, always make x the subject ----
+  // Same moves as Equations, but y stays on the other side instead of a number.
+  // Levels 1-5 are one step; 6-10 are two steps (undo + or − first, then × or ÷).
+  {
+    id: "subject_easy_01",
+    topic: "subject",
+    subject: "x",
+    equation: "y = x + 5",
+    answer: "x = y - 5",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "subtract", value: 5, target: "both-sides", result: "x = y - 5" }
+    ],
+    hints: {
+      en: ["Get x on its own — subtract 5 from both sides."],
+      ja: ["xだけにする — 両辺から5を引く。"]
+    },
+    explanation: {
+      en: "Changing the subject works like solving an equation: undo what's done to x. Subtracting 5 from both sides gives y - 5 = x, so x = y - 5.",
+      ja: "等式の変形も方程式と同じで、xにされていることを打ち消します。両辺から5を引くと y - 5 = x なので、x = y - 5 です。"
+    }
+  },
+  {
+    id: "subject_easy_02",
+    topic: "subject",
+    subject: "x",
+    equation: "y = x - 3",
+    answer: "x = y + 3",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "add", value: 3, target: "both-sides", result: "x = y + 3" }
+    ],
+    hints: {
+      en: ["Get x on its own — add 3 to both sides."],
+      ja: ["xだけにする — 両辺に3を足す。"]
+    },
+    explanation: {
+      en: "3 is taken away from x, so add 3 to both sides: y + 3 = x, so x = y + 3.",
+      ja: "xから3が引かれているので、両辺に3を足します。y + 3 = x なので、x = y + 3 です。"
+    }
+  },
+  {
+    id: "subject_easy_03",
+    topic: "subject",
+    subject: "x",
+    equation: "y = 4x",
+    answer: "x = y/4",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "divide", value: 4, target: "both-sides", result: "x = y/4" }
+    ],
+    hints: {
+      en: ["Get x on its own — divide both sides by 4."],
+      ja: ["xだけにする — 両辺を4で割る。"]
+    },
+    explanation: {
+      en: "x is multiplied by 4, so divide both sides by 4. The y side can't be worked out as a number, so it stays as y/4.",
+      ja: "xに4がかけられているので、両辺を4で割ります。yの側は数にできないので、y/4 のまま残します。"
+    }
+  },
+  {
+    id: "subject_easy_04",
+    topic: "subject",
+    subject: "x",
+    equation: "y = x/2",
+    answer: "x = 2y",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "multiply", value: 2, target: "both-sides", result: "x = 2y" }
+    ],
+    hints: {
+      en: ["Get x on its own — multiply both sides by 2."],
+      ja: ["xだけにする — 両辺に2をかける。"]
+    },
+    explanation: {
+      en: "x is divided by 2, so multiply both sides by 2: 2y = x, so x = 2y.",
+      ja: "xが2で割られているので、両辺に2をかけます。2y = x なので、x = 2y です。"
+    }
+  },
+  {
+    id: "subject_easy_05",
+    topic: "subject",
+    subject: "x",
+    equation: "y = -2x",
+    answer: "x = -y/2",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "divide", value: -2, target: "both-sides", result: "x = -y/2" }
+    ],
+    hints: {
+      en: ["Get x on its own — divide both sides by -2. Watch the negative sign!"],
+      ja: ["xだけにする — 両辺を-2で割る。マイナスの符号に注意！"]
+    },
+    explanation: {
+      en: "x is multiplied by -2, so divide by -2, including the minus. y ÷ (-2) is written -y/2.",
+      ja: "xに-2がかけられているので、マイナスも含めて-2で割ります。y ÷ (-2) は -y/2 と書きます。"
+    }
+  },
+  {
+    id: "subject_easy_06",
+    topic: "subject",
+    subject: "x",
+    equation: "y = 2x + 1",
+    answer: "x = (y - 1)/2",
+    difficulty: "easy",
+    type: "two-step",
+    basePoints: 10,
+    steps: [
+      { action: "subtract", value: 1, target: "both-sides", result: "y - 1 = 2x" },
+      { action: "divide",   value: 2, target: "both-sides", result: "x = (y - 1)/2" }
+    ],
+    hints: {
+      en: [
+        "Undo the + 1 first — subtract 1 from both sides.",
+        "Now divide both sides by 2. All of y - 1 is divided, so keep it in brackets."
+      ],
+      ja: [
+        "まず + 1 を消す — 両辺から1を引く。",
+        "次に両辺を2で割る。y - 1 全体を割るので、かっこでまとめる。"
+      ]
+    },
+    explanation: {
+      en: "Undo the + 1, then the × 2, just like 2x + 1 = 7. Dividing y - 1 by 2 divides all of it, so it's written (y - 1)/2, not y - 1/2.",
+      ja: "2x + 1 = 7 を解くときと同じく、+ 1 を消してから × 2 を消します。y - 1 全体を2で割るので、y - 1/2 ではなく (y - 1)/2 と書きます。"
+    }
+  },
+  {
+    id: "subject_easy_07",
+    topic: "subject",
+    subject: "x",
+    equation: "y = 3x - 4",
+    answer: "x = (y + 4)/3",
+    difficulty: "easy",
+    type: "two-step",
+    basePoints: 10,
+    steps: [
+      { action: "add",    value: 4, target: "both-sides", result: "y + 4 = 3x" },
+      { action: "divide", value: 3, target: "both-sides", result: "x = (y + 4)/3" }
+    ],
+    hints: {
+      en: [
+        "Undo the - 4 first — add 4 to both sides.",
+        "Now divide both sides by 3. All of y + 4 is divided, so keep it in brackets."
+      ],
+      ja: [
+        "まず - 4 を消す — 両辺に4を足す。",
+        "次に両辺を3で割る。y + 4 全体を割るので、かっこでまとめる。"
+      ]
+    },
+    explanation: {
+      en: "Adding 4 gives y + 4 = 3x. Then divide both sides by 3: the whole of y + 4 is divided, so x = (y + 4)/3.",
+      ja: "4を足すと y + 4 = 3x。両辺を3で割ると y + 4 全体が割られるので、x = (y + 4)/3 です。"
+    }
+  },
+  {
+    id: "subject_easy_08",
+    topic: "subject",
+    subject: "x",
+    equation: "y = x/3 + 2",
+    answer: "x = 3(y - 2)",
+    difficulty: "easy",
+    type: "two-step",
+    basePoints: 10,
+    steps: [
+      { action: "subtract", value: 2, target: "both-sides", result: "y - 2 = x/3" },
+      { action: "multiply", value: 3, target: "both-sides", result: "x = 3(y - 2)" }
+    ],
+    hints: {
+      en: [
+        "Undo the + 2 first — subtract 2 from both sides.",
+        "Now multiply both sides by 3. All of y - 2 is multiplied, so keep it in brackets."
+      ],
+      ja: [
+        "まず + 2 を消す — 両辺から2を引く。",
+        "次に両辺に3をかける。y - 2 全体にかけるので、かっこでまとめる。"
+      ]
+    },
+    explanation: {
+      en: "Subtracting 2 gives y - 2 = x/3. Multiplying by 3 multiplies all of y - 2, so x = 3(y - 2).",
+      ja: "2を引くと y - 2 = x/3。3をかけると y - 2 全体にかかるので、x = 3(y - 2) です。"
+    }
+  },
+  {
+    id: "subject_easy_09",
+    topic: "subject",
+    subject: "x",
+    equation: "y = x/4 - 1",
+    answer: "x = 4(y + 1)",
+    difficulty: "easy",
+    type: "two-step",
+    basePoints: 10,
+    steps: [
+      { action: "add",      value: 1, target: "both-sides", result: "y + 1 = x/4" },
+      { action: "multiply", value: 4, target: "both-sides", result: "x = 4(y + 1)" }
+    ],
+    hints: {
+      en: [
+        "Undo the - 1 first — add 1 to both sides.",
+        "Now multiply both sides by 4. All of y + 1 is multiplied, so keep it in brackets."
+      ],
+      ja: [
+        "まず - 1 を消す — 両辺に1を足す。",
+        "次に両辺に4をかける。y + 1 全体にかけるので、かっこでまとめる。"
+      ]
+    },
+    explanation: {
+      en: "Adding 1 gives y + 1 = x/4. Multiplying by 4 multiplies all of y + 1, so x = 4(y + 1).",
+      ja: "1を足すと y + 1 = x/4。4をかけると y + 1 全体にかかるので、x = 4(y + 1) です。"
+    }
+  },
+  {
+    id: "subject_easy_10",
+    topic: "subject",
+    subject: "x",
+    equation: "y = 5x + 10",
+    answer: "x = (y - 10)/5",
+    difficulty: "easy",
+    type: "two-step",
+    basePoints: 10,
+    steps: [
+      { action: "subtract", value: 10, target: "both-sides", result: "y - 10 = 5x" },
+      { action: "divide",   value: 5,  target: "both-sides", result: "x = (y - 10)/5" }
+    ],
+    hints: {
+      en: [
+        "Undo the + 10 first — subtract 10 from both sides.",
+        "Now divide both sides by 5. All of y - 10 is divided, so keep it in brackets."
+      ],
+      ja: [
+        "まず + 10 を消す — 両辺から10を引く。",
+        "次に両辺を5で割る。y - 10 全体を割るので、かっこでまとめる。"
+      ]
+    },
+    explanation: {
+      en: "Subtracting 10 gives y - 10 = 5x. Dividing by 5 divides all of y - 10, so x = (y - 10)/5.",
+      ja: "10を引くと y - 10 = 5x。5で割ると y - 10 全体が割られるので、x = (y - 10)/5 です。"
+    }
+  },
+
+  // ---- Medium: letters in the moves, and the subject changes every level ----
+  // Levels 1-5 are one step (÷, ×, +, −, ÷); 6-10 are two steps. Real formulas mixed with made-up ones.
+  // No l, I or O: they look like 1 or 0 in the pixel font.
+  {
+    id: "subject_medium_01",
+    topic: "subject",
+    subject: "a",
+    equation: "F = ma",
+    answer: "a = F/m",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "divide", value: "m", target: "both-sides", result: "a = F/m",
+        moves: [
+          { action: "multiply", value: "m", kind: "wrongWay" },
+          { action: "subtract", value: "m", kind: "wrongKind" },
+          { action: "divide",   value: "F", kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: ["a is multiplied by m — divide both sides by m."],
+      ja: ["aにmがかけられている — 両辺をmで割る。"]
+    },
+    explanation: {
+      en: "Letters work just like numbers. ma means m × a, so dividing both sides by m leaves a on its own: a = F/m.",
+      ja: "文字も数と同じように扱えます。ma は m × a なので、両辺をmで割るとaだけが残り、a = F/m です。"
+    }
+  },
+  {
+    id: "subject_medium_02",
+    topic: "subject",
+    subject: "d",
+    equation: "s = d/t",
+    answer: "d = st",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "multiply", value: "t", target: "both-sides", result: "d = st",
+        moves: [
+          { action: "divide",   value: "t", kind: "wrongWay" },
+          { action: "add",      value: "t", kind: "wrongKind" },
+          { action: "multiply", value: "s", kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: ["d is divided by t — multiply both sides by t."],
+      ja: ["dがtで割られている — 両辺にtをかける。"]
+    },
+    explanation: {
+      en: "Multiplying both sides by t cancels the ÷ t: st = d, so d = st.",
+      ja: "両辺にtをかけると ÷ t が打ち消され、st = d なので d = st です。"
+    }
+  },
+  {
+    id: "subject_medium_03",
+    topic: "subject",
+    subject: "q",
+    equation: "p = q - r",
+    answer: "q = p + r",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "add", value: "r", target: "both-sides", result: "q = p + r",
+        moves: [
+          { action: "subtract", value: "r", kind: "wrongWay" },
+          { action: "multiply", value: "r", kind: "wrongKind" },
+          { action: "add",      value: "p", kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: ["r is taken away from q — add r to both sides."],
+      ja: ["qからrが引かれている — 両辺にrを足す。"]
+    },
+    explanation: {
+      en: "Adding r to both sides cancels the - r: p + r = q, so q = p + r.",
+      ja: "両辺にrを足すと - r が打ち消され、p + r = q なので q = p + r です。"
+    }
+  },
+  {
+    id: "subject_medium_04",
+    topic: "subject",
+    subject: "a",
+    equation: "c = a + b",
+    answer: "a = c - b",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: "b", target: "both-sides", result: "a = c - b",
+        moves: [
+          { action: "add",      value: "b", kind: "wrongWay" },
+          { action: "divide",   value: "b", kind: "wrongKind" },
+          { action: "subtract", value: "c", kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: ["b is added to a — subtract b from both sides."],
+      ja: ["aにbが足されている — 両辺からbを引く。"]
+    },
+    explanation: {
+      en: "Subtracting b from both sides leaves a on its own: c - b = a, so a = c - b.",
+      ja: "両辺からbを引くとaだけが残ります。c - b = a なので a = c - b です。"
+    }
+  },
+  {
+    id: "subject_medium_05",
+    topic: "subject",
+    subject: "h",
+    equation: "A = bh",
+    answer: "h = A/b",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "divide", value: "b", target: "both-sides", result: "h = A/b",
+        moves: [
+          { action: "multiply", value: "b", kind: "wrongWay" },
+          { action: "subtract", value: "b", kind: "wrongKind" },
+          { action: "divide",   value: "A", kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: ["h is multiplied by b — divide both sides by b."],
+      ja: ["hにbがかけられている — 両辺をbで割る。"]
+    },
+    explanation: {
+      en: "bh means b × h, so divide both sides by b: h = A/b. This is the area of a rectangle, rearranged to find the height.",
+      ja: "bh は b × h なので、両辺をbで割ると h = A/b です。長方形の面積の式を、高さを求める形に変えました。"
+    }
+  },
+  {
+    id: "subject_medium_06",
+    topic: "subject",
+    subject: "t",
+    equation: "v = u + at",
+    answer: "t = (v - u)/a",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: "u", target: "both-sides", result: "v - u = at",
+        moves: [
+          { action: "add",      value: "u", kind: "wrongWay" },
+          { action: "divide",   value: "u", kind: "wrongKind" },
+          { action: "subtract", value: "v", kind: "wrongNumber" }
+        ] },
+      { action: "divide", value: "a", target: "both-sides", result: "t = (v - u)/a",
+        moves: [
+          { action: "multiply", value: "a", kind: "wrongWay" },
+          { action: "subtract", value: "a", kind: "wrongKind" },
+          { action: "divide",   value: "v", kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: [
+        "Undo the + u first — subtract u from both sides.",
+        "t is multiplied by a — divide both sides by a. All of v - u is divided, so keep it in brackets."
+      ],
+      ja: [
+        "まず + u を消す — 両辺からuを引く。",
+        "tにaがかけられている — 両辺をaで割る。v - u 全体を割るので、かっこでまとめる。"
+      ]
+    },
+    explanation: {
+      en: "Same order as a number equation: undo the + u, then the × a. This is the motion formula rearranged to find the time: t = (v - u)/a.",
+      ja: "数の方程式と同じ順番で、+ u を消してから × a を消します。運動の式を、時間を求める形に変えると t = (v - u)/a です。"
+    }
+  },
+  {
+    id: "subject_medium_07",
+    topic: "subject",
+    subject: "a",
+    equation: "P = 2a + 2b",
+    answer: "a = (P - 2b)/2",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: "2b", target: "both-sides", result: "P - 2b = 2a",
+        moves: [
+          { action: "add",      value: "2b", kind: "wrongWay" },
+          { action: "divide",   value: "2b", kind: "wrongKind" },
+          { action: "subtract", value: "2a", kind: "wrongNumber" }
+        ] },
+      { action: "divide", value: 2, target: "both-sides", result: "a = (P - 2b)/2" }
+    ],
+    hints: {
+      en: [
+        "Undo the + 2b first — subtract 2b from both sides.",
+        "Now divide both sides by 2. All of P - 2b is divided, so keep it in brackets."
+      ],
+      ja: [
+        "まず + 2b を消す — 両辺から2bを引く。",
+        "次に両辺を2で割る。P - 2b 全体を割るので、かっこでまとめる。"
+      ]
+    },
+    explanation: {
+      en: "2b is one whole term, so it moves in one go: subtract 2b, then divide by 2. This is the perimeter of a rectangle rearranged: a = (P - 2b)/2.",
+      ja: "2b はひとまとまりの項なので、まとめて引きます。2bを引いてから2で割ると、長方形の周の長さの式から a = (P - 2b)/2 になります。"
+    }
+  },
+  {
+    id: "subject_medium_08",
+    topic: "subject",
+    subject: "x",
+    equation: "y = mx + c",
+    answer: "x = (y - c)/m",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: "c", target: "both-sides", result: "y - c = mx",
+        moves: [
+          { action: "add",      value: "c", kind: "wrongWay" },
+          { action: "divide",   value: "c", kind: "wrongKind" },
+          { action: "subtract", value: "y", kind: "wrongNumber" }
+        ] },
+      { action: "divide", value: "m", target: "both-sides", result: "x = (y - c)/m",
+        moves: [
+          { action: "multiply", value: "m", kind: "wrongWay" },
+          { action: "subtract", value: "m", kind: "wrongKind" },
+          { action: "divide",   value: "y", kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: [
+        "Undo the + c first — subtract c from both sides.",
+        "x is multiplied by m — divide both sides by m, keeping y - c in brackets."
+      ],
+      ja: [
+        "まず + c を消す — 両辺からcを引く。",
+        "xにmがかけられている — 両辺をmで割る。y - c はかっこでまとめる。"
+      ]
+    },
+    explanation: {
+      en: "This is the straight-line formula. Undo the + c, then the × m: x = (y - c)/m.",
+      ja: "直線の式です。+ c を消してから × m を消すと x = (y - c)/m です。"
+    }
+  },
+  {
+    id: "subject_medium_09",
+    topic: "subject",
+    subject: "m",
+    equation: "k = 3m - n",
+    answer: "m = (k + n)/3",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "add", value: "n", target: "both-sides", result: "k + n = 3m",
+        moves: [
+          { action: "subtract", value: "n", kind: "wrongWay" },
+          { action: "multiply", value: "n", kind: "wrongKind" },
+          { action: "add",      value: "k", kind: "wrongNumber" }
+        ] },
+      { action: "divide", value: 3, target: "both-sides", result: "m = (k + n)/3" }
+    ],
+    hints: {
+      en: [
+        "Undo the - n first — add n to both sides.",
+        "Now divide both sides by 3, keeping k + n in brackets."
+      ],
+      ja: [
+        "まず - n を消す — 両辺にnを足す。",
+        "次に両辺を3で割る。k + n はかっこでまとめる。"
+      ]
+    },
+    explanation: {
+      en: "Adding n gives k + n = 3m, then dividing by 3 gives m = (k + n)/3.",
+      ja: "nを足すと k + n = 3m、3で割ると m = (k + n)/3 です。"
+    }
+  },
+  {
+    id: "subject_medium_10",
+    topic: "subject",
+    subject: "b",
+    equation: "a = b/c + d",
+    answer: "b = c(a - d)",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: "d", target: "both-sides", result: "a - d = b/c",
+        moves: [
+          { action: "add",      value: "d", kind: "wrongWay" },
+          { action: "divide",   value: "d", kind: "wrongKind" },
+          { action: "subtract", value: "a", kind: "wrongNumber" }
+        ] },
+      { action: "multiply", value: "c", target: "both-sides", result: "b = c(a - d)",
+        moves: [
+          { action: "divide",   value: "c", kind: "wrongWay" },
+          { action: "add",      value: "c", kind: "wrongKind" },
+          { action: "multiply", value: "a", kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: [
+        "Undo the + d first — subtract d from both sides.",
+        "b is divided by c — multiply both sides by c. All of a - d is multiplied, so keep it in brackets."
+      ],
+      ja: [
+        "まず + d を消す — 両辺からdを引く。",
+        "bがcで割られている — 両辺にcをかける。a - d 全体にかけるので、かっこでまとめる。"
+      ]
+    },
+    explanation: {
+      en: "Undo the + d, then the ÷ c. Multiplying by c multiplies all of a - d, so b = c(a - d).",
+      ja: "+ d を消してから ÷ c を消します。cをかけると a - d 全体にかかるので、b = c(a - d) です。"
+    }
+  },
+
+  // ---- Hard: brackets and fractions, 2–3 steps ----
+  // Work from the outside in: undo any + or − on the end, then the number or letter in front
+  // of the brackets (or underneath the fraction), and the inside last. Brackets are divided
+  // away, never expanded, so Hard stays different from the Brackets topic.
+  // Levels 1-3: numbers only. 4-6: a letter in the × or ÷ step. 7-10: three steps.
+  {
+    id: "subject_hard_01",
+    topic: "subject",
+    subject: "x",
+    equation: "y = 2(x - 3)",
+    answer: "x = y/2 + 3",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "divide", value: 2, target: "both-sides", result: "y/2 = x - 3" },
+      { action: "add",    value: 3, target: "both-sides", result: "x = y/2 + 3" }
+    ],
+    hints: {
+      en: [
+        "The 2 is outside the brackets — divide both sides by 2 first.",
+        "Now undo the - 3 — add 3 to both sides."
+      ],
+      ja: [
+        "2はかっこの外にある — まず両辺を2で割る。",
+        "次に - 3 を消す — 両辺に3を足す。"
+      ]
+    },
+    explanation: {
+      en: "Dividing by 2 first removes the brackets in one move: y/2 = x - 3. Then add 3: x = y/2 + 3. Expanding first would work too, but it takes more steps.",
+      ja: "先に2で割ると、1回でかっこが外れます：y/2 = x - 3。次に3を足して x = y/2 + 3 です。先に展開しても解けますが、手順が増えます。"
+    }
+  },
+  {
+    id: "subject_hard_02",
+    topic: "subject",
+    subject: "p",
+    equation: "k = 4(p + q)",
+    answer: "p = k/4 - q",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "divide", value: 4, target: "both-sides", result: "k/4 = p + q" },
+      { action: "subtract", value: "q", target: "both-sides", result: "p = k/4 - q",
+        moves: [
+          { action: "add",      value: "q", kind: "wrongWay" },
+          { action: "divide",   value: "q", kind: "wrongKind" },
+          { action: "subtract", value: "k", kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: [
+        "The 4 is outside the brackets — divide both sides by 4 first.",
+        "Now undo the + q — subtract q from both sides."
+      ],
+      ja: [
+        "4はかっこの外にある — まず両辺を4で割る。",
+        "次に + q を消す — 両辺からqを引く。"
+      ]
+    },
+    explanation: {
+      en: "Divide by 4 to remove the brackets: k/4 = p + q. Then subtract q, just like a number: p = k/4 - q.",
+      ja: "4で割るとかっこが外れます：k/4 = p + q。次に、数と同じようにqを引くと p = k/4 - q です。"
+    }
+  },
+  {
+    id: "subject_hard_03",
+    topic: "subject",
+    subject: "x",
+    equation: "y = (x + 4)/3",
+    answer: "x = 3y - 4",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "multiply", value: 3, target: "both-sides", result: "3y = x + 4" },
+      { action: "subtract", value: 4, target: "both-sides", result: "x = 3y - 4" }
+    ],
+    hints: {
+      en: [
+        "All of x + 4 is divided by 3 — multiply both sides by 3 first.",
+        "Now undo the + 4 — subtract 4 from both sides."
+      ],
+      ja: [
+        "x + 4 全体が3で割られている — まず両辺に3をかける。",
+        "次に + 4 を消す — 両辺から4を引く。"
+      ]
+    },
+    explanation: {
+      en: "The whole top, x + 4, is divided by 3, so multiply by 3 first: 3y = x + 4. Then subtract 4: x = 3y - 4.",
+      ja: "分子の x + 4 全体が3で割られているので、まず3をかけます：3y = x + 4。次に4を引いて x = 3y - 4 です。"
+    }
+  },
+  {
+    id: "subject_hard_04",
+    topic: "subject",
+    subject: "n",
+    equation: "m = a(n + 3)",
+    answer: "n = m/a - 3",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "divide", value: "a", target: "both-sides", result: "m/a = n + 3",
+        moves: [
+          { action: "multiply", value: "a", kind: "wrongWay" },
+          { action: "subtract", value: "a", kind: "wrongKind" },
+          { action: "divide",   value: "m", kind: "wrongNumber" }
+        ] },
+      { action: "subtract", value: 3, target: "both-sides", result: "n = m/a - 3" }
+    ],
+    hints: {
+      en: [
+        "a is outside the brackets — divide both sides by a first.",
+        "Now undo the + 3 — subtract 3 from both sides."
+      ],
+      ja: [
+        "aはかっこの外にある — まず両辺をaで割る。",
+        "次に + 3 を消す — 両辺から3を引く。"
+      ]
+    },
+    explanation: {
+      en: "a multiplies the whole bracket, so dividing by a removes it: m/a = n + 3. Then subtract 3: n = m/a - 3.",
+      ja: "aはかっこ全体にかかっているので、aで割るとかっこが外れます：m/a = n + 3。次に3を引いて n = m/a - 3 です。"
+    }
+  },
+  {
+    id: "subject_hard_05",
+    topic: "subject",
+    subject: "x",
+    equation: "y = (x + 2)/k",
+    answer: "x = ky - 2",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "multiply", value: "k", target: "both-sides", result: "ky = x + 2",
+        moves: [
+          { action: "divide",   value: "k", kind: "wrongWay" },
+          { action: "add",      value: "k", kind: "wrongKind" },
+          { action: "multiply", value: "y", kind: "wrongNumber" }
+        ] },
+      { action: "subtract", value: 2, target: "both-sides", result: "x = ky - 2" }
+    ],
+    hints: {
+      en: [
+        "All of x + 2 is divided by k — multiply both sides by k first.",
+        "Now undo the + 2 — subtract 2 from both sides."
+      ],
+      ja: [
+        "x + 2 全体がkで割られている — まず両辺にkをかける。",
+        "次に + 2 を消す — 両辺から2を引く。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying by k clears the fraction: ky = x + 2. Then subtract 2: x = ky - 2.",
+      ja: "kをかけると分数がなくなります：ky = x + 2。次に2を引いて x = ky - 2 です。"
+    }
+  },
+  {
+    id: "subject_hard_06",
+    topic: "subject",
+    subject: "h",
+    equation: "A = (a + b)h/2",
+    answer: "h = 2A/(a + b)",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "multiply", value: 2, target: "both-sides", result: "2A = (a + b)h" },
+      { action: "divide", value: "(a + b)", target: "both-sides", result: "h = 2A/(a + b)",
+        moves: [
+          { action: "multiply", value: "(a + b)", kind: "wrongWay" },
+          { action: "subtract", value: "(a + b)", kind: "wrongKind" },
+          { action: "divide",   value: "a",       kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 2.",
+        "h is multiplied by the whole bracket — divide both sides by (a + b)."
+      ],
+      ja: [
+        "分数をなくす — 両辺に2をかける。",
+        "hにかっこ全体がかけられている — 両辺を (a + b) で割る。"
+      ]
+    },
+    explanation: {
+      en: "This is the area of a trapezium. × 2 gives 2A = (a + b)h. h is multiplied by all of (a + b), so divide by the whole bracket, not just a: h = 2A/(a + b).",
+      ja: "台形の面積の式です。2をかけると 2A = (a + b)h。hには (a + b) 全体がかけられているので、aだけでなくかっこ全体で割ります：h = 2A/(a + b)。"
+    }
+  },
+  {
+    id: "subject_hard_07",
+    topic: "subject",
+    subject: "C",
+    equation: "F = 9C/5 + 32",
+    answer: "C = 5(F - 32)/9",
+    difficulty: "hard",
+    type: "three-step",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: 32, target: "both-sides", result: "F - 32 = 9C/5" },
+      { action: "multiply", value: 5,  target: "both-sides", result: "5(F - 32) = 9C" },
+      { action: "divide",   value: 9,  target: "both-sides", result: "C = 5(F - 32)/9" }
+    ],
+    hints: {
+      en: [
+        "Undo the + 32 first — subtract 32 from both sides.",
+        "Clear the fraction — multiply both sides by 5. All of F - 32 is multiplied, so keep it in brackets.",
+        "C is multiplied by 9 — divide both sides by 9."
+      ],
+      ja: [
+        "まず + 32 を消す — 両辺から32を引く。",
+        "分数をなくす — 両辺に5をかける。F - 32 全体にかけるので、かっこでまとめる。",
+        "Cに9がかけられている — 両辺を9で割る。"
+      ]
+    },
+    explanation: {
+      en: "This turns °F into °C. Undo the steps in reverse order: - 32, × 5, ÷ 9. So C = 5(F - 32)/9.",
+      ja: "華氏（°F）を摂氏（°C）に直す式です。逆の順番で打ち消します：32を引く、5をかける、9で割る。C = 5(F - 32)/9 です。"
+    }
+  },
+  {
+    id: "subject_hard_08",
+    topic: "subject",
+    subject: "x",
+    equation: "y = (x - 5)/2 + 1",
+    answer: "x = 2(y - 1) + 5",
+    difficulty: "hard",
+    type: "three-step",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: 1, target: "both-sides", result: "y - 1 = (x - 5)/2" },
+      { action: "multiply", value: 2, target: "both-sides", result: "2(y - 1) = x - 5" },
+      { action: "add",      value: 5, target: "both-sides", result: "x = 2(y - 1) + 5" }
+    ],
+    hints: {
+      en: [
+        "Undo the + 1 on the end first — subtract 1 from both sides.",
+        "Clear the fraction — multiply both sides by 2, keeping y - 1 in brackets.",
+        "Now undo the - 5 — add 5 to both sides."
+      ],
+      ja: [
+        "まず最後の + 1 を消す — 両辺から1を引く。",
+        "分数をなくす — 両辺に2をかける。y - 1 はかっこでまとめる。",
+        "次に - 5 を消す — 両辺に5を足す。"
+      ]
+    },
+    explanation: {
+      en: "Work from the outside in: the + 1, then the ÷ 2, then the - 5 inside. x = 2(y - 1) + 5, which you could also simplify to x = 2y + 3.",
+      ja: "外側から順に打ち消します：+ 1、÷ 2、かっこの中の - 5。x = 2(y - 1) + 5 で、整理すると x = 2y + 3 とも書けます。"
+    }
+  },
+  {
+    id: "subject_hard_09",
+    topic: "subject",
+    subject: "v",
+    equation: "s = (u + v)t/2",
+    answer: "v = 2s/t - u",
+    difficulty: "hard",
+    type: "three-step",
+    basePoints: 30,
+    steps: [
+      { action: "multiply", value: 2, target: "both-sides", result: "2s = (u + v)t" },
+      { action: "divide", value: "t", target: "both-sides", result: "2s/t = u + v",
+        moves: [
+          { action: "multiply", value: "t", kind: "wrongWay" },
+          { action: "subtract", value: "t", kind: "wrongKind" },
+          { action: "divide",   value: "u", kind: "wrongNumber" }
+        ] },
+      { action: "subtract", value: "u", target: "both-sides", result: "v = 2s/t - u",
+        moves: [
+          { action: "add",      value: "u", kind: "wrongWay" },
+          { action: "divide",   value: "u", kind: "wrongKind" },
+          { action: "subtract", value: "s", kind: "wrongNumber" }
+        ] }
+    ],
+    hints: {
+      en: [
+        "Clear the fraction — multiply both sides by 2.",
+        "The bracket is multiplied by t — divide both sides by t.",
+        "Now undo the + u — subtract u from both sides."
+      ],
+      ja: [
+        "分数をなくす — 両辺に2をかける。",
+        "かっこにtがかけられている — 両辺をtで割る。",
+        "次に + u を消す — 両辺からuを引く。"
+      ]
+    },
+    explanation: {
+      en: "This motion formula gives the distance from the start and end speeds. × 2, then ÷ t, leaves u + v on its own; subtracting u gives v = 2s/t - u.",
+      ja: "最初と最後の速さから距離を求める運動の式です。2をかけてtで割ると u + v だけが残り、uを引くと v = 2s/t - u です。"
+    }
+  },
+  {
+    id: "subject_hard_10",
+    topic: "subject",
+    subject: "x",
+    equation: "y = k(x - 2) + c",
+    answer: "x = (y - c)/k + 2",
+    difficulty: "hard",
+    type: "three-step",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: "c", target: "both-sides", result: "y - c = k(x - 2)",
+        moves: [
+          { action: "add",      value: "c", kind: "wrongWay" },
+          { action: "divide",   value: "c", kind: "wrongKind" },
+          { action: "subtract", value: "k", kind: "wrongNumber" }
+        ] },
+      { action: "divide", value: "k", target: "both-sides", result: "(y - c)/k = x - 2",
+        moves: [
+          { action: "multiply", value: "k", kind: "wrongWay" },
+          { action: "subtract", value: "k", kind: "wrongKind" },
+          { action: "divide",   value: "c", kind: "wrongNumber" }
+        ] },
+      { action: "add", value: 2, target: "both-sides", result: "x = (y - c)/k + 2" }
+    ],
+    hints: {
+      en: [
+        "Undo the + c on the end first — subtract c from both sides.",
+        "k multiplies the whole bracket — divide both sides by k, keeping y - c in brackets.",
+        "Now undo the - 2 — add 2 to both sides."
+      ],
+      ja: [
+        "まず最後の + c を消す — 両辺からcを引く。",
+        "kはかっこ全体にかかっている — 両辺をkで割る。y - c はかっこでまとめる。",
+        "次に - 2 を消す — 両辺に2を足す。"
+      ]
+    },
+    explanation: {
+      en: "Everything together: undo the + c, then the × k outside the brackets, then the - 2 inside. x = (y - c)/k + 2.",
+      ja: "すべてを使います：+ c を消し、かっこの外の × k を消し、最後にかっこの中の - 2 を消します。x = (y - c)/k + 2 です。"
+    }
   }
 ];
 
@@ -5257,6 +6170,28 @@ const TIER_TIPS = {
       move: { en: "Multiply both sides by 6", ja: "両辺に6をかける" },
       to: "3(x + 1) = 2(x - 2)"
     }
+  },
+  subject_medium: {
+    text: {
+      en: "Now the moves use letters. They work just like numbers: if t is multiplied by a, divide both sides by a.",
+      ja: "ここからは文字で操作するよ。数と同じで、tにaがかけられていたら、両辺をaで割ろう。"
+    },
+    demo: {
+      from: "v - u = at",
+      move: { en: "Divide both sides by a", ja: "両辺をaで割る" },
+      to: "t = (v - u)/a"
+    }
+  },
+  subject_hard: {
+    text: {
+      en: "Brackets or fractions? Work from the outside in: undo any + or − on the end, then the number in front or underneath. What's inside comes last.",
+      ja: "かっこや分数があるときは外側から：まず最後の＋や−、次に前や下の数を打ち消そう。かっこの中は最後だよ。"
+    },
+    demo: {
+      from: "y = 2(x - 3)",
+      move: { en: "Divide both sides by 2", ja: "両辺を2で割る" },
+      to: "y/2 = x - 3"
+    }
   }
 };
 
@@ -5265,14 +6200,15 @@ const TIER_TIPS = {
 // `group` decides the section in the achievements panel: "general", "review", or a topic key.
 
 // Topic display names for the generated per-topic achievements
-// (keep in sync with the topic labels in index.html's STRINGS).
+// (keep in sync with the topic labels in strings.js).
 const TOPIC_NAMES = {
   equation:   { en: "Equations",    ja: "方程式" },
   inequality: { en: "Inequalities", ja: "不等式" },
   brackets:   { en: "Brackets",     ja: "かっこ" },
   quadratic:  { en: "Quadratics",   ja: "二次方程式" },
   system:     { en: "Systems",      ja: "連立方程式" },
-  fraction:   { en: "Fractions",    ja: "分数" }
+  fraction:   { en: "Fractions",    ja: "分数" },
+  subject:    { en: "Formulas",     ja: "等式の変形" }
 };
 
 // One template per per-topic achievement type. {topic} = topic name, {n} = level or star count.
