@@ -25,9 +25,10 @@
 //   "scale"       — multiply one equation of a system so a letter will cancel (systems, Hard).
 //                   Authored: `value` is just the scaled equation (e.g. "2x + 6y = 14");
 //                   `result` is the new two-line system with that line replaced.
-//   "simplify"    — combine like terms on ONE side (fractions, after clearing them).
+//   "simplify"    — combine like terms on ONE side (fractions, after clearing them), or one
+//                   group of like terms in an expression (expression topic).
 //                   Authored like "expand": `value` is the combined side (e.g. "5x"),
-//                   `target` is "left" or "right".
+//                   `target` is "left" or "right" ("expression" in the expression topic).
 //
 // Systems: `equation` is two lines joined by "\n" (e.g. "x + y = 9\n2x - y = 3"), and
 // `answer` is { x, y }. A step whose result the player must substitute into keeps that
@@ -55,7 +56,18 @@
 // "Make x the subject:" prompt. Earlier steps keep the formula's layout (y - 1 = 2x); only the
 // final step's result puts the subject on the left (x = (y - 1)/2), so no "swap sides" move is needed.
 //
-// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction" or "subject". `target` is "both-sides"
+// Expression topic (simplifying): `equation` is an expression with no "=" (e.g. "4x + 3 + 2x"), and
+// `answer` is the simplified expression. Each collect step is an authored "simplify" step with
+// `collect`: the group of terms being collected ("x", "xy", "x²" or "number"), which drives the
+// "Collect the x terms:" prompt. `wrongKinds` tags each `wrong` option, in the same order:
+// "unlikeTerms" (combining terms that aren't alike, or x + x → x²), "signSlip" (a minus mishandled),
+// "loneLetter" (a lone x not counted as 1x) or "generic" (an arithmetic slip, not tracked).
+// Hard expands every bracket in one "expand" step with no wrongKinds, so those slips count as tip_expand.
+// Rules: in each option, terms not being collected stay exactly as they are (unless the mistake is
+// merging them), and expressions are written so collecting in order of first appearance gives the
+// answer order: x² first, then letters alphabetically, then the number.
+//
+// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject" or "expression". `target` is "both-sides"
 // for every move that changes a side's value; only "expand" and "simplify" rewrite one side,
 // because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
@@ -6052,6 +6064,841 @@ const LEVELS = [
       en: "Everything together: undo the + c, then the × k outside the brackets, then the - 2 inside. x = (y - c)/k + 2.",
       ja: "すべてを使います：+ c を消し、かっこの外の × k を消し、最後にかっこの中の - 2 を消します。x = (y - c)/k + 2 です。"
     }
+  },
+
+  // =====================================================================
+  // SIMPLIFYING EXPRESSIONS (topic "expression", shown as "Expressions")
+  // =====================================================================
+
+  // ---- Easy: one letter plus numbers ----
+  // Levels 1-7 are one step; 8-10 are two steps (collect the letter, then the numbers).
+  // Levels 3, 4, 5 and 9 have a lone letter (y means 1y).
+  {
+    id: "expression_easy_01",
+    topic: "expression",
+    equation: "3x + 5x",
+    answer: "8x",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", collect: "x", value: "8x", target: "expression", result: "8x",
+        wrong: ["8x²", "2x", "15x"], wrongKinds: ["unlikeTerms", "signSlip", "generic"] }
+    ],
+    hints: {
+      en: ["Collect the x terms: 3x + 5x — add the numbers in front of x."],
+      ja: ["xの項をまとめる：3x + 5x — xの前の数を足す。"]
+    },
+    explanation: {
+      en: "3x and 5x are like terms — both are a number of x's. Add the numbers in front: 3 + 5 = 8, so 8x. The letter stays the same; it doesn't become x².",
+      ja: "3xと5xは同類項（どちらもxがいくつ分か）です。xの前の数を足して 3 + 5 = 8 で 8x。文字はそのままで、x² にはなりません。"
+    }
+  },
+  {
+    id: "expression_easy_02",
+    topic: "expression",
+    equation: "2a + 6 + 3a",
+    answer: "5a + 6",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", collect: "a", value: "5a + 6", target: "expression", result: "5a + 6",
+        wrong: ["11a", "-a + 6", "6a + 6"], wrongKinds: ["unlikeTerms", "signSlip", "generic"] }
+    ],
+    hints: {
+      en: ["Collect the a terms: 2a + 3a. The 6 isn't an a term, so it stays as it is."],
+      ja: ["aの項をまとめる：2a + 3a。6はaの項ではないので、そのまま残す。"]
+    },
+    explanation: {
+      en: "2a and 3a are like terms, so 2a + 3a = 5a. The 6 is just a number, not an a term, so it can't join them: 5a + 6.",
+      ja: "2aと3aは同類項なので 2a + 3a = 5a。6はただの数でaの項ではないので、まとめられません：5a + 6。"
+    }
+  },
+  {
+    id: "expression_easy_03",
+    topic: "expression",
+    equation: "7y - y",
+    answer: "6y",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", collect: "y", value: "6y", target: "expression", result: "6y",
+        wrong: ["7y", "8y", "6y²"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: ["A lone y means 1y. Collect the y terms: 7y - 1y."],
+      ja: ["yだけのときは1y。yの項をまとめる：7y - 1y。"]
+    },
+    explanation: {
+      en: "y on its own counts as 1y, so 7y - y = 7y - 1y = 6y.",
+      ja: "yだけのときは1yと数えるので、7y - y = 7y - 1y = 6y です。"
+    }
+  },
+  {
+    id: "expression_easy_04",
+    topic: "expression",
+    equation: "x + 4x",
+    answer: "5x",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", collect: "x", value: "5x", target: "expression", result: "5x",
+        wrong: ["4x", "3x", "4x²"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: ["A lone x means 1x. Collect the x terms: 1x + 4x."],
+      ja: ["xだけのときは1x。xの項をまとめる：1x + 4x。"]
+    },
+    explanation: {
+      en: "x on its own is 1x, so x + 4x = 1x + 4x = 5x — not 4x.",
+      ja: "xだけのときは1xなので、x + 4x = 1x + 4x = 5x です。4xではありません。"
+    }
+  },
+  {
+    id: "expression_easy_05",
+    topic: "expression",
+    equation: "6b - 2b + b",
+    answer: "5b",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", collect: "b", value: "5b", target: "expression", result: "5b",
+        wrong: ["4b", "9b", "3b"], wrongKinds: ["loneLetter", "signSlip", "signSlip"] }
+    ],
+    hints: {
+      en: ["Collect the b terms, keeping each sign: 6b - 2b + 1b."],
+      ja: ["bの項を符号ごとまとめる：6b - 2b + 1b。"]
+    },
+    explanation: {
+      en: "Each term keeps the sign in front of it: 6 - 2 + 1 = 5, so 5b. The last b is 1b, not nothing.",
+      ja: "それぞれの項は前の符号と一緒です：6 - 2 + 1 = 5 で 5b。最後のbは1bで、0ではありません。"
+    }
+  },
+  {
+    id: "expression_easy_06",
+    topic: "expression",
+    equation: "4x + 3 + 2x",
+    answer: "6x + 3",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", collect: "x", value: "6x + 3", target: "expression", result: "6x + 3",
+        wrong: ["9x", "2x + 3", "8x + 3"], wrongKinds: ["unlikeTerms", "signSlip", "generic"] }
+    ],
+    hints: {
+      en: ["Collect the x terms: 4x + 2x. The 3 stays as it is."],
+      ja: ["xの項をまとめる：4x + 2x。3はそのまま。"]
+    },
+    explanation: {
+      en: "Only like terms can be added: 4x + 2x = 6x. The 3 has no x, so it stays: 6x + 3, not 9x.",
+      ja: "まとめられるのは同類項だけです：4x + 2x = 6x。3にはxがないのでそのまま残り、9xではなく 6x + 3 です。"
+    }
+  },
+  {
+    id: "expression_easy_07",
+    topic: "expression",
+    equation: "8x - 3 - 5x",
+    answer: "3x - 3",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", collect: "x", value: "3x - 3", target: "expression", result: "3x - 3",
+        wrong: ["13x - 3", "-3x - 3", "3x² - 3"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: ["Collect the x terms: 8x - 5x. The minus stays with the 5x."],
+      ja: ["xの項をまとめる：8x - 5x。マイナスは5xと一緒。"]
+    },
+    explanation: {
+      en: "The - in front of 5x belongs to it, so 8x - 5x = 3x. The - 3 stays as it is: 3x - 3.",
+      ja: "5xの前の - は5xについています。8x - 5x = 3x で、- 3 はそのまま残り 3x - 3 です。"
+    }
+  },
+  {
+    id: "expression_easy_08",
+    topic: "expression",
+    equation: "5a + 2 + 3a + 4",
+    answer: "8a + 6",
+    difficulty: "easy",
+    type: "two-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", collect: "a", value: "8a + 2 + 4", target: "expression", result: "8a + 2 + 4",
+        wrong: ["8a² + 2 + 4", "2a + 2 + 4", "15a + 2 + 4"], wrongKinds: ["unlikeTerms", "signSlip", "generic"] },
+      { action: "simplify", collect: "number", value: "8a + 6", target: "expression", result: "8a + 6",
+        wrong: ["14a", "8a - 2", "8a + 8"], wrongKinds: ["unlikeTerms", "signSlip", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Collect the a terms first: 5a + 3a.",
+        "Now collect the numbers: 2 + 4."
+      ],
+      ja: [
+        "まずaの項をまとめる：5a + 3a。",
+        "次に数をまとめる：2 + 4。"
+      ]
+    },
+    explanation: {
+      en: "Group like with like: the a terms make 8a and the numbers make 6. They're different kinds of term, so the answer stays as two terms: 8a + 6.",
+      ja: "同じ種類どうしでまとめます：aの項で8a、数で6。種類が違うので、答えは2つの項のまま 8a + 6 です。"
+    }
+  },
+  {
+    id: "expression_easy_09",
+    topic: "expression",
+    equation: "6y - 1 + y + 5",
+    answer: "7y + 4",
+    difficulty: "easy",
+    type: "two-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", collect: "y", value: "7y - 1 + 5", target: "expression", result: "7y - 1 + 5",
+        wrong: ["6y - 1 + 5", "5y - 1 + 5", "7y² - 1 + 5"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "number", value: "7y + 4", target: "expression", result: "7y + 4",
+        wrong: ["7y + 6", "7y - 4", "11y"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Collect the y terms: 6y + y. A lone y is 1y.",
+        "Now collect the numbers: -1 + 5."
+      ],
+      ja: [
+        "yの項をまとめる：6y + y。yだけのときは1y。",
+        "次に数をまとめる：-1 + 5。"
+      ]
+    },
+    explanation: {
+      en: "6y + 1y = 7y, and -1 + 5 = 4, so 7y + 4. Keep the minus with the 1 when you add the numbers.",
+      ja: "6y + 1y = 7y、-1 + 5 = 4 なので 7y + 4。数をまとめるときは、マイナスを1と一緒に扱います。"
+    }
+  },
+  {
+    id: "expression_easy_10",
+    topic: "expression",
+    equation: "2a + 7 - 4a - 1",
+    answer: "-2a + 6",
+    difficulty: "easy",
+    type: "two-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", collect: "a", value: "-2a + 7 - 1", target: "expression", result: "-2a + 7 - 1",
+        wrong: ["6a + 7 - 1", "2a + 7 - 1", "-2a² + 7 - 1"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "number", value: "-2a + 6", target: "expression", result: "-2a + 6",
+        wrong: ["-2a + 8", "-2a - 6", "4a"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Collect the a terms: 2a - 4a. Taking away more than you have goes negative.",
+        "Now collect the numbers: 7 - 1."
+      ],
+      ja: [
+        "aの項をまとめる：2a - 4a。持っているより多く引くと負になる。",
+        "次に数をまとめる：7 - 1。"
+      ]
+    },
+    explanation: {
+      en: "2a - 4a = -2a, since 2 - 4 = -2. Then 7 - 1 = 6, so -2a + 6. It's fine for a negative term to come first.",
+      ja: "2 - 4 = -2 なので 2a - 4a = -2a。7 - 1 = 6 で、答えは -2a + 6 です。負の項が先頭に来ても大丈夫です。"
+    }
+  },
+
+  // ---- Medium: two kinds of term (levels 1-6), then x² and xy (levels 7-10) ----
+  // Every level is two steps: one group of like terms per step.
+  {
+    id: "expression_medium_01",
+    topic: "expression",
+    equation: "5a + 3b - 2a + b",
+    answer: "3a + 4b",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", collect: "a", value: "3a + 3b + b", target: "expression", result: "3a + 3b + b",
+        wrong: ["7a + 3b + b", "-3a + 3b + b", "3a² + 3b + b"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "b", value: "3a + 4b", target: "expression", result: "3a + 4b",
+        wrong: ["3a + 3b", "3a + 2b", "3a + 4b²"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Collect the a terms: 5a - 2a. Leave the b terms alone for now.",
+        "Now collect the b terms: 3b + b. A lone b is 1b."
+      ],
+      ja: [
+        "aの項をまとめる：5a - 2a。bの項はまだそのまま。",
+        "次にbの項をまとめる：3b + b。bだけのときは1b。"
+      ]
+    },
+    explanation: {
+      en: "a terms and b terms are different kinds, so collect each group separately: 5a - 2a = 3a and 3b + 1b = 4b. The answer keeps both: 3a + 4b.",
+      ja: "aの項とbの項は種類が違うので、別々にまとめます：5a - 2a = 3a、3b + 1b = 4b。答えは両方を残して 3a + 4b です。"
+    }
+  },
+  {
+    id: "expression_medium_02",
+    topic: "expression",
+    equation: "4x - 7 - 6x + 2",
+    answer: "-2x - 5",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", collect: "x", value: "-2x - 7 + 2", target: "expression", result: "-2x - 7 + 2",
+        wrong: ["10x - 7 + 2", "2x - 7 + 2", "-2x² - 7 + 2"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "number", value: "-2x - 5", target: "expression", result: "-2x - 5",
+        wrong: ["-2x - 9", "-2x + 5", "-7x"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Collect the x terms: 4x - 6x. The minus belongs to the 6x.",
+        "Now collect the numbers: -7 + 2."
+      ],
+      ja: [
+        "xの項をまとめる：4x - 6x。マイナスは6xについている。",
+        "次に数をまとめる：-7 + 2。"
+      ]
+    },
+    explanation: {
+      en: "Each term keeps its own sign. 4x - 6x = -2x, and -7 + 2 = -5, so -2x - 5.",
+      ja: "それぞれの項は自分の符号を持っています。4x - 6x = -2x、-7 + 2 = -5 で -2x - 5 です。"
+    }
+  },
+  {
+    id: "expression_medium_03",
+    topic: "expression",
+    equation: "6p + 2q - p - 5q",
+    answer: "5p - 3q",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", collect: "p", value: "5p + 2q - 5q", target: "expression", result: "5p + 2q - 5q",
+        wrong: ["6p + 2q - 5q", "7p + 2q - 5q", "5p² + 2q - 5q"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "q", value: "5p - 3q", target: "expression", result: "5p - 3q",
+        wrong: ["5p + 7q", "5p + 3q", "5p - 3q²"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Collect the p terms: 6p - p. A lone p is 1p.",
+        "Now collect the q terms: 2q - 5q."
+      ],
+      ja: [
+        "pの項をまとめる：6p - p。pだけのときは1p。",
+        "次にqの項をまとめる：2q - 5q。"
+      ]
+    },
+    explanation: {
+      en: "6p - 1p = 5p, and 2q - 5q = -3q. Put them together: 5p - 3q.",
+      ja: "6p - 1p = 5p、2q - 5q = -3q。合わせて 5p - 3q です。"
+    }
+  },
+  {
+    id: "expression_medium_04",
+    topic: "expression",
+    equation: "3m - 4n + 2m + 6n",
+    answer: "5m + 2n",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", collect: "m", value: "5m - 4n + 6n", target: "expression", result: "5m - 4n + 6n",
+        wrong: ["m - 4n + 6n", "5m² - 4n + 6n", "6m - 4n + 6n"], wrongKinds: ["signSlip", "unlikeTerms", "generic"] },
+      { action: "simplify", collect: "n", value: "5m + 2n", target: "expression", result: "5m + 2n",
+        wrong: ["5m - 10n", "5m - 2n", "7mn"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Collect the m terms: 3m + 2m.",
+        "Now collect the n terms: -4n + 6n."
+      ],
+      ja: [
+        "mの項をまとめる：3m + 2m。",
+        "次にnの項をまとめる：-4n + 6n。"
+      ]
+    },
+    explanation: {
+      en: "3m + 2m = 5m, and -4n + 6n = 2n, so 5m + 2n. m and n are different letters, so they never join into mn.",
+      ja: "3m + 2m = 5m、-4n + 6n = 2n で 5m + 2n。mとnは違う文字なので、mnにはなりません。"
+    }
+  },
+  {
+    id: "expression_medium_05",
+    topic: "expression",
+    equation: "-2x + 5y + 7x - 8y",
+    answer: "5x - 3y",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", collect: "x", value: "5x + 5y - 8y", target: "expression", result: "5x + 5y - 8y",
+        wrong: ["-9x + 5y - 8y", "9x + 5y - 8y", "5x² + 5y - 8y"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "y", value: "5x - 3y", target: "expression", result: "5x - 3y",
+        wrong: ["5x + 13y", "5x + 3y", "2xy"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Collect the x terms: -2x + 7x.",
+        "Now collect the y terms: 5y - 8y."
+      ],
+      ja: [
+        "xの項をまとめる：-2x + 7x。",
+        "次にyの項をまとめる：5y - 8y。"
+      ]
+    },
+    explanation: {
+      en: "-2x + 7x = 5x, and 5y - 8y = -3y, so 5x - 3y. A negative term at the start works the same way as any other.",
+      ja: "-2x + 7x = 5x、5y - 8y = -3y で 5x - 3y です。先頭が負の項でも、まとめ方は同じです。"
+    }
+  },
+  {
+    id: "expression_medium_06",
+    topic: "expression",
+    equation: "a - 3b - 4a + b",
+    answer: "-3a - 2b",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", collect: "a", value: "-3a - 3b + b", target: "expression", result: "-3a - 3b + b",
+        wrong: ["-4a - 3b + b", "5a - 3b + b", "3a - 3b + b"], wrongKinds: ["loneLetter", "signSlip", "signSlip"] },
+      { action: "simplify", collect: "b", value: "-3a - 2b", target: "expression", result: "-3a - 2b",
+        wrong: ["-3a - 3b", "-3a - 4b", "-3a + 2b"], wrongKinds: ["loneLetter", "signSlip", "signSlip"] }
+    ],
+    hints: {
+      en: [
+        "Collect the a terms: 1a - 4a.",
+        "Now collect the b terms: -3b + 1b."
+      ],
+      ja: [
+        "aの項をまとめる：1a - 4a。",
+        "次にbの項をまとめる：-3b + 1b。"
+      ]
+    },
+    explanation: {
+      en: "Both lone letters count as 1: a - 4a = 1a - 4a = -3a, and -3b + b = -3b + 1b = -2b. So -3a - 2b.",
+      ja: "文字だけの項はどちらも1と数えます：a - 4a = 1a - 4a = -3a、-3b + b = -3b + 1b = -2b。答えは -3a - 2b です。"
+    }
+  },
+  {
+    id: "expression_medium_07",
+    topic: "expression",
+    equation: "x² + 3x + 2x² - x",
+    answer: "3x² + 2x",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", collect: "x²", value: "3x² + 3x - x", target: "expression", result: "3x² + 3x - x",
+        wrong: ["2x² + 3x - x", "-x² + 3x - x", "3x + 3x - x"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "x", value: "3x² + 2x", target: "expression", result: "3x² + 2x",
+        wrong: ["3x² + 3x", "3x² + 4x", "5x²"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "x² and x are different kinds of term. Collect the x² terms first: x² + 2x².",
+        "Now collect the x terms: 3x - x."
+      ],
+      ja: [
+        "x²とxは違う種類の項。まずx²の項をまとめる：x² + 2x²。",
+        "次にxの項をまとめる：3x - x。"
+      ]
+    },
+    explanation: {
+      en: "x² and x are not like terms, so they're collected separately: x² + 2x² = 3x² and 3x - x = 2x. They can't be joined, so the answer is 3x² + 2x.",
+      ja: "x²とxは同類項ではないので、別々にまとめます：x² + 2x² = 3x²、3x - x = 2x。これ以上まとめられないので、答えは 3x² + 2x です。"
+    }
+  },
+  {
+    id: "expression_medium_08",
+    topic: "expression",
+    equation: "4x² - 2x - x² + 5x",
+    answer: "3x² + 3x",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", collect: "x²", value: "3x² - 2x + 5x", target: "expression", result: "3x² - 2x + 5x",
+        wrong: ["4x² - 2x + 5x", "5x² - 2x + 5x", "3x - 2x + 5x"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "x", value: "3x² + 3x", target: "expression", result: "3x² + 3x",
+        wrong: ["3x² - 7x", "3x² + 7x", "6x²"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Collect the x² terms: 4x² - x². A lone x² is 1x².",
+        "Now collect the x terms: -2x + 5x."
+      ],
+      ja: [
+        "x²の項をまとめる：4x² - x²。x²だけのときは1x²。",
+        "次にxの項をまとめる：-2x + 5x。"
+      ]
+    },
+    explanation: {
+      en: "4x² - 1x² = 3x², and -2x + 5x = 3x. 3x² and 3x look alike but aren't like terms, so the answer is 3x² + 3x, not 6x².",
+      ja: "4x² - 1x² = 3x²、-2x + 5x = 3x。3x²と3xは似ていますが同類項ではないので、6x²ではなく 3x² + 3x です。"
+    }
+  },
+  {
+    id: "expression_medium_09",
+    topic: "expression",
+    equation: "3xy + 2x - xy + 4x",
+    answer: "2xy + 6x",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", collect: "xy", value: "2xy + 2x + 4x", target: "expression", result: "2xy + 2x + 4x",
+        wrong: ["3xy + 2x + 4x", "4xy + 2x + 4x", "2x + 2x + 4x"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "x", value: "2xy + 6x", target: "expression", result: "2xy + 6x",
+        wrong: ["2xy - 2x", "8xy", "2xy + 8x"], wrongKinds: ["signSlip", "unlikeTerms", "generic"] }
+    ],
+    hints: {
+      en: [
+        "xy is its own kind of term. Collect the xy terms: 3xy - xy.",
+        "Now collect the x terms: 2x + 4x."
+      ],
+      ja: [
+        "xyはそれだけで1つの種類の項。xyの項をまとめる：3xy - xy。",
+        "次にxの項をまとめる：2x + 4x。"
+      ]
+    },
+    explanation: {
+      en: "xy terms only join other xy terms: 3xy - 1xy = 2xy. The x terms make 6x. xy and x are different, so the answer is 2xy + 6x.",
+      ja: "xyの項はxyの項としかまとめられません：3xy - 1xy = 2xy。xの項で6x。xyとxは違う種類なので、答えは 2xy + 6x です。"
+    }
+  },
+  {
+    id: "expression_medium_10",
+    topic: "expression",
+    equation: "5ab - 2a + ab - 3a",
+    answer: "6ab - 5a",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", collect: "ab", value: "6ab - 2a - 3a", target: "expression", result: "6ab - 2a - 3a",
+        wrong: ["5ab - 2a - 3a", "4ab - 2a - 3a", "6a - 2a - 3a"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "a", value: "6ab - 5a", target: "expression", result: "6ab - 5a",
+        wrong: ["6ab - a", "6ab + 5a", "ab"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Collect the ab terms: 5ab + ab. A lone ab is 1ab.",
+        "Now collect the a terms: -2a - 3a."
+      ],
+      ja: [
+        "abの項をまとめる：5ab + ab。abだけのときは1ab。",
+        "次にaの項をまとめる：-2a - 3a。"
+      ]
+    },
+    explanation: {
+      en: "5ab + 1ab = 6ab, and -2a - 3a = -5a. ab and a are different kinds of term, so the answer is 6ab - 5a.",
+      ja: "5ab + 1ab = 6ab、-2a - 3a = -5a。abとaは違う種類の項なので、答えは 6ab - 5a です。"
+    }
+  },
+
+  // ---- Hard: expand every bracket in one step, then collect (2–3 steps) ----
+  // Expand steps carry no wrongKinds, so their slips count toward "tip_expand" (shared with Brackets).
+  // Levels 4, 8 and 10: a minus in front of the bracket. Level 9: a letter outside (x × x = x²).
+  {
+    id: "expression_hard_01",
+    topic: "expression",
+    equation: "3(x + 2) + 2x",
+    answer: "5x + 6",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "3x + 6 + 2x", wrong: ["3x + 2 + 2x", "x + 6 + 2x", "3x + 5 + 2x"], target: "expression", result: "3x + 6 + 2x" },
+      { action: "simplify", collect: "x", value: "5x + 6", target: "expression", result: "5x + 6",
+        wrong: ["11x", "x + 6", "5x² + 6"], wrongKinds: ["unlikeTerms", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets: 3 × x and 3 × 2.",
+        "Now collect the x terms: 3x + 2x."
+      ],
+      ja: [
+        "かっこを展開する：3 × x と 3 × 2。",
+        "次にxの項をまとめる：3x + 2x。"
+      ]
+    },
+    explanation: {
+      en: "Brackets first: 3(x + 2) = 3x + 6. Then the x terms collect: 3x + 2x = 5x, so 5x + 6.",
+      ja: "まずかっこ：3(x + 2) = 3x + 6。次にxの項をまとめて 3x + 2x = 5x、答えは 5x + 6 です。"
+    }
+  },
+  {
+    id: "expression_hard_02",
+    topic: "expression",
+    equation: "4(a - 1) + 3a",
+    answer: "7a - 4",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "4a - 4 + 3a", wrong: ["4a - 1 + 3a", "4a + 4 + 3a", "a - 4 + 3a"], target: "expression", result: "4a - 4 + 3a" },
+      { action: "simplify", collect: "a", value: "7a - 4", target: "expression", result: "7a - 4",
+        wrong: ["a - 4", "7a² - 4", "3a"], wrongKinds: ["signSlip", "unlikeTerms", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets: 4 × a and 4 × (-1).",
+        "Now collect the a terms: 4a + 3a."
+      ],
+      ja: [
+        "かっこを展開する：4 × a と 4 ×（-1）。",
+        "次にaの項をまとめる：4a + 3a。"
+      ]
+    },
+    explanation: {
+      en: "4(a - 1) = 4a - 4 — the minus inside gets multiplied too. Then 4a + 3a = 7a, so 7a - 4.",
+      ja: "4(a - 1) = 4a - 4（中のマイナスも一緒にかけます）。次に 4a + 3a = 7a で、答えは 7a - 4 です。"
+    }
+  },
+  {
+    id: "expression_hard_03",
+    topic: "expression",
+    equation: "2(x + 4) + 3(x - 1)",
+    answer: "5x + 5",
+    difficulty: "hard",
+    type: "three-step",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "2x + 8 + 3x - 3", wrong: ["2x + 4 + 3x - 1", "2x + 8 + 3x + 3", "2x + 8 + 3x - 1"], target: "expression", result: "2x + 8 + 3x - 3" },
+      { action: "simplify", collect: "x", value: "5x + 8 - 3", target: "expression", result: "5x + 8 - 3",
+        wrong: ["-x + 8 - 3", "5x² + 8 - 3", "6x + 8 - 3"], wrongKinds: ["signSlip", "unlikeTerms", "generic"] },
+      { action: "simplify", collect: "number", value: "5x + 5", target: "expression", result: "5x + 5",
+        wrong: ["5x + 11", "5x - 5", "10x"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Expand both brackets: 2 × x, 2 × 4, then 3 × x and 3 × (-1).",
+        "Collect the x terms: 2x + 3x.",
+        "Now collect the numbers: 8 - 3."
+      ],
+      ja: [
+        "両方のかっこを展開する：2 × x、2 × 4、3 × x、3 ×（-1）。",
+        "xの項をまとめる：2x + 3x。",
+        "次に数をまとめる：8 - 3。"
+      ]
+    },
+    explanation: {
+      en: "Expanding both brackets gives 2x + 8 + 3x - 3. Then 2x + 3x = 5x and 8 - 3 = 5, so 5x + 5.",
+      ja: "両方のかっこを展開すると 2x + 8 + 3x - 3。2x + 3x = 5x、8 - 3 = 5 で、答えは 5x + 5 です。"
+    }
+  },
+  {
+    id: "expression_hard_04",
+    topic: "expression",
+    equation: "5x - 2(x - 3)",
+    answer: "3x + 6",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "5x - 2x + 6", wrong: ["5x - 2x - 6", "5x - 2x - 3", "5x - 2x + 3"], target: "expression", result: "5x - 2x + 6" },
+      { action: "simplify", collect: "x", value: "3x + 6", target: "expression", result: "3x + 6",
+        wrong: ["7x + 6", "9x", "3x² + 6"], wrongKinds: ["signSlip", "unlikeTerms", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Expand: -2 × x and -2 × (-3). The minus in front belongs to the 2.",
+        "Now collect the x terms: 5x - 2x."
+      ],
+      ja: [
+        "展開する：-2 × x と -2 ×（-3）。前のマイナスは2についている。",
+        "次にxの項をまとめる：5x - 2x。"
+      ]
+    },
+    explanation: {
+      en: "The - in front of the bracket goes with the 2, so multiply by -2: -2 × x = -2x and -2 × (-3) = +6. Then 5x - 2x = 3x, so 3x + 6.",
+      ja: "かっこの前の - は2についているので、-2をかけます：-2 × x = -2x、-2 ×（-3）= +6。次に 5x - 2x = 3x で、答えは 3x + 6 です。"
+    }
+  },
+  {
+    id: "expression_hard_05",
+    topic: "expression",
+    equation: "3(2a + b) - 4a",
+    answer: "2a + 3b",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "6a + 3b - 4a", wrong: ["6a + b - 4a", "2a + 3b - 4a", "5a + 3b - 4a"], target: "expression", result: "6a + 3b - 4a" },
+      { action: "simplify", collect: "a", value: "2a + 3b", target: "expression", result: "2a + 3b",
+        wrong: ["10a + 3b", "-2a + 3b", "2a² + 3b"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Expand the brackets: 3 × 2a and 3 × b.",
+        "Now collect the a terms: 6a - 4a."
+      ],
+      ja: [
+        "かっこを展開する：3 × 2a と 3 × b。",
+        "次にaの項をまとめる：6a - 4a。"
+      ]
+    },
+    explanation: {
+      en: "3 × 2a = 6a and 3 × b = 3b, giving 6a + 3b - 4a. Collect the a terms: 6a - 4a = 2a, so 2a + 3b.",
+      ja: "3 × 2a = 6a、3 × b = 3b で 6a + 3b - 4a。aの項をまとめて 6a - 4a = 2a、答えは 2a + 3b です。"
+    }
+  },
+  {
+    id: "expression_hard_06",
+    topic: "expression",
+    equation: "2(x² + 3x) - x²",
+    answer: "x² + 6x",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "2x² + 6x - x²", wrong: ["2x² + 3x - x²", "2x + 6x - x²", "x² + 6x - x²"], target: "expression", result: "2x² + 6x - x²" },
+      { action: "simplify", collect: "x²", value: "x² + 6x", target: "expression", result: "x² + 6x",
+        wrong: ["2x² + 6x", "3x² + 6x", "x + 6x"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Expand: 2 × x² and 2 × 3x.",
+        "Now collect the x² terms: 2x² - x². A lone x² is 1x²."
+      ],
+      ja: [
+        "展開する：2 × x² と 2 × 3x。",
+        "次にx²の項をまとめる：2x² - x²。x²だけのときは1x²。"
+      ]
+    },
+    explanation: {
+      en: "2(x² + 3x) = 2x² + 6x. Then 2x² - 1x² = 1x², written x². The x term can't join the x² term, so the answer is x² + 6x.",
+      ja: "2(x² + 3x) = 2x² + 6x。次に 2x² - 1x² = 1x² で、x² と書きます。xの項はx²の項とまとめられないので、答えは x² + 6x です。"
+    }
+  },
+  {
+    id: "expression_hard_07",
+    topic: "expression",
+    equation: "4(m + 2n) - 3(m - n)",
+    answer: "m + 11n",
+    difficulty: "hard",
+    type: "three-step",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "4m + 8n - 3m + 3n", wrong: ["4m + 8n - 3m - 3n", "4m + 2n - 3m - n", "4m + 8n - 3m - n"], target: "expression", result: "4m + 8n - 3m + 3n" },
+      { action: "simplify", collect: "m", value: "m + 8n + 3n", target: "expression", result: "m + 8n + 3n",
+        wrong: ["8n + 3n", "7m + 8n + 3n", "m² + 8n + 3n"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "n", value: "m + 11n", target: "expression", result: "m + 11n",
+        wrong: ["m + 5n", "12mn", "m + 24n"], wrongKinds: ["signSlip", "unlikeTerms", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Expand both brackets. The second one is multiplied by -3, so -3 × (-n) = +3n.",
+        "Collect the m terms: 4m - 3m. 1m is written m.",
+        "Now collect the n terms: 8n + 3n."
+      ],
+      ja: [
+        "両方のかっこを展開する。2つ目は-3をかけるので、-3 ×（-n）= +3n。",
+        "mの項をまとめる：4m - 3m。1mはmと書く。",
+        "次にnの項をまとめる：8n + 3n。"
+      ]
+    },
+    explanation: {
+      en: "-3 multiplies both terms in the second bracket: -3m and +3n. Then 4m - 3m = m (1m, not nothing) and 8n + 3n = 11n, so m + 11n.",
+      ja: "2つ目のかっこの両方の項に-3をかけて -3m と +3n。4m - 3m = m（1mで、0ではありません）、8n + 3n = 11n で、答えは m + 11n です。"
+    }
+  },
+  {
+    id: "expression_hard_08",
+    topic: "expression",
+    equation: "6y - 2(y + 4) + 3",
+    answer: "4y - 5",
+    difficulty: "hard",
+    type: "three-step",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "6y - 2y - 8 + 3", wrong: ["6y - 2y + 8 + 3", "6y - 2y - 4 + 3", "6y - 2y + 4 + 3"], target: "expression", result: "6y - 2y - 8 + 3" },
+      { action: "simplify", collect: "y", value: "4y - 8 + 3", target: "expression", result: "4y - 8 + 3",
+        wrong: ["8y - 8 + 3", "-4y - 8 + 3", "4y² - 8 + 3"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "number", value: "4y - 5", target: "expression", result: "4y - 5",
+        wrong: ["4y - 11", "4y + 5", "-y"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Expand: -2 × y and -2 × 4. Both come out negative.",
+        "Collect the y terms: 6y - 2y.",
+        "Now collect the numbers: -8 + 3."
+      ],
+      ja: [
+        "展開する：-2 × y と -2 × 4。どちらも負になる。",
+        "yの項をまとめる：6y - 2y。",
+        "次に数をまとめる：-8 + 3。"
+      ]
+    },
+    explanation: {
+      en: "-2(y + 4) = -2y - 8. Then 6y - 2y = 4y and -8 + 3 = -5, so 4y - 5.",
+      ja: "-2(y + 4) = -2y - 8。次に 6y - 2y = 4y、-8 + 3 = -5 で、答えは 4y - 5 です。"
+    }
+  },
+  {
+    id: "expression_hard_09",
+    topic: "expression",
+    equation: "x(x + 3) + 2x",
+    answer: "x² + 5x",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "x² + 3x + 2x", wrong: ["x² + 3 + 2x", "2x + 3x + 2x", "x + 3x + 2x"], target: "expression", result: "x² + 3x + 2x" },
+      { action: "simplify", collect: "x", value: "x² + 5x", target: "expression", result: "x² + 5x",
+        wrong: ["x² + x", "x² + 5x²", "x² + 6x"], wrongKinds: ["signSlip", "unlikeTerms", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Expand: x × x and x × 3. x × x is x².",
+        "Now collect the x terms: 3x + 2x."
+      ],
+      ja: [
+        "展開する：x × x と x × 3。x × x は x²。",
+        "次にxの項をまとめる：3x + 2x。"
+      ]
+    },
+    explanation: {
+      en: "A letter outside the brackets multiplies too: x × x = x² and x × 3 = 3x. Then 3x + 2x = 5x, so x² + 5x.",
+      ja: "かっこの外が文字でも、同じようにかけます：x × x = x²、x × 3 = 3x。次に 3x + 2x = 5x で、答えは x² + 5x です。"
+    }
+  },
+  {
+    id: "expression_hard_10",
+    topic: "expression",
+    equation: "2(3x - y) - (x - 4y)",
+    answer: "5x + 2y",
+    difficulty: "hard",
+    type: "three-step",
+    basePoints: 30,
+    steps: [
+      { action: "expand", value: "6x - 2y - x + 4y", wrong: ["6x - 2y - x - 4y", "6x - y - x + 4y", "6x - 2y + x - 4y"], target: "expression", result: "6x - 2y - x + 4y" },
+      { action: "simplify", collect: "x", value: "5x - 2y + 4y", target: "expression", result: "5x - 2y + 4y",
+        wrong: ["6x - 2y + 4y", "7x - 2y + 4y", "5x² - 2y + 4y"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] },
+      { action: "simplify", collect: "y", value: "5x + 2y", target: "expression", result: "5x + 2y",
+        wrong: ["5x - 6y", "5x + 6y", "7xy"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Expand both brackets. A minus in front of a bracket means × (-1): -(x - 4y) = -x + 4y.",
+        "Collect the x terms: 6x - x.",
+        "Now collect the y terms: -2y + 4y."
+      ],
+      ja: [
+        "両方のかっこを展開する。かっこの前のマイナスは ×（-1）：-(x - 4y) = -x + 4y。",
+        "xの項をまとめる：6x - x。",
+        "次にyの項をまとめる：-2y + 4y。"
+      ]
+    },
+    explanation: {
+      en: "A minus in front of a bracket changes every sign inside: -(x - 4y) = -x + 4y. Then 6x - x = 5x and -2y + 4y = 2y, so 5x + 2y.",
+      ja: "かっこの前のマイナスは、中のすべての符号を変えます：-(x - 4y) = -x + 4y。次に 6x - x = 5x、-2y + 4y = 2y で、答えは 5x + 2y です。"
+    }
   }
 ];
 
@@ -6192,6 +7039,28 @@ const TIER_TIPS = {
       move: { en: "Divide both sides by 2", ja: "両辺を2で割る" },
       to: "y/2 = x - 3"
     }
+  },
+  expression_medium: {
+    text: {
+      en: "Different letters, or x² and x, are different kinds of term — they never join. Collect each kind on its own.",
+      ja: "違う文字や、x²とxは種類が違う項 — まとめられないよ。種類ごとにまとめよう。"
+    },
+    demo: {
+      from: "x² + 3x + 2x² - x",
+      move: { en: "Collect the x² terms", ja: "x²の項をまとめる" },
+      to: "3x² + 3x - x"
+    }
+  },
+  expression_hard: {
+    text: {
+      en: "Expand the brackets first, then collect. A minus or a letter in front multiplies every term inside: -2(x - 3) = -2x + 6, and x(x + 3) = x² + 3x.",
+      ja: "まずかっこを展開してから、まとめよう。前にあるマイナスや文字は中のすべての項にかかるよ：-2(x - 3) = -2x + 6、x(x + 3) = x² + 3x。"
+    },
+    demo: {
+      from: "5x - 2(x - 3)",
+      move: { en: "Expand: -2 × x and -2 × (-3)", ja: "展開：-2 × x と -2 × (-3)" },
+      to: "5x - 2x + 6"
+    }
   }
 };
 
@@ -6208,7 +7077,8 @@ const TOPIC_NAMES = {
   quadratic:  { en: "Quadratics",   ja: "二次方程式" },
   system:     { en: "Systems",      ja: "連立方程式" },
   fraction:   { en: "Fractions",    ja: "分数" },
-  subject:    { en: "Formulas",     ja: "等式の変形" }
+  subject:    { en: "Formulas",     ja: "等式の変形" },
+  expression: { en: "Expressions",  ja: "式の計算" }
 };
 
 // One template per per-topic achievement type. {topic} = topic name, {n} = level or star count.
