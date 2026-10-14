@@ -129,6 +129,10 @@ function makeDistractors(correctStep) {
 // "tip_<action>" (e.g. tip_expand). wrongNumber isn't guaranteed, but nearly every generated
 // step offers a nearby number, so any generated step can practise it.
 function practiceKinds(step) {
+  // Expressions: each authored wrong option is tagged with its own kind; "generic" isn't practised
+  if (Array.isArray(step.wrong) && Array.isArray(step.wrongKinds)) {
+    return [...new Set(step.wrongKinds.filter(k => k !== "generic"))];
+  }
   if (Array.isArray(step.wrong)) return [`tip_${step.action}`];
   if (Array.isArray(step.moves)) return [...new Set(step.moves.map(m => m.kind))];
   if (Array.isArray(step.traps)) return ["notLcd"];

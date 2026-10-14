@@ -265,6 +265,15 @@
           <span class="topic-card-count"></span>
         </span>
       </button>
+      <button class="topic-card" data-topic="expression">
+        <span class="topic-card-sample">4x + 3 + 2x</span>
+        <span class="topic-card-title" data-i18n="topicExpression">Expressions</span>
+        <span class="topic-card-desc" data-i18n="topicExpressionDesc">Collect like terms to simplify</span>
+        <span class="topic-card-progress" data-progress="expression">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -790,7 +799,9 @@
   // get a tip for that step's move. Anything else falls back to the generic buddyWrong lines.
   const MISTAKE_KEYS = {
     notLcd: "mistakeNotLcd", forgotSign: "mistakeForgotSign", wrongWay: "mistakeWrongWay",
-    wrongKind: "mistakeWrongKind", wrongNumber: "mistakeWrongNumber"
+    wrongKind: "mistakeWrongKind", wrongNumber: "mistakeWrongNumber",
+    // Expressions (authored wrong options tagged with wrongKinds)
+    unlikeTerms: "mistakeUnlikeTerms", signSlip: "mistakeSignSlip", loneLetter: "mistakeLoneLetter"
   };
   const AUTHORED_TIP_KEYS = {
     expand: "mistakeTipExpand", factor: "mistakeTipFactor", roots: "mistakeTipRoots",
@@ -820,6 +831,8 @@
   // The kind to track for a wrong option: authored-choice steps use "tip_<action>";
   // generated options use their kind, except "generic", which has nothing useful to practise.
   function trackedKind(choice, step) {
+    // Expressions: authored options carry their own kind; "generic" slips aren't tracked
+    if (Array.isArray(step.wrong) && choice.kind) return choice.kind === "generic" ? null : choice.kind;
     if (Array.isArray(step.wrong)) return `tip_${step.action}`;
     return choice.kind && choice.kind !== "generic" ? choice.kind : null;
   }
@@ -980,6 +993,12 @@
   // Text above the choices: the step's own prompt ("Factorise:"), Quadratics' "To make one side 0:",
   // or the Formulas topic's "Make x the subject:" (letter from level.subject). Empty when there's none.
   function choicePrompt(level, step) {
+    // Expressions: "Collect the x terms:" / "Collect the numbers:". Checked first, so it wins over simplifyPrompt.
+    if (step.collect) {
+      return step.collect === "number"
+        ? (LLL_I18N.t("collectNumbersPrompt") || "")
+        : (LLL_I18N.t("collectPrompt") || "").split("{letter}").join(step.collect);
+    }
     const key = CHOICE_PROMPT_KEYS[step.action]
       || (level.topic === "quadratic" ? "rearrangePrompt" : null)
       || (level.subject ? "subjectPrompt" : null);
@@ -1029,7 +1048,7 @@
     $expandPrompt.hidden = !prompt;
     $expandPrompt.textContent = prompt;
     const distractors = isAuthored
-      ? step.wrong.map(w => ({ action: step.action, value: w }))
+      ? step.wrong.map((w, i) => ({ action: step.action, value: w, kind: (step.wrongKinds || [])[i] }))
       : makeDistractors(step);
     stepKinds = new Set(distractors.map(d => trackedKind(d, step)).filter(Boolean));
     const choices = [{ action: step.action, value: step.value }, ...distractors];
@@ -1730,8 +1749,8 @@
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
-  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject" };
-  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject", expression: "topicExpression" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1", expression: "4x + 3 + 2x" };
 
   // Levels unlock in order within a tier; the first level of every tier is always open.
   function isUnlocked(level) {
@@ -2101,7 +2120,7 @@
   // Shown once per topic on first visit, reopenable from the ❔ on the level-select screen.
   // Chalky explains the key idea, then a demo level plays step by step using the real game pieces.
   const TUTORIAL_SEEN_KEY = "lll_algebra_tutorials_seen";
-  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2 };
+  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2, expression: 2 };
   const TUT_STEP_MS = 2600;   // time per demo step
 
   // Demo level per topic: normally the first Easy level, except where that level skips the
@@ -2113,7 +2132,8 @@
     }
     if (topic === "quadratic" && levelsFor(topic, "medium").length) return levelsFor(topic, "medium")[0];
     // Formulas: a two-step level, so the demo shows why (y - 1) stays in brackets
-    if (topic === "subject") {
+    // Expressions: a two-step level, so the demo collects the letters, then the numbers
+    if (topic === "subject" || topic === "expression") {
       const twoStep = levelsFor(topic, "easy").find(l => l.steps.length === 2);
       if (twoStep) return twoStep;
     }
