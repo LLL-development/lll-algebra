@@ -274,6 +274,15 @@
           <span class="topic-card-count"></span>
         </span>
       </button>
+      <button class="topic-card" data-topic="indices">
+        <span class="topic-card-sample">x<span class="pow">3</span> × x<span class="pow">4</span></span>
+        <span class="topic-card-title" data-i18n="topicIndices">Indices</span>
+        <span class="topic-card-desc" data-i18n="topicIndicesDesc">Use the laws of indices to simplify powers</span>
+        <span class="topic-card-progress" data-progress="indices">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -345,7 +354,7 @@
   import { STRINGS } from "./strings.js";
   import { sfx, updateSoundBtn } from "./sound.js";
   import { showSystemGraph, clearSystemGraph, showNumberLine, clearNumberLine, afterGraphDrawn } from "./graph.js";
-  import { setMathText } from "./mathtext.js";
+  import { setMathText, appendWithPowers, makePow, eqUnits, eqLineLen } from "./mathtext.js";
   import { BUDDY_SVG, CHALKY_IDLES, buddyLine, makeBuddy } from "./chalky.js";
   import { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors, practiceKinds } from "./choices.js";
   import { initFloatingSymbols, burstGrandConfetti } from "./effects.js";
@@ -801,7 +810,10 @@
     notLcd: "mistakeNotLcd", forgotSign: "mistakeForgotSign", wrongWay: "mistakeWrongWay",
     wrongKind: "mistakeWrongKind", wrongNumber: "mistakeWrongNumber",
     // Expressions (authored wrong options tagged with wrongKinds)
-    unlikeTerms: "mistakeUnlikeTerms", signSlip: "mistakeSignSlip", loneLetter: "mistakeLoneLetter"
+    unlikeTerms: "mistakeUnlikeTerms", signSlip: "mistakeSignSlip", loneLetter: "mistakeLoneLetter",
+    // Indices (also authored, tagged with wrongKinds)
+    powerOp: "mistakePowerOp", coefficient: "mistakeCoefficient", lonePower: "mistakeLonePower",
+    zeroPower: "mistakeZeroPower", negPower: "mistakeNegPower"
   };
   const AUTHORED_TIP_KEYS = {
     expand: "mistakeTipExpand", factor: "mistakeTipFactor", roots: "mistakeTipRoots",
@@ -819,6 +831,8 @@
     // Formulas' letter moves: talk about the letter, not "the number"
     if (step.moves && choice.kind === "wrongNumber") key = "mistakeWrongLetter";
     if (step.moves && choice.kind === "wrongKind") key = "mistakeWrongKindLetter";
+    // Indices: a generic slip shouldn't get Expressions' "add up the numbers in front" line
+    if (step.law && !MISTAKE_KEYS[choice.kind]) key = "mistakeTipIndices";
     return (key && buddyLine(key)) || buddyLine("buddyWrong");
   }
 
@@ -927,7 +941,9 @@
   let flipPending = false; // true while a flip step's result is being typed
 
   function appendEqChar(ch) {
-    if (INEQ_SIGN.test(ch)) {
+    if (ch.length > 1 && ch[0] === "^") {   // a whole power from eqUnits(), e.g. "^3" or "^-1"
+      $eq.appendChild(makePow(ch.slice(1), "-"));
+    } else if (INEQ_SIGN.test(ch)) {
       const s = document.createElement("span");
       s.className = "ineq-sign" + (PIXEL_INEQ[ch] ? " pixel-ineq" : "") + (flipPending ? " flip-pending" : "");
       s.textContent = PIXEL_INEQ[ch] || ch;
@@ -946,12 +962,12 @@
   // Longest line of an equation, in characters. Press Start 2P is fixed-width, so brand.css
   // uses this (--eq-len) to shrink a long equation until it fits the card on one line.
   function setEqLen(el, text) {
-    el.style.setProperty("--eq-len", Math.max(...text.split("\n").map(line => [...line].length)));
+    el.style.setProperty("--eq-len", Math.max(...text.split("\n").map(eqLineLen)));
   }
 
   function renderEqText(text) {
     $eq.textContent = "";
-    for (const ch of text) appendEqChar(ch);
+    for (const ch of eqUnits(text)) appendEqChar(ch);
   }
 
   function setEquationText(text, onDone) {
@@ -975,7 +991,7 @@
 
   function typewriterReveal(text, onDone) {
     $eq.textContent = "";
-    const chars = [...text];
+    const chars = eqUnits(text);   // a power ("^3") types as one unit
     let i = 0;
     const speed = 28; // ms per character
     function typeChar() {
@@ -993,6 +1009,10 @@
   // Text above the choices: the step's own prompt ("Factorise:"), Quadratics' "To make one side 0:",
   // or the Formulas topic's "Make x the subject:" (letter from level.subject). Empty when there's none.
   function choicePrompt(level, step) {
+    // Indices: "Use the multiply rule:" etc., one prompt per law. Checked first, so it wins over simplifyPrompt.
+    const LAW_PROMPT_KEYS = { multiply: "lawMultiplyPrompt", divide: "lawDividePrompt", power: "lawPowerPrompt",
+                              zero: "lawZeroPrompt", positive: "lawPositivePrompt" };
+    if (step.law) return LLL_I18N.t(LAW_PROMPT_KEYS[step.law]) || "";
     // Expressions: "Collect the x terms:" / "Collect the numbers:". Checked first, so it wins over simplifyPrompt.
     if (step.collect) {
       return step.collect === "number"
@@ -1061,7 +1081,7 @@
     choices.forEach(choice => {
       const btn = document.createElement("button");
       btn.className = "choice-btn";
-      btn.textContent = actionLabel(choice.action, choice.value);
+      appendWithPowers(btn, actionLabel(choice.action, choice.value));
       if (choice.action === step.action && choice.value === step.value) btn.dataset.correct = "1";
       btn.addEventListener("click", () => handleChoice(choice, btn, step));
       $choices.appendChild(btn);
@@ -1718,7 +1738,7 @@
       const ok = !review.slipped.has(i);
       return `
       <div class="review-row">
-        <span class="review-row-name tricky-q">${i + 1}. ${escapeHtml(l.equation.split("\n").join(", "))}</span>
+        <span class="review-row-name tricky-q">${i + 1}. ${escapeHtml(l.equation.split("\n").join(", ")).replace(/\^([-−]?\d+)/g, '<span class="pow">$1</span>')}</span>
         <span class="review-row-marks"><span class="review-mark ${ok ? "ok" : "slip"}">${ok ? "✓" : "✗"}</span></span>
       </div>`;
     }).join("");
@@ -1749,8 +1769,8 @@
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
-  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject", expression: "topicExpression" };
-  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1", expression: "4x + 3 + 2x" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject", expression: "topicExpression", indices: "topicIndices" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1", expression: "4x + 3 + 2x", indices: "x^3 × x^4" };
 
   // Levels unlock in order within a tier; the first level of every tier is always open.
   function isUnlocked(level) {
@@ -1765,7 +1785,8 @@
 
   function renderLevelSelect(topic) {
     const t = k => LLL_I18N.t(k);
-    $levelsSample.textContent = TOPIC_SAMPLES[topic];
+    $levelsSample.textContent = "";
+    appendWithPowers($levelsSample, TOPIC_SAMPLES[topic], "-");
     $levelsTitle.textContent = t(TOPIC_LABEL_KEYS[topic]) || topic;
     $levelsSummary.textContent = statsText(topicStats(topic));
     $levelsTiers.innerHTML = "";
@@ -2051,7 +2072,7 @@
     if (key === "introTopics") {
       return `<div class="intro-topic-list">${Object.keys(TOPIC_LABEL_KEYS).map(tp => `
         <div class="intro-topic">
-          <span class="topic-card-sample">${TOPIC_SAMPLES[tp].split("\n")[0]}</span>
+          <span class="topic-card-sample">${TOPIC_SAMPLES[tp].split("\n")[0].replace(/\^(-?\d+)/g, '<span class="pow">$1</span>')}</span>
           <span class="intro-topic-name">${t(TOPIC_LABEL_KEYS[tp])}</span>
         </div>`).join("")}</div>`;
     }
@@ -2120,7 +2141,7 @@
   // Shown once per topic on first visit, reopenable from the ❔ on the level-select screen.
   // Chalky explains the key idea, then a demo level plays step by step using the real game pieces.
   const TUTORIAL_SEEN_KEY = "lll_algebra_tutorials_seen";
-  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2, expression: 2 };
+  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2, expression: 2, indices: 2 };
   const TUT_STEP_MS = 2600;   // time per demo step
 
   // Demo level per topic: normally the first Easy level, except where that level skips the
@@ -2133,7 +2154,8 @@
     if (topic === "quadratic" && levelsFor(topic, "medium").length) return levelsFor(topic, "medium")[0];
     // Formulas: a two-step level, so the demo shows why (y - 1) stays in brackets
     // Expressions: a two-step level, so the demo collects the letters, then the numbers
-    if (topic === "subject" || topic === "expression") {
+    // Indices: a two-step level (Easy 9, x^2 × x^3 × x^4), so the demo uses the multiply rule twice
+    if (topic === "subject" || topic === "expression" || topic === "indices") {
       const twoStep = levelsFor(topic, "easy").find(l => l.steps.length === 2);
       if (twoStep) return twoStep;
     }
@@ -2176,8 +2198,10 @@
   function setPixelEq(el, text) {
     setEqLen(el, text);
     el.textContent = "";
-    for (const ch of text) {
-      if (INEQ_SIGN.test(ch)) {
+    for (const ch of eqUnits(text)) {
+      if (ch.length > 1 && ch[0] === "^") {
+        el.appendChild(makePow(ch.slice(1), "-"));
+      } else if (INEQ_SIGN.test(ch)) {
         const s = document.createElement("span");
         s.className = "ineq-sign" + (PIXEL_INEQ[ch] ? " pixel-ineq" : "");
         s.textContent = PIXEL_INEQ[ch] || ch;
@@ -2191,7 +2215,8 @@
   function fillTutorialText(topic) {
     const t = k => LLL_I18N.t(k) || "";
     const base = TOPIC_LABEL_KEYS[topic];
-    $tutSample.textContent = TOPIC_SAMPLES[topic];
+    $tutSample.textContent = "";
+    appendWithPowers($tutSample, TOPIC_SAMPLES[topic], "-");
     $tutTitle.textContent = t(base);
     setMathText($tutBody, t(`${base}TutBody`));
     $tutTips.innerHTML = "";
@@ -2233,7 +2258,7 @@
           b.className = "choice-btn";
           b.tabIndex = -1;                     // demo only, not interactive
           b.setAttribute("aria-hidden", "true");
-          b.textContent = actionLabel(c.action, c.value);
+          appendWithPowers(b, actionLabel(c.action, c.value));
           $tutChoices.appendChild(b);
           return b;
         });

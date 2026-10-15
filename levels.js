@@ -67,7 +67,16 @@
 // merging them), and expressions are written so collecting in order of first appearance gives the
 // answer order: x² first, then letters alphabetically, then the number.
 //
-// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject" or "expression". `target` is "both-sides"
+// Indices topic (laws of indices): powers are written x^3 / x^-2 (drawn raised by mathtext.js) and, like
+// Expressions, there's no "=". Each step is an authored "simplify" step using one law, named in `law`:
+// "multiply" (add the powers), "divide" (subtract them), "power" (multiply them), "zero" (x^0 = 1) or
+// "positive" (rewrite a negative power: x^-3 → 1/x^3). `law` drives the "Use the multiply rule:" prompt.
+// `wrongKinds`: "powerOp" (wrong operation on the powers, sign slips included), "coefficient" (numbers in
+// front mishandled), "lonePower" (a lone x not counted as x^1), "zeroPower" (x^0 taken as 0 or x),
+// "negPower" (x^-3 taken as -x^3, or not moved under the line), "unlikeTerms" (shared with Expressions:
+// x and y powers merged) or "generic" (not tracked). Answers use positive powers, and x^1 is always written x.
+//
+// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject", "expression" or "indices". `target` is "both-sides"
 // for every move that changes a side's value; only "expand" and "simplify" rewrite one side,
 // because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
@@ -6899,6 +6908,760 @@ const LEVELS = [
       en: "A minus in front of a bracket changes every sign inside: -(x - 4y) = -x + 4y. Then 6x - x = 5x and -2y + 4y = 2y, so 5x + 2y.",
       ja: "かっこの前のマイナスは、中のすべての符号を変えます：-(x - 4y) = -x + 4y。次に 6x - x = 5x、-2y + 4y = 2y で、答えは 5x + 2y です。"
     }
+  },
+
+  // =====================================================================
+  // LAWS OF INDICES (topic "indices", shown as "Indices")
+  // =====================================================================
+ 
+  // ---- Easy: one law, plain powers ----
+  // Levels 1-8 are one step; 9-10 are two steps (same law twice, left to right).
+  // Levels 7 and 8 have a lone x (x means x^1).
+  {
+    id: "indices_easy_01",
+    topic: "indices",
+    equation: "x^3 × x^4",
+    answer: "x^7",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", law: "multiply", value: "x^7", target: "expression", result: "x^7",
+        wrong: ["x^12", "2x^7", "x"], wrongKinds: ["powerOp", "coefficient", "powerOp"] }
+    ],
+    hints: {
+      en: ["Multiply rule: when you multiply, add the powers: 3 + 4."],
+      ja: ["かけ算のルール：かけるときは指数を足す：3 + 4。"]
+    },
+    explanation: {
+      en: "x^3 × x^4 is three x's times four more x's — seven x's in all. So add the powers: 3 + 4 = 7, giving x^7. Multiplying the powers (x^12) is the slip to avoid.",
+      ja: "x^3 × x^4 は、xを3個かけたものにさらに4個かけたもの — 全部で7個です。だから指数を足して 3 + 4 = 7、答えは x^7。指数どうしをかけて x^12 にしないように。"
+    }
+  },
+  {
+    id: "indices_easy_02",
+    topic: "indices",
+    equation: "x^2 × x^5",
+    answer: "x^7",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", law: "multiply", value: "x^7", target: "expression", result: "x^7",
+        wrong: ["x^10", "2x^7", "x^3"], wrongKinds: ["powerOp", "coefficient", "powerOp"] }
+    ],
+    hints: {
+      en: ["Add the powers: 2 + 5."],
+      ja: ["指数を足す：2 + 5。"]
+    },
+    explanation: {
+      en: "Multiplying the same letter adds the powers: 2 + 5 = 7, so x^7. There's only one x in the answer, so no 2 in front.",
+      ja: "同じ文字のかけ算は指数を足します：2 + 5 = 7 で x^7。答えのxは1つだけなので、前に2はつきません。"
+    }
+  },
+  {
+    id: "indices_easy_03",
+    topic: "indices",
+    equation: "x^6 ÷ x^2",
+    answer: "x^4",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", law: "divide", value: "x^4", target: "expression", result: "x^4",
+        wrong: ["x^3", "x^8", "x^12"], wrongKinds: ["powerOp", "powerOp", "powerOp"] }
+    ],
+    hints: {
+      en: ["Divide rule: when you divide, subtract the powers: 6 - 2."],
+      ja: ["わり算のルール：わるときは指数を引く：6 - 2。"]
+    },
+    explanation: {
+      en: "Dividing cancels x's: six on top, two underneath, so four are left. Subtract the powers: 6 - 2 = 4, giving x^4. Dividing the powers (x^3) is a common slip.",
+      ja: "わり算ではxが約分されます：上に6個、下に2個なので、残りは4個。指数を引いて 6 - 2 = 4、答えは x^4。指数どうしをわって x^3 にしないように。"
+    }
+  },
+  {
+    id: "indices_easy_04",
+    topic: "indices",
+    equation: "x^9 ÷ x^3",
+    answer: "x^6",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", law: "divide", value: "x^6", target: "expression", result: "x^6",
+        wrong: ["x^3", "x^12", "x^27"], wrongKinds: ["powerOp", "powerOp", "powerOp"] }
+    ],
+    hints: {
+      en: ["Subtract the powers: 9 - 3."],
+      ja: ["指数を引く：9 - 3。"]
+    },
+    explanation: {
+      en: "Divide means subtract the powers: 9 - 3 = 6, so x^6. Not 9 ÷ 3, which would give x^3.",
+      ja: "わり算は指数を引きます：9 - 3 = 6 で x^6。9 ÷ 3 で x^3 にはなりません。"
+    }
+  },
+  {
+    id: "indices_easy_05",
+    topic: "indices",
+    equation: "(x^2)^3",
+    answer: "x^6",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", law: "power", value: "x^6", target: "expression", result: "x^6",
+        wrong: ["x^5", "x^8", "x^9"], wrongKinds: ["powerOp", "generic", "generic"] }
+    ],
+    hints: {
+      en: ["Power rule: a power of a power multiplies the powers: 2 × 3."],
+      ja: ["累乗のルール：累乗の累乗は指数をかける：2 × 3。"]
+    },
+    explanation: {
+      en: "(x^2)^3 means x^2 × x^2 × x^2, which is 2 + 2 + 2 = 6 x's. That's the same as 2 × 3, so x^6. Adding the powers (x^5) is the slip to avoid.",
+      ja: "(x^2)^3 は x^2 × x^2 × x^2 のこと。2 + 2 + 2 = 6 個のxで、2 × 3 と同じなので x^6。指数を足して x^5 にしないように。"
+    }
+  },
+  {
+    id: "indices_easy_06",
+    topic: "indices",
+    equation: "(x^4)^2",
+    answer: "x^8",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", law: "power", value: "x^8", target: "expression", result: "x^8",
+        wrong: ["x^6", "x^16", "x^2"], wrongKinds: ["powerOp", "generic", "powerOp"] }
+    ],
+    hints: {
+      en: ["Multiply the powers: 4 × 2."],
+      ja: ["指数をかける：4 × 2。"]
+    },
+    explanation: {
+      en: "(x^4)^2 = x^4 × x^4 = x^8. A power of a power multiplies: 4 × 2 = 8.",
+      ja: "(x^4)^2 = x^4 × x^4 = x^8。累乗の累乗は指数をかけます：4 × 2 = 8。"
+    }
+  },
+  {
+    id: "indices_easy_07",
+    topic: "indices",
+    equation: "x × x^5",
+    answer: "x^6",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", law: "multiply", value: "x^6", target: "expression", result: "x^6",
+        wrong: ["x^5", "2x^6", "x^4"], wrongKinds: ["lonePower", "coefficient", "powerOp"] }
+    ],
+    hints: {
+      en: ["A lone x means x^1. Add the powers: 1 + 5."],
+      ja: ["xだけのときは x^1。指数を足す：1 + 5。"]
+    },
+    explanation: {
+      en: "x on its own is x^1, so x × x^5 = x^1 × x^5 = x^6 — not x^5.",
+      ja: "xだけのときは x^1 なので、x × x^5 = x^1 × x^5 = x^6 です。x^5 ではありません。"
+    }
+  },
+  {
+    id: "indices_easy_08",
+    topic: "indices",
+    equation: "x^7 ÷ x",
+    answer: "x^6",
+    difficulty: "easy",
+    type: "one-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", law: "divide", value: "x^6", target: "expression", result: "x^6",
+        wrong: ["x^7", "x^8", "x^5"], wrongKinds: ["lonePower", "powerOp", "generic"] }
+    ],
+    hints: {
+      en: ["A lone x means x^1. Subtract the powers: 7 - 1."],
+      ja: ["xだけのときは x^1。指数を引く：7 - 1。"]
+    },
+    explanation: {
+      en: "x is x^1, so x^7 ÷ x = x^7 ÷ x^1 = x^6. One x cancels, so the power goes down by 1.",
+      ja: "xは x^1 なので、x^7 ÷ x = x^7 ÷ x^1 = x^6。xが1個約分されるので、指数が1減ります。"
+    }
+  },
+  {
+    id: "indices_easy_09",
+    topic: "indices",
+    equation: "x^2 × x^3 × x^4",
+    answer: "x^9",
+    difficulty: "easy",
+    type: "two-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", law: "multiply", value: "x^5 × x^4", target: "expression", result: "x^5 × x^4",
+        wrong: ["x^6 × x^4", "2x^5 × x^4", "x × x^4"], wrongKinds: ["powerOp", "coefficient", "powerOp"] },
+      { action: "simplify", law: "multiply", value: "x^9", target: "expression", result: "x^9",
+        wrong: ["x^20", "2x^9", "x"], wrongKinds: ["powerOp", "coefficient", "powerOp"] }
+    ],
+    hints: {
+      en: [
+        "Multiply the first two: add the powers 2 + 3.",
+        "Now x^5 × x^4: add 5 + 4."
+      ],
+      ja: [
+        "最初の2つをかける：指数を足して 2 + 3。",
+        "次に x^5 × x^4：5 + 4。"
+      ]
+    },
+    explanation: {
+      en: "Work left to right, adding the powers each time: 2 + 3 = 5, then 5 + 4 = 9. So x^9 — the same as adding all three powers at once.",
+      ja: "左から順に、毎回指数を足します：2 + 3 = 5、次に 5 + 4 = 9。答えは x^9 で、3つの指数を一度に足しても同じです。"
+    }
+  },
+  {
+    id: "indices_easy_10",
+    topic: "indices",
+    equation: "x^12 ÷ x^4 ÷ x^2",
+    answer: "x^6",
+    difficulty: "easy",
+    type: "two-step",
+    basePoints: 10,
+    steps: [
+      { action: "simplify", law: "divide", value: "x^8 ÷ x^2", target: "expression", result: "x^8 ÷ x^2",
+        wrong: ["x^16 ÷ x^2", "x^3 ÷ x^2", "x^12 ÷ x^2"], wrongKinds: ["powerOp", "powerOp", "generic"] },
+      { action: "simplify", law: "divide", value: "x^6", target: "expression", result: "x^6",
+        wrong: ["x^10", "x^4", "x^16"], wrongKinds: ["powerOp", "powerOp", "powerOp"] }
+    ],
+    hints: {
+      en: [
+        "Divide the first two: subtract 12 - 4.",
+        "Now x^8 ÷ x^2: subtract 8 - 2."
+      ],
+      ja: [
+        "最初の2つをわる：12 - 4。",
+        "次に x^8 ÷ x^2：8 - 2。"
+      ]
+    },
+    explanation: {
+      en: "Go left to right, subtracting the powers: 12 - 4 = 8, then 8 - 2 = 6. So x^6. Doing x^4 ÷ x^2 first would give the wrong answer.",
+      ja: "左から順に指数を引きます：12 - 4 = 8、次に 8 - 2 = 6 で x^6。先に x^4 ÷ x^2 を計算すると答えが変わってしまいます。"
+    }
+  },
+ 
+  // ---- Medium: numbers in front, two letters, mixed laws ----
+  // Levels 1-5 and 9 are one step; 6, 7, 8 and 10 are two steps.
+  // Levels 2 and 9 have two letters (each letter's powers on their own).
+  {
+    id: "indices_medium_01",
+    topic: "indices",
+    equation: "3x^2 × 4x^5",
+    answer: "12x^7",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", law: "multiply", value: "12x^7", target: "expression", result: "12x^7",
+        wrong: ["7x^7", "12x^10", "12x^3"], wrongKinds: ["coefficient", "powerOp", "powerOp"] }
+    ],
+    hints: {
+      en: ["Multiply the numbers (3 × 4) and add the powers (2 + 5)."],
+      ja: ["数をかけて（3 × 4）、指数を足す（2 + 5）。"]
+    },
+    explanation: {
+      en: "Numbers and powers follow different rules: the numbers in front multiply, 3 × 4 = 12, and the powers add, 2 + 5 = 7. So 12x^7.",
+      ja: "数と指数はルールが違います：前の数はかけ算で 3 × 4 = 12、指数は足し算で 2 + 5 = 7。答えは 12x^7 です。"
+    }
+  },
+  {
+    id: "indices_medium_02",
+    topic: "indices",
+    equation: "x^2y^3 × x^4y",
+    answer: "x^6y^4",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", law: "multiply", value: "x^6y^4", target: "expression", result: "x^6y^4",
+        wrong: ["x^6y^3", "x^8y^3", "x^10"], wrongKinds: ["lonePower", "powerOp", "unlikeTerms"] }
+    ],
+    hints: {
+      en: ["Do each letter on its own: x powers 2 + 4, y powers 3 + 1."],
+      ja: ["文字ごとに計算する：xの指数は 2 + 4、yの指数は 3 + 1。"]
+    },
+    explanation: {
+      en: "x and y are different letters, so their powers never mix. x: 2 + 4 = 6. y: the lone y is y^1, so 3 + 1 = 4. That gives x^6y^4.",
+      ja: "xとyは違う文字なので、指数は混ぜません。x：2 + 4 = 6。y：yだけのときは y^1 なので 3 + 1 = 4。答えは x^6y^4 です。"
+    }
+  },
+  {
+    id: "indices_medium_03",
+    topic: "indices",
+    equation: "12x^8 ÷ 4x^2",
+    answer: "3x^6",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", law: "divide", value: "3x^6", target: "expression", result: "3x^6",
+        wrong: ["8x^6", "3x^4", "3x^10"], wrongKinds: ["coefficient", "powerOp", "powerOp"] }
+    ],
+    hints: {
+      en: ["Divide the numbers (12 ÷ 4) and subtract the powers (8 - 2)."],
+      ja: ["数をわって（12 ÷ 4）、指数を引く（8 - 2）。"]
+    },
+    explanation: {
+      en: "The numbers divide, 12 ÷ 4 = 3, and the powers subtract, 8 - 2 = 6. So 3x^6.",
+      ja: "数はわり算で 12 ÷ 4 = 3、指数は引き算で 8 - 2 = 6。答えは 3x^6 です。"
+    }
+  },
+  {
+    id: "indices_medium_04",
+    topic: "indices",
+    equation: "15x^9 ÷ 3x^3",
+    answer: "5x^6",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", law: "divide", value: "5x^6", target: "expression", result: "5x^6",
+        wrong: ["12x^6", "5x^3", "5x^12"], wrongKinds: ["coefficient", "powerOp", "powerOp"] }
+    ],
+    hints: {
+      en: ["Divide the numbers (15 ÷ 3) and subtract the powers (9 - 3)."],
+      ja: ["数をわって（15 ÷ 3）、指数を引く（9 - 3）。"]
+    },
+    explanation: {
+      en: "15 ÷ 3 = 5 and 9 - 3 = 6, so 5x^6. Subtracting the numbers (12x^6) is a common slip — the numbers in front divide.",
+      ja: "15 ÷ 3 = 5、9 - 3 = 6 で 5x^6。前の数を引いて 12x^6 にしないように — 前の数はわり算です。"
+    }
+  },
+  {
+    id: "indices_medium_05",
+    topic: "indices",
+    equation: "6x × 2x^4",
+    answer: "12x^5",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", law: "multiply", value: "12x^5", target: "expression", result: "12x^5",
+        wrong: ["8x^5", "12x^4", "12x^3"], wrongKinds: ["coefficient", "lonePower", "powerOp"] }
+    ],
+    hints: {
+      en: ["Multiply 6 × 2. The lone x is x^1, so add 1 + 4."],
+      ja: ["6 × 2 をかける。xだけのときは x^1 なので、1 + 4。"]
+    },
+    explanation: {
+      en: "Numbers multiply: 6 × 2 = 12. 6x has x^1, so the powers add to 1 + 4 = 5. That gives 12x^5.",
+      ja: "数はかけ算で 6 × 2 = 12。6x のxは x^1 なので、指数は 1 + 4 = 5。答えは 12x^5 です。"
+    }
+  },
+  {
+    id: "indices_medium_06",
+    topic: "indices",
+    equation: "(x^3)^2 × x^4",
+    answer: "x^10",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", law: "power", value: "x^6 × x^4", target: "expression", result: "x^6 × x^4",
+        wrong: ["x^5 × x^4", "x^9 × x^4", "2x^3 × x^4"], wrongKinds: ["powerOp", "generic", "coefficient"] },
+      { action: "simplify", law: "multiply", value: "x^10", target: "expression", result: "x^10",
+        wrong: ["x^24", "x^2", "2x^10"], wrongKinds: ["powerOp", "powerOp", "coefficient"] }
+    ],
+    hints: {
+      en: [
+        "Bracket first: a power of a power, so 3 × 2.",
+        "Now x^6 × x^4: add the powers."
+      ],
+      ja: [
+        "まずかっこ：累乗の累乗なので 3 × 2。",
+        "次に x^6 × x^4：指数を足す。"
+      ]
+    },
+    explanation: {
+      en: "Do the bracket first: (x^3)^2 = x^6, because a power of a power multiplies. Then x^6 × x^4 adds the powers: 6 + 4 = 10, so x^10.",
+      ja: "まずかっこ：累乗の累乗は指数をかけるので (x^3)^2 = x^6。次に x^6 × x^4 は指数を足して 6 + 4 = 10、答えは x^10 です。"
+    }
+  },
+  {
+    id: "indices_medium_07",
+    topic: "indices",
+    equation: "x^8 ÷ (x^2)^3",
+    answer: "x^2",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", law: "power", value: "x^8 ÷ x^6", target: "expression", result: "x^8 ÷ x^6",
+        wrong: ["x^8 ÷ x^5", "x^8 ÷ x^8", "x^8 ÷ x^9"], wrongKinds: ["powerOp", "generic", "generic"] },
+      { action: "simplify", law: "divide", value: "x^2", target: "expression", result: "x^2",
+        wrong: ["x^14", "x^48", "x^3"], wrongKinds: ["powerOp", "powerOp", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Bracket first: (x^2)^3, so multiply 2 × 3.",
+        "Now x^8 ÷ x^6: subtract the powers."
+      ],
+      ja: [
+        "まずかっこ：(x^2)^3 なので 2 × 3。",
+        "次に x^8 ÷ x^6：指数を引く。"
+      ]
+    },
+    explanation: {
+      en: "(x^2)^3 = x^6, so the problem is x^8 ÷ x^6. Dividing subtracts the powers: 8 - 6 = 2, giving x^2.",
+      ja: "(x^2)^3 = x^6 なので、問題は x^8 ÷ x^6 になります。わり算は指数を引いて 8 - 6 = 2、答えは x^2 です。"
+    }
+  },
+  {
+    id: "indices_medium_08",
+    topic: "indices",
+    equation: "4x^3 × 3x^2 ÷ 6x",
+    answer: "2x^4",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", law: "multiply", value: "12x^5 ÷ 6x", target: "expression", result: "12x^5 ÷ 6x",
+        wrong: ["7x^5 ÷ 6x", "12x^6 ÷ 6x", "12x ÷ 6x"], wrongKinds: ["coefficient", "powerOp", "powerOp"] },
+      { action: "simplify", law: "divide", value: "2x^4", target: "expression", result: "2x^4",
+        wrong: ["6x^4", "2x^5", "2x^6"], wrongKinds: ["coefficient", "lonePower", "powerOp"] }
+    ],
+    hints: {
+      en: [
+        "Multiply first: 4 × 3, and add 3 + 2.",
+        "Now 12x^5 ÷ 6x: 12 ÷ 6, and 5 - 1 (x is x^1)."
+      ],
+      ja: [
+        "まずかけ算：4 × 3、指数は 3 + 2。",
+        "次に 12x^5 ÷ 6x：12 ÷ 6、指数は 5 - 1（xは x^1）。"
+      ]
+    },
+    explanation: {
+      en: "4x^3 × 3x^2 = 12x^5: numbers multiply, powers add. Then 12x^5 ÷ 6x: 12 ÷ 6 = 2, and 5 - 1 = 4 because 6x has x^1. So 2x^4.",
+      ja: "4x^3 × 3x^2 = 12x^5（数はかけ算、指数は足し算）。次に 12x^5 ÷ 6x：12 ÷ 6 = 2、6x のxは x^1 なので 5 - 1 = 4。答えは 2x^4 です。"
+    }
+  },
+  {
+    id: "indices_medium_09",
+    topic: "indices",
+    equation: "6x^5y^4 ÷ 2x^2y",
+    answer: "3x^3y^3",
+    difficulty: "medium",
+    type: "one-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", law: "divide", value: "3x^3y^3", target: "expression", result: "3x^3y^3",
+        wrong: ["4x^3y^3", "3x^3y^4", "3x^6"], wrongKinds: ["coefficient", "lonePower", "unlikeTerms"] }
+    ],
+    hints: {
+      en: ["Divide 6 ÷ 2. Then each letter on its own: x 5 - 2, y 4 - 1."],
+      ja: ["6 ÷ 2 をわる。文字ごとに：xは 5 - 2、yは 4 - 1。"]
+    },
+    explanation: {
+      en: "Numbers divide: 6 ÷ 2 = 3. Each letter subtracts its own powers: x: 5 - 2 = 3, y: 4 - 1 = 3 (the lone y is y^1). So 3x^3y^3.",
+      ja: "数はわり算で 6 ÷ 2 = 3。指数は文字ごとに引きます：x：5 - 2 = 3、y：4 - 1 = 3（yだけのときは y^1）。答えは 3x^3y^3 です。"
+    }
+  },
+  {
+    id: "indices_medium_10",
+    topic: "indices",
+    equation: "3x^2 × 2x^3 × x",
+    answer: "6x^6",
+    difficulty: "medium",
+    type: "two-step",
+    basePoints: 20,
+    steps: [
+      { action: "simplify", law: "multiply", value: "6x^5 × x", target: "expression", result: "6x^5 × x",
+        wrong: ["5x^5 × x", "6x × x", "3x^5 × x"], wrongKinds: ["coefficient", "powerOp", "coefficient"] },
+      { action: "simplify", law: "multiply", value: "6x^6", target: "expression", result: "6x^6",
+        wrong: ["6x^5", "7x^6", "6x^4"], wrongKinds: ["lonePower", "coefficient", "powerOp"] }
+    ],
+    hints: {
+      en: [
+        "Multiply the first two: 3 × 2, and add 2 + 3.",
+        "Now 6x^5 × x: x is x^1, so add 5 + 1."
+      ],
+      ja: [
+        "最初の2つをかける：3 × 2、指数は 2 + 3。",
+        "次に 6x^5 × x：xは x^1 なので 5 + 1。"
+      ]
+    },
+    explanation: {
+      en: "3x^2 × 2x^3 = 6x^5. Then × x adds one more to the power, since x is x^1: 6x^6. The number stays 6, because x has 1 in front.",
+      ja: "3x^2 × 2x^3 = 6x^5。次に × x は、xが x^1 なので指数が1増えて 6x^6。xの前の数は1なので、6はそのままです。"
+    }
+  },
+ 
+  // ---- Hard: brackets with a number, zero and negative powers ----
+  // Answers are written with positive powers, so a negative power ends with a "positive" step.
+  // Levels 3, 4 and 7 use the zero rule; 5, 6, 8 and 10 end with a negative power.
+  {
+    id: "indices_hard_01",
+    topic: "indices",
+    equation: "(2x^3)^2",
+    answer: "4x^6",
+    difficulty: "hard",
+    type: "one-step",
+    basePoints: 30,
+    steps: [
+      { action: "simplify", law: "power", value: "4x^6", target: "expression", result: "4x^6",
+        wrong: ["2x^6", "4x^5", "4x^9"], wrongKinds: ["coefficient", "powerOp", "generic"] }
+    ],
+    hints: {
+      en: ["The power applies to everything in the bracket: square the 2 and multiply the powers 3 × 2."],
+      ja: ["かっこの外の指数は中のすべてにかかる：2を2乗し、指数は 3 × 2。"]
+    },
+    explanation: {
+      en: "(2x^3)^2 = 2x^3 × 2x^3, so the 2 is squared too: 2^2 = 4. The powers multiply: 3 × 2 = 6. That gives 4x^6 — forgetting to square the 2 gives 2x^6.",
+      ja: "(2x^3)^2 = 2x^3 × 2x^3 なので、2も2乗されます：2^2 = 4。指数はかけて 3 × 2 = 6。答えは 4x^6 — 2を2乗し忘れると 2x^6 になってしまいます。"
+    }
+  },
+  {
+    id: "indices_hard_02",
+    topic: "indices",
+    equation: "(3x^2)^3",
+    answer: "27x^6",
+    difficulty: "hard",
+    type: "one-step",
+    basePoints: 30,
+    steps: [
+      { action: "simplify", law: "power", value: "27x^6", target: "expression", result: "27x^6",
+        wrong: ["3x^6", "9x^6", "27x^5"], wrongKinds: ["coefficient", "coefficient", "powerOp"] }
+    ],
+    hints: {
+      en: ["Cube the 3 (3 × 3 × 3) and multiply the powers 2 × 3."],
+      ja: ["3を3乗し（3 × 3 × 3）、指数は 2 × 3。"]
+    },
+    explanation: {
+      en: "Everything inside is cubed: 3^3 = 27 (not 9, and not 3), and (x^2)^3 = x^6. So 27x^6.",
+      ja: "中のすべてが3乗されます：3^3 = 27（9でも3でもありません）、(x^2)^3 = x^6。答えは 27x^6 です。"
+    }
+  },
+  {
+    id: "indices_hard_03",
+    topic: "indices",
+    equation: "5x^0",
+    answer: "5",
+    difficulty: "hard",
+    type: "one-step",
+    basePoints: 30,
+    steps: [
+      { action: "simplify", law: "zero", value: "5", target: "expression", result: "5",
+        wrong: ["0", "5x", "1"], wrongKinds: ["zeroPower", "zeroPower", "zeroPower"] }
+    ],
+    hints: {
+      en: ["Zero rule: anything to the power 0 is 1. Only the x has the power."],
+      ja: ["0乗のルール：0乗はいつも1。指数がついているのはxだけ。"]
+    },
+    explanation: {
+      en: "x^0 = 1, so 5x^0 = 5 × 1 = 5. The power belongs only to x, so the 5 stays. And it's not 0 — x^0 is 1.",
+      ja: "x^0 = 1 なので、5x^0 = 5 × 1 = 5。指数はxだけにかかるので、5はそのまま。0にはなりません — x^0 は1です。"
+    }
+  },
+  {
+    id: "indices_hard_04",
+    topic: "indices",
+    equation: "x^4 ÷ x^4",
+    answer: "1",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "simplify", law: "divide", value: "x^0", target: "expression", result: "x^0",
+        wrong: ["x", "x^8", "x^16"], wrongKinds: ["powerOp", "powerOp", "powerOp"] },
+      { action: "simplify", law: "zero", value: "1", target: "expression", result: "1",
+        wrong: ["0", "x", "4"], wrongKinds: ["zeroPower", "zeroPower", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract the powers: 4 - 4.",
+        "Zero rule: x^0 = 1."
+      ],
+      ja: [
+        "指数を引く：4 - 4。",
+        "0乗のルール：x^0 = 1。"
+      ]
+    },
+    explanation: {
+      en: "x^4 ÷ x^4 = x^0 by the divide rule. But anything divided by itself is 1 — that's exactly why x^0 = 1.",
+      ja: "わり算のルールで x^4 ÷ x^4 = x^0。でも、同じものどうしのわり算は1 — だから x^0 = 1 なのです。"
+    }
+  },
+  {
+    id: "indices_hard_05",
+    topic: "indices",
+    equation: "x^2 × x^-5",
+    answer: "1/x^3",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "simplify", law: "multiply", value: "x^-3", target: "expression", result: "x^-3",
+        wrong: ["x^-10", "x^7", "x^3"], wrongKinds: ["powerOp", "powerOp", "powerOp"] },
+      { action: "simplify", law: "positive", value: "1/x^3", target: "expression", result: "1/x^3",
+        wrong: ["-x^3", "x^3", "-1/x^3"], wrongKinds: ["negPower", "negPower", "negPower"] }
+    ],
+    hints: {
+      en: [
+        "Add the powers, sign included: 2 + (-5).",
+        "A negative power means one over: x^-3 = 1/x^3."
+      ],
+      ja: [
+        "符号ごと指数を足す：2 + (-5)。",
+        "負の指数は「1分の」：x^-3 = 1/x^3。"
+      ]
+    },
+    explanation: {
+      en: "Adding the powers gives 2 + (-5) = -3, so x^-3. A negative power doesn't make the answer negative — it means one over the positive power: x^-3 = 1/x^3.",
+      ja: "指数を足すと 2 + (-5) = -3 で x^-3。負の指数は答えをマイナスにするのではなく、「正の指数の1分の」という意味です：x^-3 = 1/x^3。"
+    }
+  },
+  {
+    id: "indices_hard_06",
+    topic: "indices",
+    equation: "x^3 ÷ x^7",
+    answer: "1/x^4",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "simplify", law: "divide", value: "x^-4", target: "expression", result: "x^-4",
+        wrong: ["x^4", "x^10", "x^21"], wrongKinds: ["powerOp", "powerOp", "powerOp"] },
+      { action: "simplify", law: "positive", value: "1/x^4", target: "expression", result: "1/x^4",
+        wrong: ["-x^4", "x^4", "-1/x^4"], wrongKinds: ["negPower", "negPower", "negPower"] }
+    ],
+    hints: {
+      en: [
+        "Subtract the powers in order: 3 - 7.",
+        "Write x^-4 with a positive power."
+      ],
+      ja: [
+        "順番どおりに指数を引く：3 - 7。",
+        "x^-4 を正の指数で書く。"
+      ]
+    },
+    explanation: {
+      en: "3 - 7 = -4, so x^-4. There are more x's underneath (7) than on top (3), so 4 are left on the bottom: 1/x^4.",
+      ja: "3 - 7 = -4 で x^-4。下のx（7個）が上（3個）より多いので、下に4個残ります：1/x^4。"
+    }
+  },
+  {
+    id: "indices_hard_07",
+    topic: "indices",
+    equation: "7x^3 ÷ x^3",
+    answer: "7",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "simplify", law: "divide", value: "7x^0", target: "expression", result: "7x^0",
+        wrong: ["7x", "7x^6", "6x^0"], wrongKinds: ["powerOp", "powerOp", "coefficient"] },
+      { action: "simplify", law: "zero", value: "7", target: "expression", result: "7",
+        wrong: ["0", "7x", "1"], wrongKinds: ["zeroPower", "zeroPower", "zeroPower"] }
+    ],
+    hints: {
+      en: [
+        "Subtract the powers: 3 - 3. The 7 has nothing to divide by, so it stays.",
+        "Zero rule: x^0 = 1, so 7x^0 = 7 × 1."
+      ],
+      ja: [
+        "指数を引く：3 - 3。7はわる相手がないので、そのまま。",
+        "0乗のルール：x^0 = 1 なので、7x^0 = 7 × 1。"
+      ]
+    },
+    explanation: {
+      en: "The x^3 parts cancel: 3 - 3 = 0, leaving 7x^0. Since x^0 = 1, the answer is 7.",
+      ja: "x^3 どうしが約分されて 3 - 3 = 0、残りは 7x^0。x^0 = 1 なので、答えは7です。"
+    }
+  },
+  {
+    id: "indices_hard_08",
+    topic: "indices",
+    equation: "(x^-2)^3",
+    answer: "1/x^6",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "simplify", law: "power", value: "x^-6", target: "expression", result: "x^-6",
+        wrong: ["x", "x^6", "x^-8"], wrongKinds: ["powerOp", "powerOp", "generic"] },
+      { action: "simplify", law: "positive", value: "1/x^6", target: "expression", result: "1/x^6",
+        wrong: ["-x^6", "x^6", "-1/x^6"], wrongKinds: ["negPower", "negPower", "negPower"] }
+    ],
+    hints: {
+      en: [
+        "Power of a power: multiply -2 × 3.",
+        "Write x^-6 with a positive power."
+      ],
+      ja: [
+        "累乗の累乗：-2 × 3。",
+        "x^-6 を正の指数で書く。"
+      ]
+    },
+    explanation: {
+      en: "-2 × 3 = -6, so (x^-2)^3 = x^-6. Then x^-6 = 1/x^6.",
+      ja: "-2 × 3 = -6 なので、(x^-2)^3 = x^-6。そして x^-6 = 1/x^6 です。"
+    }
+  },
+  {
+    id: "indices_hard_09",
+    topic: "indices",
+    equation: "(2x^4)^3 ÷ 4x^5",
+    answer: "2x^7",
+    difficulty: "hard",
+    type: "two-step",
+    basePoints: 30,
+    steps: [
+      { action: "simplify", law: "power", value: "8x^12 ÷ 4x^5", target: "expression", result: "8x^12 ÷ 4x^5",
+        wrong: ["2x^12 ÷ 4x^5", "8x^7 ÷ 4x^5", "6x^12 ÷ 4x^5"], wrongKinds: ["coefficient", "powerOp", "coefficient"] },
+      { action: "simplify", law: "divide", value: "2x^7", target: "expression", result: "2x^7",
+        wrong: ["4x^7", "2x^17", "32x^7"], wrongKinds: ["coefficient", "powerOp", "coefficient"] }
+    ],
+    hints: {
+      en: [
+        "Bracket first: 2^3 = 8, and multiply the powers 4 × 3.",
+        "Now divide 8 ÷ 4 and subtract 12 - 5."
+      ],
+      ja: [
+        "まずかっこ：2^3 = 8、指数は 4 × 3。",
+        "次に 8 ÷ 4、指数は 12 - 5。"
+      ]
+    },
+    explanation: {
+      en: "(2x^4)^3 = 8x^12: the 2 is cubed and the powers multiply. Then 8x^12 ÷ 4x^5: 8 ÷ 4 = 2 and 12 - 5 = 7. So 2x^7.",
+      ja: "(2x^4)^3 = 8x^12（2を3乗し、指数はかける）。次に 8x^12 ÷ 4x^5：8 ÷ 4 = 2、12 - 5 = 7。答えは 2x^7 です。"
+    }
+  },
+  {
+    id: "indices_hard_10",
+    topic: "indices",
+    equation: "(3x^3)^2 × x^-8",
+    answer: "9/x^2",
+    difficulty: "hard",
+    type: "three-step",
+    basePoints: 30,
+    steps: [
+      { action: "simplify", law: "power", value: "9x^6 × x^-8", target: "expression", result: "9x^6 × x^-8",
+        wrong: ["3x^6 × x^-8", "6x^6 × x^-8", "9x^5 × x^-8"], wrongKinds: ["coefficient", "coefficient", "powerOp"] },
+      { action: "simplify", law: "multiply", value: "9x^-2", target: "expression", result: "9x^-2",
+        wrong: ["9x^-48", "9x^14", "9x^2"], wrongKinds: ["powerOp", "powerOp", "powerOp"] },
+      { action: "simplify", law: "positive", value: "9/x^2", target: "expression", result: "9/x^2",
+        wrong: ["-9x^2", "9x^2", "1/(9x^2)"], wrongKinds: ["negPower", "negPower", "negPower"] }
+    ],
+    hints: {
+      en: [
+        "Bracket first: 3^2 = 9, and multiply the powers 3 × 2.",
+        "Add the powers: 6 + (-8).",
+        "Only x has the negative power, so only x goes under the line."
+      ],
+      ja: [
+        "まずかっこ：3^2 = 9、指数は 3 × 2。",
+        "指数を足す：6 + (-8)。",
+        "負の指数がついているのはxだけなので、下に行くのはxだけ。"
+      ]
+    },
+    explanation: {
+      en: "(3x^3)^2 = 9x^6, then 6 + (-8) = -2 gives 9x^-2. The power belongs to x, not the 9, so 9x^-2 = 9/x^2 — not 1/(9x^2).",
+      ja: "(3x^3)^2 = 9x^6、次に 6 + (-8) = -2 で 9x^-2。指数はxだけにかかり9にはかからないので、9x^-2 = 9/x^2 です。1/(9x^2) ではありません。"
+    }
   }
 ];
 
@@ -7061,6 +7824,28 @@ const TIER_TIPS = {
       move: { en: "Expand: -2 × x and -2 × (-3)", ja: "展開：-2 × x と -2 × (-3)" },
       to: "5x - 2x + 6"
     }
+  },
+  indices_medium: {
+    text: {
+      en: "Numbers in front and powers follow different rules: multiply the numbers, add the powers. With two letters, work out each letter's powers on their own.",
+      ja: "前の数と指数はルールが違うよ：数はかけ算、指数は足し算。文字が2つあるときは、文字ごとに指数を計算しよう。"
+    },
+    demo: {
+      from: "3x^2 × 4x^5",
+      move: { en: "Numbers: 3 × 4. Powers: 2 + 5", ja: "数：3 × 4、指数：2 + 5" },
+      to: "12x^7"
+    }
+  },
+  indices_hard: {
+    text: {
+      en: "Two new rules: anything to the power 0 is 1, and a negative power means one over: x^-3 = 1/x^3. A bracket's power reaches the number inside too.",
+      ja: "新しいルールが2つ：0乗はいつも1、そして負の指数は「1分の」：x^-3 = 1/x^3。かっこの外の指数は、中の数にもかかるよ。"
+    },
+    demo: {
+      from: "x^-3",
+      move: { en: "Write with a positive power", ja: "正の指数で書く" },
+      to: "1/x^3"
+    }
   }
 };
 
@@ -7078,7 +7863,8 @@ const TOPIC_NAMES = {
   system:     { en: "Systems",      ja: "連立方程式" },
   fraction:   { en: "Fractions",    ja: "分数" },
   subject:    { en: "Formulas",     ja: "等式の変形" },
-  expression: { en: "Expressions",  ja: "式の計算" }
+  expression: { en: "Expressions",  ja: "式の計算" },
+  indices:    { en: "Indices",      ja: "指数法則" }
 };
 
 // One template per per-topic achievement type. {topic} = topic name, {n} = level or star count.

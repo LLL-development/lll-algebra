@@ -499,8 +499,14 @@ body {
 @keyframes buddyNod   { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(4px) rotate(-4deg); } }
 
 /* Keeps a math run like "(x + 2)(x + 3)" on one line in hints and explanations
-   (see setMathText() in index.html); the text around it still wraps normally. */
+   (see setMathText() in mathtext.js); the text around it still wraps normally. */
 .nowrap { white-space: nowrap; }
+
+/* Powers (x^3 in level data): half size and raised. Neither Press Start 2P nor IBM Plex Mono
+   has ⁰ ⁴–⁹ ⁻, so this is used in every font. 0.5em keeps the pixel font on a half grid. */
+.pow { font-size: .75em; vertical-align: .5em; line-height: 0; }
+/* Pixel font (equation card, topic samples): half size on the font's 8×8 grid, raised to the top of the x */
+.pixel-card .pow, .topic-card-sample .pow { font-size: .5em; vertical-align: .875em; }
 
 /* ---------- Loading overlay ---------- */
 .loading-overlay {
