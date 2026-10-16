@@ -71,6 +71,7 @@
     </div>
     <div class="tip-demo" id="tipDemo">
       <p class="tip-demo-label" id="tipDemoLabel"></p>
+      <div class="tip-picture" id="tipPicture" hidden></div>
       <div class="equation-card pixel-card tip-demo-card" id="tipFromCard"><p class="equation tip-demo-eq" id="tipFrom"></p></div>
       <p class="tip-demo-move" id="tipMove"></p>
       <div class="equation-card pixel-card tip-demo-card"><p class="equation tip-demo-eq" id="tipTo"></p></div>
@@ -283,6 +284,15 @@
           <span class="topic-card-count"></span>
         </span>
       </button>
+      <button class="topic-card" data-topic="roots">
+        <span class="topic-card-sample">(x + 3)² = 16</span>
+        <span class="topic-card-title" data-i18n="topicRoots">Completing the square</span>
+        <span class="topic-card-desc" data-i18n="topicRootsDesc">Square roots, completing the square and the quadratic formula</span>
+        <span class="topic-card-progress" data-progress="roots">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -321,6 +331,12 @@
       <p class="equation" id="equationText">x + 5 = 12</p>
     </div>
 
+    <!-- Completing the square Hard: the quadratic formula, filled in once a, b and c are read off -->
+    <div class="formula-panel" id="formulaPanel" hidden>
+      <span class="fp-label" data-i18n="formulaPanelLabel">Quadratic formula</span>
+      <div class="fp-math" id="fpMath"></div>
+    </div>
+
     <p class="expand-prompt" id="expandPrompt" hidden></p>
 
     <div class="choices" id="choicesGrid"></div>
@@ -356,7 +372,7 @@
   import { showSystemGraph, clearSystemGraph, showNumberLine, clearNumberLine, afterGraphDrawn } from "./graph.js";
   import { setMathText, appendWithPowers, makePow, eqUnits, eqLineLen } from "./mathtext.js";
   import { BUDDY_SVG, CHALKY_IDLES, buddyLine, makeBuddy } from "./chalky.js";
-  import { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors, practiceKinds } from "./choices.js";
+  import { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors, practiceKinds, isLongChoice } from "./choices.js";
   import { initFloatingSymbols, burstGrandConfetti } from "./effects.js";
 
   // ---------- i18n ----------
@@ -374,6 +390,12 @@
     if ($introOverlay.classList.contains("show")) showIntroStep(introStep);
     if (!$tipOverlay.hidden) { fillTierTip(); showTipText(false); }
     fillReplayText();
+    // The play screen's top label and Chalky's end-of-replay line stay up during and after a replay,
+    // which return below before render(), so they're redone here
+    if (!$screenPlay.hidden) {
+      fillPlayLevelLabel();
+      if (!$replayEnd.hidden) buddyReact("celebrating", { line: buddyLine("replayDoneLine") || "That's the whole route. Your turn!", stay: true });
+    }
     if (replaying) return;   // the replay keeps playing; redrawing would restart its step
     // Only redraw the game when it's on screen mid-level (a solved level has no current step).
     if ($screenPlay.hidden || !$completeOverlay.hidden || stepIndex >= currentLevel().steps.length) return;
@@ -813,7 +835,11 @@
     unlikeTerms: "mistakeUnlikeTerms", signSlip: "mistakeSignSlip", loneLetter: "mistakeLoneLetter",
     // Indices (also authored, tagged with wrongKinds)
     powerOp: "mistakePowerOp", coefficient: "mistakeCoefficient", lonePower: "mistakeLonePower",
-    zeroPower: "mistakeZeroPower", negPower: "mistakeNegPower"
+    zeroPower: "mistakeZeroPower", negPower: "mistakeNegPower",
+    // Completing the square (also authored, tagged with wrongKinds)
+    plusMinus: "mistakePlusMinus", rootSlip: "mistakeRootSlip", undoSign: "mistakeUndoSign",
+    halfB: "mistakeHalfB", addSquare: "mistakeAddSquare", discriminant: "mistakeDiscriminant", twoA: "mistakeTwoA",
+    squareHalf: "mistakeSquareHalf", readCoef: "mistakeReadCoef"
   };
   const AUTHORED_TIP_KEYS = {
     expand: "mistakeTipExpand", factor: "mistakeTipFactor", roots: "mistakeTipRoots",
@@ -833,6 +859,16 @@
     if (step.moves && choice.kind === "wrongKind") key = "mistakeWrongKindLetter";
     // Indices: a generic slip shouldn't get Expressions' "add up the numbers in front" line
     if (step.law && !MISTAKE_KEYS[choice.kind]) key = "mistakeTipIndices";
+    // Completing the square: a + / − step only moves a number that's added on; taking (b/2)² away instead of
+    // adding it doesn't fill the square; a generic slip is the right side's sum (writing it as a square) or
+    // the number next to x not moved (the last step)
+    if (currentLevel().topic === "roots") {
+      if (choice.kind === "wrongKind") key = "mistakeTipSquareAlone";
+      else if (choice.kind === "wrongWay" && step.moves) key = "mistakeTipAddSquareWay";
+      else if (choice.kind === "rootSlip" && step.action === "formula") key = "mistakeTipFormulaRoot";
+      else if (choice.kind === "rootSlip" && step.action === "evalRoot") key = "mistakeTipCheckRoot";
+      else if (choice.kind === "generic") key = step.action === "complete" ? "mistakeTipSquareSum" : "mistakeTipSolveRoots";
+    }
     return (key && buddyLine(key)) || buddyLine("buddyWrong");
   }
 
@@ -940,9 +976,16 @@
   const INEQ_SIGN = /[<>≤≥]/;
   let flipPending = false; // true while a flip step's result is being typed
 
-  function appendEqChar(ch) {
-    if (ch.length > 1 && ch[0] === "^") {   // a whole power from eqUnits(), e.g. "^3" or "^-1"
+  function appendEqChar(ch, cls = null) {
+    if (cls) {   // a coloured number on the "a = 1, b = 5, c = -24" line
+      const s = document.createElement("span");
+      s.className = cls;
+      s.textContent = ch;
+      $eq.appendChild(s);
+    } else if (ch.length > 1 && ch[0] === "^") {   // a whole power from eqUnits(), e.g. "^3" or "^-1"
       $eq.appendChild(makePow(ch.slice(1), "-"));
+    } else if (ch.length > 1 && ch[0] === "√") {   // a whole root, e.g. "√121": the pixel hook and bar
+      appendWithPowers($eq, ch, "-");
     } else if (INEQ_SIGN.test(ch)) {
       const s = document.createElement("span");
       s.className = "ineq-sign" + (PIXEL_INEQ[ch] ? " pixel-ineq" : "") + (flipPending ? " flip-pending" : "");
@@ -959,6 +1002,24 @@
     if (sign) sign.classList.replace("flip-pending", "flip-cue");
   }
 
+  // Completing the square Hard: on the "a = 1, b = 5, c = -24" line, each number takes its letter's colour
+  // (the same colours as the formula panel). One class (or null) per unit from eqUnits().
+  const COEF_LINE = /^a = -?\d+, b = -?\d+, c = -?\d+$/m;
+  function coefClasses(units) {
+    const classes = units.map(() => null);
+    const text = units.join("");
+    const line = COEF_LINE.exec(text);
+    if (!line) return classes;
+    const marks = new Map();   // character position → class
+    for (const m of line[0].matchAll(/([abc]) = (-?\d+)/g)) {
+      const start = line.index + m.index + m[0].length - m[2].length;
+      for (let i = 0; i < m[2].length; i++) marks.set(start + i, "v-" + m[1]);
+    }
+    let pos = 0;
+    units.forEach((u, i) => { classes[i] = marks.get(pos) || null; pos += u.length; });
+    return classes;
+  }
+
   // Longest line of an equation, in characters. Press Start 2P is fixed-width, so brand.css
   // uses this (--eq-len) to shrink a long equation until it fits the card on one line.
   function setEqLen(el, text) {
@@ -967,7 +1028,8 @@
 
   function renderEqText(text) {
     $eq.textContent = "";
-    for (const ch of eqUnits(text)) appendEqChar(ch);
+    const units = eqUnits(text), classes = coefClasses(units);
+    units.forEach((ch, i) => appendEqChar(ch, classes[i]));
   }
 
   function setEquationText(text, onDone) {
@@ -992,11 +1054,12 @@
   function typewriterReveal(text, onDone) {
     $eq.textContent = "";
     const chars = eqUnits(text);   // a power ("^3") types as one unit
+    const classes = coefClasses(chars);
     let i = 0;
     const speed = 28; // ms per character
     function typeChar() {
       if (i < chars.length) {
-        appendEqChar(chars[i]);
+        appendEqChar(chars[i], classes[i]);
         i++;
         setTimeout(typeChar, speed);
       } else if (onDone) {
@@ -1006,9 +1069,106 @@
     typeChar();
   }
 
+  // ---------- Completing the square Hard: the quadratic formula panel ----------
+  // Once "Read off a, b and c" (the step with fill: "formula") is answered, the formula under the card
+  // fills in b, then a, then c (the level's `abc`), and stays for the rest of the level.
+  // A step's `focus` lights up the part it uses: "disc" (b² − 4ac) or "top" (the top of the fraction).
+  const $formulaPanel = document.getElementById("formulaPanel");
+  const $fpMath = document.getElementById("fpMath");
+  const FILL_ORDER = ["b", "a", "c"];
+  const FILL_GAP_MS = 650;   // between letters
+  let panelTimers = [];
+
+  function panelLater(fn, ms) { panelTimers.push(setTimeout(fn, ms)); }
+  function clearPanelTimers() { panelTimers.forEach(clearTimeout); panelTimers = []; }
+  function coefShown(v) { return v < 0 ? `(−${-v})` : `${v}`; }
+
+  // x = (−b ± √(b² − 4·a·c)) / 2·a, as three groups that each stay on one line (it wraps between them on a phone).
+  // filled: numbers in place of the letters, with the "·" between them showing.
+  function buildFormulaPanel(level, filled) {
+    const [a, b, c] = level.abc;
+    const vals = { a, b, c };
+    const el = (cls, text) => {
+      const e = document.createElement("span");
+      e.className = cls;
+      if (text != null) e.textContent = text;
+      return e;
+    };
+    const v = name => {
+      const e = el("fp-var " + name, filled ? coefShown(vals[name]) : name);
+      e.dataset.v = name;
+      return e;
+    };
+    const dot = () => el("fp-dot" + (filled ? " show" : ""), "·");
+    const disc = el("fp-focus fp-disc");
+    disc.append(v("b"), "² − 4", dot(), v("a"), dot(), v("c"));
+    const top = el("fp-group fp-focus fp-top");
+    top.append("(−", v("b"), " ± √(", disc, "))");
+    const bottom = el("fp-group", "/ 2");
+    bottom.append(dot(), v("a"));
+    $fpMath.textContent = "";
+    $fpMath.append(el("fp-group", "x ="), " ", top, " ", bottom);   // spaces between groups, so they survive a wrap
+    $formulaPanel.dataset.level = level.id;
+  }
+
+  function showFormulaPanel() {
+    $formulaPanel.hidden = false;
+    void $formulaPanel.offsetWidth;   // so the fade-in runs
+    $formulaPanel.classList.add("show");
+  }
+
+  function hideFormulaPanel() {
+    clearPanelTimers();
+    $formulaPanel.hidden = true;
+    $formulaPanel.classList.remove("show");
+    delete $formulaPanel.dataset.level;
+  }
+
+  // Called by render(): the panel shows (already filled) on every step after the fill step,
+  // so resuming mid-level, "Show me" and Mixed Review all get it. A fill still running is left alone.
+  function syncFormulaPanel(level) {
+    const fillAt = level.abc ? level.steps.findIndex(s => s.fill === "formula") : -1;
+    if (fillAt < 0 || stepIndex <= fillAt) { hideFormulaPanel(); return; }
+    if ($formulaPanel.hidden || $formulaPanel.dataset.level !== level.id) {
+      clearPanelTimers();
+      buildFormulaPanel(level, true);
+      showFormulaPanel();
+    }
+    const focus = (level.steps[stepIndex] || {}).focus;
+    $fpMath.querySelector(".fp-disc").classList.toggle("on", focus === "disc");
+    $fpMath.querySelector(".fp-top").classList.toggle("on", focus === "top");
+  }
+
+  // The fill itself: each letter flips to its number, b first, then a, then c. done() runs once it's finished.
+  function animateFormulaPanel(level, done) {
+    clearPanelTimers();
+    if (REDUCED_MOTION) {
+      buildFormulaPanel(level, true);
+      showFormulaPanel();
+      if (done) done();
+      return;
+    }
+    buildFormulaPanel(level, false);
+    showFormulaPanel();
+    const vals = { a: level.abc[0], b: level.abc[1], c: level.abc[2] };
+    FILL_ORDER.forEach((name, k) => panelLater(() => {
+      const spans = $fpMath.querySelectorAll(`.fp-var[data-v="${name}"]`);
+      spans.forEach(s => s.classList.add("flip"));
+      panelLater(() => spans.forEach(s => {
+        s.textContent = coefShown(vals[name]);
+        s.classList.remove("flip");
+        s.classList.add("pop");
+      }), 180);
+      if (name === "c") panelLater(() => $fpMath.querySelectorAll(".fp-dot").forEach(d => d.classList.add("show")), 200);
+      if (k === FILL_ORDER.length - 1 && done) panelLater(done, 900);
+    }, 450 + k * FILL_GAP_MS));
+  }
+
   // Text above the choices: the step's own prompt ("Factorise:"), Quadratics' "To make one side 0:",
   // or the Formulas topic's "Make x the subject:" (letter from level.subject). Empty when there's none.
   function choicePrompt(level, step) {
+    // A step can name its own prompt (Completing the square Medium: "Move the number across:"); it wins over the rest
+    if (step.prompt) return LLL_I18N.t(step.prompt) || "";
     // Indices: "Use the multiply rule:" etc., one prompt per law. Checked first, so it wins over simplifyPrompt.
     const LAW_PROMPT_KEYS = { multiply: "lawMultiplyPrompt", divide: "lawDividePrompt", power: "lawPowerPrompt",
                               zero: "lawZeroPrompt", positive: "lawPositivePrompt" };
@@ -1019,10 +1179,20 @@
         ? (LLL_I18N.t("collectNumbersPrompt") || "")
         : (LLL_I18N.t("collectPrompt") || "").split("{letter}").join(step.collect);
     }
+    // Completing the square: the last step solves x ± a = ±r ("Solve for x:"), not Quadratics' "Set each bracket to 0"
+    if (level.topic === "roots" && step.action === "roots") return LLL_I18N.t("rootsSolvePrompt") || "";
     const key = CHOICE_PROMPT_KEYS[step.action]
       || (level.topic === "quadratic" ? "rearrangePrompt" : null)
+      || (level.topic === "roots" ? "squareAlonePrompt" : null)
       || (level.subject ? "subjectPrompt" : null);
     return key ? (LLL_I18N.t(key) || "").split("{letter}").join(level.subject || "") : "";
+  }
+
+  // "Completing the square · Hard" above the card
+  function fillPlayLevelLabel() {
+    const level = currentLevel();
+    $playLevelLabel.textContent =
+      `${LLL_I18N.t(TOPIC_LABEL_KEYS[level.topic]) || level.topic} · ${LLL_I18N.t(TIER_LABEL_KEYS[level.difficulty]) || level.difficulty}`;
   }
 
   function render() {
@@ -1046,8 +1216,7 @@
       : inReviewMode
         ? `${review.index + 1} / ${review.levels.length}`
         : `${levelIndex + 1} / ${activeLevels.length}`;
-    $playLevelLabel.textContent =
-      `${LLL_I18N.t(TOPIC_LABEL_KEYS[level.topic]) || level.topic} · ${LLL_I18N.t(TIER_LABEL_KEYS[level.difficulty]) || level.difficulty}`;
+    fillPlayLevelLabel();
     $hudScore.textContent = inReviewMode ? review.score : score;
     const practice = inReviewMode && review.practice;
     $trickyBanner.hidden = !practice || replaying;
@@ -1058,7 +1227,10 @@
     buildStepDots(level.steps.length);
     updateStepDots(stepIndex, level.steps.length, false);
     if (stepIndex === 0) $equationCard.classList.remove("solved");
-    $equationCard.classList.toggle("system-card", level.topic === "system");
+    // Reserve two lines when any step shows two (Systems, and Completing the square Hard's a, b, c and b² − 4ac lines)
+    $equationCard.classList.toggle("system-card", level.topic === "system" || level.steps.some(s => s.result.includes("\n")));
+
+    syncFormulaPanel(level);
 
     const step = currentStep();
     // Authored-choice steps (expand, factor, roots) carry their own wrong options;
@@ -1081,7 +1253,9 @@
     choices.forEach(choice => {
       const btn = document.createElement("button");
       btn.className = "choice-btn";
-      appendWithPowers(btn, actionLabel(choice.action, choice.value));
+      const label = actionLabel(choice.action, choice.value);
+      if (isLongChoice(label)) btn.classList.add("long");   // 12px on narrow phones (e.g. the quadratic formula)
+      appendWithPowers(btn, label);
       if (choice.action === step.action && choice.value === step.value) btn.dataset.correct = "1";
       btn.addEventListener("click", () => handleChoice(choice, btn, step));
       $choices.appendChild(btn);
@@ -1103,7 +1277,18 @@
       const prevText = currentEquationText;
       currentEquationText = correctStep.result;
       flipPending = !!correctStep.flip;
-      setEquationText(currentEquationText, correctStep.flip ? playFlipCue : null);
+      // Completing the square Hard: after "Read off a, b and c", the formula panel fills in once the card has
+      // typed, and the next step's buttons wait for it (unless the player has left or tapped "Show me" meanwhile)
+      const fillLevel = correctStep.fill === "formula" ? currentLevel() : null;
+      const fillAt = stepIndex + 1;
+      const fillThenRender = () => {
+        $choices.innerHTML = "";
+        $expandPrompt.hidden = true;
+        animateFormulaPanel(fillLevel, () => {
+          if (!replaying && !$screenPlay.hidden && currentLevel() === fillLevel && stepIndex === fillAt) render();
+        });
+      };
+      setEquationText(currentEquationText, correctStep.flip ? playFlipCue : fillLevel ? fillThenRender : null);
       if (correctStep.flip) {
         const from = (prevText.match(INEQ_SIGN) || [""])[0];
         const to = (correctStep.result.match(INEQ_SIGN) || [""])[0];
@@ -1174,7 +1359,7 @@
         // Let the solved card + typewriter finish before the overlay appears
         // (longer on a sign flip, so the flip animation and message can be seen).
         setTimeout(() => showCompleteOverlay(result), correctStep.flip ? 1500 : 900);
-      } else {
+      } else if (!fillLevel) {
         setTimeout(() => { if (!replaying) render(); }, 600);
       }
     } else {
@@ -1335,7 +1520,12 @@
       if (correctBtn) { correctBtn.classList.remove("intro-demo-tap"); correctBtn.classList.add("correct"); }
       flipPending = !!step.flip;
       currentEquationText = step.result;
-      setEquationText(step.result, step.flip ? playFlipCue : null);
+      // Completing the square Hard: the formula panel fills in after "Read off a, b and c", then the replay goes on
+      const fills = step.fill === "formula";
+      const nextStep = () => replayLater(() => playReplayStep(level), REPLAY_STEP_MS - REPLAY_MOVE_MS);
+      setEquationText(step.result, step.flip ? playFlipCue
+        : fills ? () => animateFormulaPanel(level, () => { if (replaying && currentLevel() === level) nextStep(); })
+        : null);
       burstChalkDust();
       stepIndex++;
       const done = stepIndex >= level.steps.length;
@@ -1344,8 +1534,8 @@
       if (done) {
         $equationCard.classList.add("solved");
         finishReplay();
-      } else {
-        replayLater(() => playReplayStep(level), REPLAY_STEP_MS - REPLAY_MOVE_MS);
+      } else if (!fills) {
+        nextStep();
       }
     }, REPLAY_MOVE_MS);
   }
@@ -1366,6 +1556,7 @@
   function cancelReplay() {
     if (!replaying) return;
     clearReplayTimers();
+    clearPanelTimers();
     setReplayUi(false);
     stepIndex = 0;
   }
@@ -1376,7 +1567,12 @@
     startReplay(0, { charge: false, cap: best < 3 });
   }
 
-  $showMeBtn.addEventListener("click", () => startReplay(stepIndex));
+  // On a ★★★ level there's nothing left to cap, so "Show me" only costs the −2 (like "See how it's solved").
+  // Mixed Review always marks the question as watched.
+  $showMeBtn.addEventListener("click", () => {
+    const best = (levelProgress[currentLevel().id] || {}).stars || 0;
+    startReplay(stepIndex, { cap: inReviewMode || best < 3 });
+  });
 
   $replayTryBtn.addEventListener("click", () => {
     clearReplayTimers();
@@ -1769,8 +1965,8 @@
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
-  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject", expression: "topicExpression", indices: "topicIndices" };
-  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1", expression: "4x + 3 + 2x", indices: "x^3 × x^4" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject", expression: "topicExpression", indices: "topicIndices", roots: "topicRoots" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1", expression: "4x + 3 + 2x", indices: "x^3 × x^4", roots: "(x + 3)² = 16" };
 
   // Levels unlock in order within a tier; the first level of every tier is always open.
   function isUnlocked(level) {
@@ -2141,7 +2337,7 @@
   // Shown once per topic on first visit, reopenable from the ❔ on the level-select screen.
   // Chalky explains the key idea, then a demo level plays step by step using the real game pieces.
   const TUTORIAL_SEEN_KEY = "lll_algebra_tutorials_seen";
-  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2, expression: 2, indices: 2 };
+  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2, expression: 2, indices: 2, roots: 2 };
   const TUT_STEP_MS = 2600;   // time per demo step
 
   // Demo level per topic: normally the first Easy level, except where that level skips the
@@ -2155,7 +2351,8 @@
     // Formulas: a two-step level, so the demo shows why (y - 1) stays in brackets
     // Expressions: a two-step level, so the demo collects the letters, then the numbers
     // Indices: a two-step level (Easy 9, x^2 × x^3 × x^4), so the demo uses the multiply rule twice
-    if (topic === "subject" || topic === "expression" || topic === "indices") {
+    // Completing the square: a two-step level (Easy 3, (x + 3)² = 16), so the demo shows √ with ±, then solving
+    if (topic === "subject" || topic === "expression" || topic === "indices" || topic === "roots") {
       const twoStep = levelsFor(topic, "easy").find(l => l.steps.length === 2);
       if (twoStep) return twoStep;
     }
@@ -2201,6 +2398,8 @@
     for (const ch of eqUnits(text)) {
       if (ch.length > 1 && ch[0] === "^") {
         el.appendChild(makePow(ch.slice(1), "-"));
+      } else if (ch.length > 1 && ch[0] === "√") {   // a whole root: the pixel hook and bar
+        appendWithPowers(el, ch, "-");
       } else if (INEQ_SIGN.test(ch)) {
         const s = document.createElement("span");
         s.className = "ineq-sign" + (PIXEL_INEQ[ch] ? " pixel-ineq" : "");
@@ -2258,7 +2457,9 @@
           b.className = "choice-btn";
           b.tabIndex = -1;                     // demo only, not interactive
           b.setAttribute("aria-hidden", "true");
-          appendWithPowers(b, actionLabel(c.action, c.value));
+          const label = actionLabel(c.action, c.value);
+          if (isLongChoice(label)) b.classList.add("long");
+          appendWithPowers(b, label);
           $tutChoices.appendChild(b);
           return b;
         });
@@ -2345,6 +2546,28 @@
   const $tipFrom = document.getElementById("tipFrom");
   const $tipMove = document.getElementById("tipMove");
   const $tipTo = document.getElementById("tipTo");
+  const $tipPicture = document.getElementById("tipPicture");
+
+  // Small diagrams a tier tip can show above its demo (`picture` in TIER_TIPS). Colours come from brand.css.
+  const TIP_PICTURES = {
+    // x² + 6x as tiles: an x-by-x square and two 3-by-x strips, with the 3-by-3 corner (the 9) missing.
+    // Underneath: the general rule, then (x + 3)² written out, each term coloured like its tile.
+    squareTiles: `<svg viewBox="0 0 230 222" role="img" aria-label="x² + 6x as tiles: a square, two strips of 3x, and a missing 3 × 3 corner worth 9. (x ± n)² = x² ± 2n·x + n², so (x + 3)² = x² + 3x + 3x + 9 = x² + 6x + 9">
+      <text class="tile-edge" x="104" y="9">x</text><text class="tile-edge" x="170" y="9">3</text>
+      <text class="tile-edge" x="46" y="63">x</text><text class="tile-edge" x="46" y="129">3</text>
+      <rect class="tile tile-sq" x="59" y="18" width="90" height="90"/>
+      <rect class="tile tile-strip" x="152" y="18" width="36" height="90"/>
+      <rect class="tile tile-strip" x="59" y="111" width="90" height="36"/>
+      <rect class="tile tile-gap" x="152" y="111" width="36" height="36"/>
+      <text class="tile-label" x="104" y="63">x²</text>
+      <text class="tile-label" x="170" y="63">3x</text>
+      <text class="tile-label" x="104" y="129">3x</text>
+      <text class="tile-label tile-gap-label" x="170" y="129">+9</text>
+      <text class="tile-math tile-rule" x="115" y="170">(x ± n)² = x² ± 2n·x + n²</text>
+      <text class="tile-math" x="115" y="192">(x + 3)² = <tspan class="tile-t-sq">x²</tspan> + <tspan class="tile-t-strip">3x</tspan> + <tspan class="tile-t-strip">3x</tspan> + <tspan class="tile-t-gap">9</tspan></text>
+      <text class="tile-math" x="115" y="214">= x² + 6x + <tspan class="tile-t-gap">9</tspan></text>
+    </svg>`
+  };
   const $tipOkBtn = document.getElementById("tipOkBtn");
   const tipBuddy = makeBuddy(document.getElementById("tipBuddy"), null);
 
@@ -2361,6 +2584,8 @@
     const tier = tipKey.split("_")[1];
     $tipTag.textContent = t("tipTag").split("{tier}").join(t(TIER_LABEL_KEYS[tier]));
     $tipDemoLabel.textContent = t("tipDemoLabel");
+    $tipPicture.innerHTML = TIP_PICTURES[tip.picture] || "";
+    $tipPicture.hidden = !TIP_PICTURES[tip.picture];
     setPixelEq($tipFrom, tip.demo.from);
     $tipFromCard.classList.toggle("system-card", tip.demo.from.includes("\n"));
     setMathText($tipMove, (tip.demo.move[lang] || tip.demo.move.en).replace(/-(?=\d)/g, "−"));

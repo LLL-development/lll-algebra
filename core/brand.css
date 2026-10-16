@@ -58,6 +58,10 @@ body {
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
 }
+/* Japanese: break lines between phrases, not mid-word (「まとめられませ / ん」).
+   Chrome/Edge only for now; other browsers ignore it and break as before.
+   break-word is the safety net if a single phrase is wider than its box. */
+:root:lang(ja) body { word-break: auto-phrase; overflow-wrap: break-word; }
 
 /* ---------- Top bar ---------- */
 .topbar {
@@ -303,8 +307,8 @@ body {
    one-line steps (e.g. "3x = 12") sit in the middle. */
 .pixel-card.system-card .equation {
   min-height: 3.6em;              /* 2 lines × line-height 1.8 */
-  display: grid;
-  align-content: center;
+  display: block;                 /* not grid: grid put each ² / √ / coloured number on a row of its own */
+  align-content: center;          /* Chrome 123+, Firefox 125+, Safari 17.4+; older ones just sit at the top */
 }
 
 /* ---------- Floating background symbols ---------- */
@@ -421,6 +425,9 @@ body {
 @media (max-width: 420px) {
   .choices { gap: 8px; }
   .choice-btn { font-size: 13px; padding: 12px 6px; }
+  /* Long options (17–18 characters, e.g. the quadratic formula "x = (-11 ± √361)/2") would
+     wrap at 13px, so they drop to 12px. The `long` class is set where the buttons are built. */
+  .choice-btn.long { font-size: 12px; }
 }
 /* "Expand the brackets:" label above the choices on expand steps */
 .expand-prompt {
@@ -505,8 +512,28 @@ body {
 /* Powers (x^3 in level data): half size and raised. Neither Press Start 2P nor IBM Plex Mono
    has ⁰ ⁴–⁹ ⁻, so this is used in every font. 0.5em keeps the pixel font on a half grid. */
 .pow { font-size: .75em; vertical-align: .5em; line-height: 0; }
-/* Pixel font (equation card, topic samples): half size on the font's 8×8 grid, raised to the top of the x */
-.pixel-card .pow, .topic-card-sample .pow { font-size: .5em; vertical-align: .875em; }
+/* Pixel font (equation card, topic samples): half size on the font's 8×8 grid, raised to the top of the x.
+   .equation, not the whole .pixel-card: the level-complete and tier-tip cards are .pixel-card too
+   (for the border), and their explanation text is in the normal font. */
+.pixel-card .equation .pow, .topic-card-sample .pow { font-size: .5em; vertical-align: .875em; }
+
+/* Square roots (√ in level data, drawn by makeSqrt() in mathtext.js).
+   Normal text shows the √ character and keeps the brackets. On the pixel card and topic
+   samples, the √ is a pixel hook (neither font has √) with a 2-pixel bar over the root,
+   and the brackets go, since the bar already shows what's under the root. */
+.sqrt-hook { display: none; }
+.pixel-card .equation .sqrt, .topic-card-sample .sqrt { display: inline-flex; align-items: flex-start; line-height: 1; }
+.pixel-card .equation .sqrt-hook, .topic-card-sample .sqrt-hook {
+  display: block; flex: none; width: 1.25em; height: 1.375em;
+  fill: currentColor; shape-rendering: crispEdges;
+}
+.pixel-card .equation .sqrt-sign, .pixel-card .equation .sqrt-paren,
+.topic-card-sample .sqrt-sign, .topic-card-sample .sqrt-paren { display: none; }
+.pixel-card .equation .sqrt-rad, .topic-card-sample .sqrt-rad {
+  border-top: .25em solid currentColor;
+  padding: .125em .125em 0 0;
+  line-height: 1;
+}
 
 /* ---------- Loading overlay ---------- */
 .loading-overlay {
@@ -1121,6 +1148,21 @@ body:has(.tip-overlay:not([hidden])) { overflow: hidden; }   /* no page scroll b
 .tip-demo-move::before { content: "↓ "; }
 .tip-ok-btn { width: 100%; }
 
+/* Picture above a tier tip's demo (TIP_PICTURES in index.html), e.g. the completing-the-square tiles */
+.tip-picture:not([hidden]) { display: flex; justify-content: center; }
+.tip-picture svg { display: block; width: min(220px, 100%); height: auto; }
+.tile { stroke-width: 1.5; }
+.tile-sq { fill: var(--surface); stroke: var(--ink); }
+.tile-strip { fill: var(--correct-tint); stroke: var(--correct); }
+.tile-gap { fill: var(--accent-tint); stroke: var(--accent); stroke-dasharray: 4 3; }
+.tile-label { font-family: var(--mono); font-size: 13px; font-weight: 600; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+.tile-edge { font-family: var(--mono); font-size: 12px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.tile-gap-label { fill: var(--accent); }
+.tile-math { font-family: var(--mono); font-size: 12.5px; font-weight: 600; fill: var(--ink); text-anchor: middle; }
+.tile-t-strip { fill: var(--correct); }
+.tile-t-gap { fill: var(--accent); }
+.tile-rule { fill: var(--muted); }
+
 @media (prefers-reduced-motion: reduce) {
   .tip-backdrop, .tip-card { animation: none !important; }
   .tip-demo { transition: none !important; }
@@ -1313,4 +1355,42 @@ body:has(.tip-overlay:not([hidden])) { overflow: hidden; }   /* no page scroll b
 
 @media (prefers-reduced-motion: reduce) {
   .tricky-btn { transition: none !important; }
+}
+
+/* ---------- Completing the square Hard: quadratic formula panel ---------- */
+/* Under the card from "Read off a, b and c" on. The letters flip to their numbers (b, then a, then c),
+   and a step's `focus` lights up the part it uses. a, b and c keep one colour each, here and on the card. */
+.formula-panel {
+  width: 100%;
+  margin-top: -8px;               /* a little closer to the card than the screen's 28px gap */
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 14px 12px;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity .3s ease, transform .3s ease;
+}
+.formula-panel[hidden] { display: none; }
+.formula-panel.show { opacity: 1; transform: none; }
+.fp-label {
+  font-family: var(--sans); font-size: 11px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+}
+.fp-math { font-family: var(--mono); font-size: 17px; font-weight: 600; line-height: 1.7; color: var(--ink); text-align: center; }
+.fp-group { display: inline-block; white-space: nowrap; }   /* wraps between groups, never inside one */
+.fp-var { display: inline-block; font-weight: 700; transition: transform .18s ease; }
+.fp-var.a, .pixel-card .equation .v-a { color: var(--accent); }
+.fp-var.b, .pixel-card .equation .v-b { color: var(--correct); }
+.fp-var.c, .pixel-card .equation .v-c { color: var(--graph-line2); }
+.fp-var.flip { transform: scale(0); }
+.fp-var.pop { animation: fpPop .35s cubic-bezier(.34,1.56,.64,1); }
+@keyframes fpPop { from { transform: scale(0); } to { transform: scale(1); } }
+.fp-dot { display: inline-block; width: 0; overflow: hidden; vertical-align: bottom; transition: width .2s ease; }
+.fp-dot.show { width: .6em; }
+.fp-focus { border-radius: 6px; transition: background .3s ease, box-shadow .3s ease; }
+.fp-focus.on { background: var(--accent-tint); box-shadow: 0 0 0 3px var(--accent-tint); }
+@media (max-width: 420px) {
+  .fp-math { font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .formula-panel, .fp-var, .fp-dot, .fp-focus { transition: none !important; animation: none !important; }
 }

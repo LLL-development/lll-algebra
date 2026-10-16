@@ -1,5 +1,6 @@
 // LLL Algebra — choice buttons: the label for a move and the 3 generated wrong options.
-// Authored-choice steps (expand/factor/roots/combine/substitute/scale/simplify) bring their own
+// Authored-choice steps (expand/factor/roots/combine/substitute/scale/simplify, and sqrt/complete/
+// formula/evalRoot in Completing the square) bring their own
 // `wrong` options in levels.js; makeDistractors() is for the + − × ÷ moves. A + − × ÷ step
 // may also carry authored `traps` (numbers), used as its wrong options instead of generated ones.
 // A + − × ÷ step whose value is a letter term (Formulas, e.g. "÷ m") carries authored `moves`
@@ -9,8 +10,18 @@
 const CHOICE_PROMPT_KEYS = {
   expand: "expandPrompt", factor: "factorPrompt", roots: "rootsPrompt",
   combine: "combinePrompt", substitute: "substitutePrompt", scale: "scalePrompt",
-  simplify: "simplifyPrompt"
+  simplify: "simplifyPrompt",
+  // Completing the square: √ both sides, complete the square, the quadratic formula, work out the √
+  sqrt: "sqrtPrompt", complete: "completePrompt", formula: "formulaPrompt", evalRoot: "evalRootPrompt"
 };
+
+// Options longer than this (e.g. the quadratic formula "x = (−11 ± √361)/2") get the `long` class,
+// which drops them to 12px on narrow phones so they stay on one line (brand.css, 420px block).
+// A power's "^" isn't drawn, so it doesn't count.
+const LONG_CHOICE = 16;
+function isLongChoice(label) {
+  return String(label).replace(/\^/g, "").length > LONG_CHOICE;
+}
 
 function actionLabel(action, value) {
   const verbs = { add: "+", subtract: "−", multiply: "×", divide: "÷", add_x: "+", subtract_x: "−" };
@@ -129,7 +140,8 @@ function makeDistractors(correctStep) {
 // "tip_<action>" (e.g. tip_expand). wrongNumber isn't guaranteed, but nearly every generated
 // step offers a nearby number, so any generated step can practise it.
 function practiceKinds(step) {
-  // Expressions and Indices: each authored wrong option is tagged with its own kind; "generic" isn't practised
+  // Expressions, Indices and Completing the square: each authored wrong option is tagged with its own kind;
+  // "generic" isn't practised
   if (Array.isArray(step.wrong) && Array.isArray(step.wrongKinds)) {
     return [...new Set(step.wrongKinds.filter(k => k !== "generic"))];
   }
@@ -147,4 +159,4 @@ function practiceKinds(step) {
   return [];
 }
 
-export { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors, practiceKinds };
+export { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors, practiceKinds, isLongChoice };
