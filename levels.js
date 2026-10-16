@@ -29,6 +29,19 @@
 //                   group of like terms in an expression (expression topic).
 //                   Authored like "expand": `value` is the combined side (e.g. "5x"),
 //                   `target` is "left" or "right" ("expression" in the expression topic).
+//   "sqrt"        — square root both sides (roots topic). Authored: `value` is the result with ±
+//                   (e.g. "x + 3 = ±4"), or both answers when x² is already alone (e.g. "x = -6, 6").
+//   "complete"    — complete the square (roots topic). Authored: `value` is e.g. "(x + 3)² = 25".
+//   "formula"     — put a, b and c into the quadratic formula (roots topic). Authored: `value` is
+//                   e.g. "x = (-5 ± √121)/2".
+//   "evalRoot"    — work out the square root in the formula (roots topic), e.g. "x = (-5 ± 11)/2".
+//   "coef"        — read off a, b and c before using the formula (roots topic). Authored: `value` is e.g.
+//                   "1, 5, -24"; its prompt comes from the step's own `prompt`. Its `result` keeps the equation as
+//                   a first line ("x² + 5x - 24 = 0\na = 1, b = 5, c = -24"). With `fill: "formula"`, the formula
+//                   panel under the card fills in a, b and c once it's answered (the level's `abc`).
+//   "discriminant" — work out b² - 4ac before using the formula (roots topic). Authored: `value` is e.g.
+//                   "b² - 4ac = 121"; its prompt comes from the step's own `prompt`. Its `result` keeps the
+//                   a, b, c line first ("a = 1, b = 5, c = -24\nb² - 4ac = 121"), since b² - 4ac is a side calculation.
 //
 // Systems: `equation` is two lines joined by "\n" (e.g. "x + y = 9\n2x - y = 3"), and
 // `answer` is { x, y }. A step whose result the player must substitute into keeps that
@@ -76,7 +89,21 @@
 // "negPower" (x^-3 taken as -x^3, or not moved under the line), "unlikeTerms" (shared with Expressions:
 // x and y powers merged) or "generic" (not tracked). Answers use positive powers, and x^1 is always written x.
 //
-// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject", "expression" or "indices". `target` is "both-sides"
+// Completing the square (topic key `roots`): squares are written x² like Quadratics, and square roots with
+// the real √ (√121, or √(b² - 4ac) for more than one term), drawn by mathtext.js. Answers are whole numbers,
+// smallest first, like Quadratics. Every authored step has `wrongKinds`: "plusMinus" (only one root, the ±
+// forgotten), "rootSlip" (the √ skipped or halved), "undoSign" (a sign slip undoing a number, or -b in the
+// formula), "halfB" (completed with b instead of half of b), "addSquare" (forgot to add (b/2)² to the other
+// side), "discriminant" (a slip in b² - 4ac), "twoA" (divided by a or not at all, instead of by 2a),
+// "readCoef" (a, b or c read off wrong: a sign dropped, a = 0, or a and b swapped) or "generic" (not tracked). Formula options stay within 18 characters so they fit a narrow phone's button.
+// Medium adds (half of b)² as its own step, so its wrong moves are authored `moves` (like Formulas), with kinds
+// "halfB", "squareHalf" (halved but didn't square) or "wrongWay". A step may name its own prompt in `prompt`
+// (a strings.js key), e.g. "moveNumberPrompt", which wins over the action's prompt.
+// Hard levels carry `abc: [a, b, c]` for the quadratic formula panel under the card. It appears after the
+// step with `fill: "formula"`, and a later step's `focus` lights up the part it uses: "disc" (b² - 4ac) or
+// "top" (the top of the fraction).
+//
+// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject", "expression", "indices" or "roots". `target` is "both-sides"
 // for every move that changes a side's value; only "expand" and "simplify" rewrite one side,
 // because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
@@ -7662,6 +7689,1123 @@ const LEVELS = [
       en: "(3x^3)^2 = 9x^6, then 6 + (-8) = -2 gives 9x^-2. The power belongs to x, not the 9, so 9x^-2 = 9/x^2 — not 1/(9x^2).",
       ja: "(3x^3)^2 = 9x^6、次に 6 + (-8) = -2 で 9x^-2。指数はxだけにかかり9にはかからないので、9x^-2 = 9/x^2 です。1/(9x^2) ではありません。"
     }
+  },
+
+  // =====================================================================
+  // COMPLETING THE SQUARE (topic key: roots)
+  // =====================================================================
+
+  // ---- Easy: square root both sides (x² = k, then (x + a)² = k) ----
+  // Levels 1-2 are one step; 9-10 move the number first (a normal + step, like Quadratics Hard).
+  {
+    id: "roots_easy_01",
+    topic: "roots",
+    equation: "x² = 36",
+    answer: [-6, 6],
+    difficulty: "easy",
+    type: "square-root",
+    basePoints: 10,
+    steps: [
+      { action: "sqrt", value: "x = -6, 6", target: "both-sides", result: "x = -6, 6",
+        wrong: ["x = 6", "x = -18, 18", "x = -36, 36"], wrongKinds: ["plusMinus", "rootSlip", "rootSlip"] }
+    ],
+    hints: {
+      en: ["Undo the square with a square root. Both 6 and -6 square to 36, so there are two answers."],
+      ja: ["平方根で2乗を戻します。6も-6も2乗すると36なので、答えは2つ。"]
+    },
+    explanation: {
+      en: "√36 = 6, but (-6)² = 36 too, so x = -6 or x = 6. An equation with x² usually has two answers.",
+      ja: "√36 = 6。でも (-6)² = 36 でもあるので、x = -6 または x = 6。x² の方程式には、ふつう答えが2つあります。"
+    }
+  },
+  {
+    id: "roots_easy_02",
+    topic: "roots",
+    equation: "x² = 64",
+    answer: [-8, 8],
+    difficulty: "easy",
+    type: "square-root",
+    basePoints: 10,
+    steps: [
+      { action: "sqrt", value: "x = -8, 8", target: "both-sides", result: "x = -8, 8",
+        wrong: ["x = 8", "x = -32, 32", "x = -64, 64"], wrongKinds: ["plusMinus", "rootSlip", "rootSlip"] }
+    ],
+    hints: {
+      en: ["Undo the square with a square root. Both 8 and -8 square to 64, so there are two answers."],
+      ja: ["平方根で2乗を戻します。8も-8も2乗すると64なので、答えは2つ。"]
+    },
+    explanation: {
+      en: "√64 = 8, but (-8)² = 64 too, so x = -8 or x = 8. An equation with x² usually has two answers.",
+      ja: "√64 = 8。でも (-8)² = 64 でもあるので、x = -8 または x = 8。x² の方程式には、ふつう答えが2つあります。"
+    }
+  },
+  {
+    id: "roots_easy_03",
+    topic: "roots",
+    equation: "(x + 3)² = 16",
+    answer: [-7, 1],
+    difficulty: "easy",
+    type: "perfect-square",
+    basePoints: 10,
+    steps: [
+      { action: "sqrt", value: "x + 3 = ±4", target: "both-sides", result: "x + 3 = ±4",
+        wrong: ["x + 3 = 4", "x + 3 = ±16", "x - 3 = ±4"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -7, 1", target: "both-sides", result: "x = -7, 1",
+        wrong: ["x = -1, 7", "x = 1", "x = -4, 4"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Take the square root of both sides. √16 = 4, and don't forget ±.",
+        "Subtract 3 from both sides: x = -3 + 4 and x = -3 - 4."
+      ],
+      ja: [
+        "両辺の平方根をとる。√16 = 4、±を忘れずに。",
+        "両辺から3を引く：x = -3 + 4 と x = -3 - 4。"
+      ]
+    },
+    explanation: {
+      en: "√16 = 4, so x + 3 = ±4. x = -3 + 4 = 1 or x = -3 - 4 = -7, so x = -7 or x = 1.",
+      ja: "√16 = 4 なので x + 3 = ±4。x = -3 + 4 = 1、または x = -3 - 4 = -7 なので、x = -7 または x = 1。"
+    }
+  },
+  {
+    id: "roots_easy_04",
+    topic: "roots",
+    equation: "(x - 2)² = 9",
+    answer: [-1, 5],
+    difficulty: "easy",
+    type: "perfect-square",
+    basePoints: 10,
+    steps: [
+      { action: "sqrt", value: "x - 2 = ±3", target: "both-sides", result: "x - 2 = ±3",
+        wrong: ["x - 2 = 3", "x - 2 = ±9", "x + 2 = ±3"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -1, 5", target: "both-sides", result: "x = -1, 5",
+        wrong: ["x = -5, 1", "x = 5", "x = -3, 3"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Take the square root of both sides. √9 = 3, and don't forget ±.",
+        "Add 2 to both sides: x = 2 + 3 and x = 2 - 3."
+      ],
+      ja: [
+        "両辺の平方根をとる。√9 = 3、±を忘れずに。",
+        "両辺に2を足す：x = 2 + 3 と x = 2 - 3。"
+      ]
+    },
+    explanation: {
+      en: "√9 = 3, so x - 2 = ±3. x = 2 + 3 = 5 or x = 2 - 3 = -1, so x = -1 or x = 5.",
+      ja: "√9 = 3 なので x - 2 = ±3。x = 2 + 3 = 5、または x = 2 - 3 = -1 なので、x = -1 または x = 5。"
+    }
+  },
+  {
+    id: "roots_easy_05",
+    topic: "roots",
+    equation: "(x + 5)² = 25",
+    answer: [-10, 0],
+    difficulty: "easy",
+    type: "perfect-square",
+    basePoints: 10,
+    steps: [
+      { action: "sqrt", value: "x + 5 = ±5", target: "both-sides", result: "x + 5 = ±5",
+        wrong: ["x + 5 = 5", "x + 5 = ±25", "x - 5 = ±5"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -10, 0", target: "both-sides", result: "x = -10, 0",
+        wrong: ["x = 0, 10", "x = 0", "x = -5, 5"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Take the square root of both sides. √25 = 5, and don't forget ±.",
+        "Subtract 5 from both sides: x = -5 + 5 and x = -5 - 5."
+      ],
+      ja: [
+        "両辺の平方根をとる。√25 = 5、±を忘れずに。",
+        "両辺から5を引く：x = -5 + 5 と x = -5 - 5。"
+      ]
+    },
+    explanation: {
+      en: "√25 = 5, so x + 5 = ±5. x = -5 + 5 = 0 or x = -5 - 5 = -10, so x = -10 or x = 0.",
+      ja: "√25 = 5 なので x + 5 = ±5。x = -5 + 5 = 0、または x = -5 - 5 = -10 なので、x = -10 または x = 0。"
+    }
+  },
+  {
+    id: "roots_easy_06",
+    topic: "roots",
+    equation: "(x - 6)² = 49",
+    answer: [-1, 13],
+    difficulty: "easy",
+    type: "perfect-square",
+    basePoints: 10,
+    steps: [
+      { action: "sqrt", value: "x - 6 = ±7", target: "both-sides", result: "x - 6 = ±7",
+        wrong: ["x - 6 = 7", "x - 6 = ±49", "x + 6 = ±7"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -1, 13", target: "both-sides", result: "x = -1, 13",
+        wrong: ["x = -13, 1", "x = 13", "x = -7, 7"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Take the square root of both sides. √49 = 7, and don't forget ±.",
+        "Add 6 to both sides: x = 6 + 7 and x = 6 - 7."
+      ],
+      ja: [
+        "両辺の平方根をとる。√49 = 7、±を忘れずに。",
+        "両辺に6を足す：x = 6 + 7 と x = 6 - 7。"
+      ]
+    },
+    explanation: {
+      en: "√49 = 7, so x - 6 = ±7. x = 6 + 7 = 13 or x = 6 - 7 = -1, so x = -1 or x = 13.",
+      ja: "√49 = 7 なので x - 6 = ±7。x = 6 + 7 = 13、または x = 6 - 7 = -1 なので、x = -1 または x = 13。"
+    }
+  },
+  {
+    id: "roots_easy_07",
+    topic: "roots",
+    equation: "(x + 1)² = 36",
+    answer: [-7, 5],
+    difficulty: "easy",
+    type: "perfect-square",
+    basePoints: 10,
+    steps: [
+      { action: "sqrt", value: "x + 1 = ±6", target: "both-sides", result: "x + 1 = ±6",
+        wrong: ["x + 1 = 6", "x + 1 = ±36", "x - 1 = ±6"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -7, 5", target: "both-sides", result: "x = -7, 5",
+        wrong: ["x = -5, 7", "x = 5", "x = -6, 6"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Take the square root of both sides. √36 = 6, and don't forget ±.",
+        "Subtract 1 from both sides: x = -1 + 6 and x = -1 - 6."
+      ],
+      ja: [
+        "両辺の平方根をとる。√36 = 6、±を忘れずに。",
+        "両辺から1を引く：x = -1 + 6 と x = -1 - 6。"
+      ]
+    },
+    explanation: {
+      en: "√36 = 6, so x + 1 = ±6. x = -1 + 6 = 5 or x = -1 - 6 = -7, so x = -7 or x = 5.",
+      ja: "√36 = 6 なので x + 1 = ±6。x = -1 + 6 = 5、または x = -1 - 6 = -7 なので、x = -7 または x = 5。"
+    }
+  },
+  {
+    id: "roots_easy_08",
+    topic: "roots",
+    equation: "(x - 4)² = 100",
+    answer: [-6, 14],
+    difficulty: "easy",
+    type: "perfect-square",
+    basePoints: 10,
+    steps: [
+      { action: "sqrt", value: "x - 4 = ±10", target: "both-sides", result: "x - 4 = ±10",
+        wrong: ["x - 4 = 10", "x - 4 = ±100", "x + 4 = ±10"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -6, 14", target: "both-sides", result: "x = -6, 14",
+        wrong: ["x = -14, 6", "x = 14", "x = -10, 10"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Take the square root of both sides. √100 = 10, and don't forget ±.",
+        "Add 4 to both sides: x = 4 + 10 and x = 4 - 10."
+      ],
+      ja: [
+        "両辺の平方根をとる。√100 = 10、±を忘れずに。",
+        "両辺に4を足す：x = 4 + 10 と x = 4 - 10。"
+      ]
+    },
+    explanation: {
+      en: "√100 = 10, so x - 4 = ±10. x = 4 + 10 = 14 or x = 4 - 10 = -6, so x = -6 or x = 14.",
+      ja: "√100 = 10 なので x - 4 = ±10。x = 4 + 10 = 14、または x = 4 - 10 = -6 なので、x = -6 または x = 14。"
+    }
+  },
+  {
+    id: "roots_easy_09",
+    topic: "roots",
+    equation: "(x + 2)² - 9 = 0",
+    answer: [-5, 1],
+    difficulty: "easy",
+    type: "perfect-square-move",
+    basePoints: 10,
+    steps: [
+      { action: "add", value: 9, target: "both-sides", result: "(x + 2)² = 9" },
+      { action: "sqrt", value: "x + 2 = ±3", target: "both-sides", result: "x + 2 = ±3",
+        wrong: ["x + 2 = 3", "x + 2 = ±9", "x - 2 = ±3"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -5, 1", target: "both-sides", result: "x = -5, 1",
+        wrong: ["x = -1, 5", "x = 1", "x = -3, 3"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Get the square on its own: add 9 to both sides.",
+        "Take the square root of both sides. √9 = 3, and don't forget ±.",
+        "Subtract 2 from both sides: x = -2 + 3 and x = -2 - 3."
+      ],
+      ja: [
+        "2乗の部分だけを残す：両辺に9を足す。",
+        "両辺の平方根をとる。√9 = 3、±を忘れずに。",
+        "両辺から2を引く：x = -2 + 3 と x = -2 - 3。"
+      ]
+    },
+    explanation: {
+      en: "Add 9 first, so the square is on its own: (x + 2)² = 9. Then √9 = 3, so x + 2 = ±3. x = -2 + 3 = 1 or x = -2 - 3 = -5, so x = -5 or x = 1.",
+      ja: "まず9を足して、2乗の部分だけにします：(x + 2)² = 9。√9 = 3 なので x + 2 = ±3。x = -2 + 3 = 1、または x = -2 - 3 = -5 なので、x = -5 または x = 1。"
+    }
+  },
+  {
+    id: "roots_easy_10",
+    topic: "roots",
+    equation: "(x - 3)² - 64 = 0",
+    answer: [-5, 11],
+    difficulty: "easy",
+    type: "perfect-square-move",
+    basePoints: 10,
+    steps: [
+      { action: "add", value: 64, target: "both-sides", result: "(x - 3)² = 64" },
+      { action: "sqrt", value: "x - 3 = ±8", target: "both-sides", result: "x - 3 = ±8",
+        wrong: ["x - 3 = 8", "x - 3 = ±64", "x + 3 = ±8"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -5, 11", target: "both-sides", result: "x = -5, 11",
+        wrong: ["x = -11, 5", "x = 11", "x = -8, 8"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Get the square on its own: add 64 to both sides.",
+        "Take the square root of both sides. √64 = 8, and don't forget ±.",
+        "Add 3 to both sides: x = 3 + 8 and x = 3 - 8."
+      ],
+      ja: [
+        "2乗の部分だけを残す：両辺に64を足す。",
+        "両辺の平方根をとる。√64 = 8、±を忘れずに。",
+        "両辺に3を足す：x = 3 + 8 と x = 3 - 8。"
+      ]
+    },
+    explanation: {
+      en: "Add 64 first, so the square is on its own: (x - 3)² = 64. Then √64 = 8, so x - 3 = ±8. x = 3 + 8 = 11 or x = 3 - 8 = -5, so x = -5 or x = 11.",
+      ja: "まず64を足して、2乗の部分だけにします：(x - 3)² = 64。√64 = 8 なので x - 3 = ±8。x = 3 + 8 = 11、または x = 3 - 8 = -5 なので、x = -5 または x = 11。"
+    }
+  },
+
+  // ---- Medium: complete the square from x² + bx + c = 0 (b always even, so half of b is whole) ----
+  // Five steps, so every number shows: move the number, add (b/2)² to both sides (16 + 9 stays on the card),
+  // write the left side as a square, √ both sides, solve. Step 2's wrong moves are authored `moves`, like Formulas.
+  {
+    id: "roots_medium_01",
+    topic: "roots",
+    equation: "x² + 6x - 16 = 0",
+    answer: [-8, 2],
+    difficulty: "medium",
+    type: "complete-square",
+    basePoints: 20,
+    steps: [
+      { action: "add", value: 16, prompt: "moveNumberPrompt", target: "both-sides", result: "x² + 6x = 16" },
+      { action: "add", value: 9, prompt: "addSquarePrompt", target: "both-sides", result: "x² + 6x + 9 = 16 + 9",
+        moves: [{ action: "add", value: 36, kind: "halfB" }, { action: "add", value: 3, kind: "squareHalf" }, { action: "subtract", value: 9, kind: "wrongWay" }] },
+      { action: "complete", value: "(x + 3)² = 25", target: "both-sides", result: "(x + 3)² = 25",
+        wrong: ["(x + 9)² = 25", "(x - 3)² = 25", "(x + 3)² = 7"], wrongKinds: ["halfB", "undoSign", "generic"] },
+      { action: "sqrt", value: "x + 3 = ±5", target: "both-sides", result: "x + 3 = ±5",
+        wrong: ["x + 3 = 5", "x + 3 = ±25", "x - 3 = ±5"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -8, 2", target: "both-sides", result: "x = -8, 2",
+        wrong: ["x = -2, 8", "x = 2", "x = -5, 5"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Move the number first: add 16 to both sides.",
+        "(x + n)² = x² + 2n·x + n². Here 2n = 6, so n = 3 and n² = 9: add 9 to both sides.",
+        "(x + 3)² = x² + 3x + 3x + 9 = x² + 6x + 9, so the left side is (x + 3)². Right side: 16 + 9 = 25.",
+        "Take the square root of both sides. √25 = 5, and don't forget ±.",
+        "Subtract 3 from both sides: x = -3 + 5 and x = -3 - 5."
+      ],
+      ja: [
+        "まず数を移す：両辺に16を足す。",
+        "(x + n)² = x² + 2n·x + n²。ここでは 2n = 6 なので n = 3、n² = 9：両辺に9を足す。",
+        "(x + 3)² = x² + 3x + 3x + 9 = x² + 6x + 9 なので、左辺は (x + 3)²。右辺は 16 + 9 = 25。",
+        "両辺の平方根をとる。√25 = 5、±を忘れずに。",
+        "両辺から3を引く：x = -3 + 5 と x = -3 - 5。"
+      ]
+    },
+    explanation: {
+      en: "Completing the square: move the number to get x² + 6x = 16. Half of 6 is 3, and (x + 3)² = x² + 3x + 3x + 9 = x² + 6x + 9, so adding 9 to both sides makes the left side (x + 3)². The right side is 16 + 9 = 25. Then x + 3 = ±5. x = -3 + 5 = 2 or x = -3 - 5 = -8, so x = -8 or x = 2.",
+      ja: "平方完成：数を移して x² + 6x = 16。6の半分は3で、(x + 3)² = x² + 3x + 3x + 9 = x² + 6x + 9。だから両辺に9を足すと、左辺は (x + 3)² になります。右辺は 16 + 9 = 25。x + 3 = ±5。x = -3 + 5 = 2、または x = -3 - 5 = -8 なので、x = -8 または x = 2。"
+    }
+  },
+  {
+    id: "roots_medium_02",
+    topic: "roots",
+    equation: "x² + 4x - 12 = 0",
+    answer: [-6, 2],
+    difficulty: "medium",
+    type: "complete-square",
+    basePoints: 20,
+    steps: [
+      { action: "add", value: 12, prompt: "moveNumberPrompt", target: "both-sides", result: "x² + 4x = 12" },
+      { action: "add", value: 4, prompt: "addSquarePrompt", target: "both-sides", result: "x² + 4x + 4 = 12 + 4",
+        moves: [{ action: "add", value: 16, kind: "halfB" }, { action: "add", value: 2, kind: "squareHalf" }, { action: "subtract", value: 4, kind: "wrongWay" }] },
+      { action: "complete", value: "(x + 2)² = 16", target: "both-sides", result: "(x + 2)² = 16",
+        wrong: ["(x + 4)² = 16", "(x - 2)² = 16", "(x + 2)² = 8"], wrongKinds: ["halfB", "undoSign", "generic"] },
+      { action: "sqrt", value: "x + 2 = ±4", target: "both-sides", result: "x + 2 = ±4",
+        wrong: ["x + 2 = 4", "x + 2 = ±16", "x - 2 = ±4"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -6, 2", target: "both-sides", result: "x = -6, 2",
+        wrong: ["x = -2, 6", "x = 2", "x = -4, 4"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Move the number first: add 12 to both sides.",
+        "(x + n)² = x² + 2n·x + n². Here 2n = 4, so n = 2 and n² = 4: add 4 to both sides.",
+        "(x + 2)² = x² + 2x + 2x + 4 = x² + 4x + 4, so the left side is (x + 2)². Right side: 12 + 4 = 16.",
+        "Take the square root of both sides. √16 = 4, and don't forget ±.",
+        "Subtract 2 from both sides: x = -2 + 4 and x = -2 - 4."
+      ],
+      ja: [
+        "まず数を移す：両辺に12を足す。",
+        "(x + n)² = x² + 2n·x + n²。ここでは 2n = 4 なので n = 2、n² = 4：両辺に4を足す。",
+        "(x + 2)² = x² + 2x + 2x + 4 = x² + 4x + 4 なので、左辺は (x + 2)²。右辺は 12 + 4 = 16。",
+        "両辺の平方根をとる。√16 = 4、±を忘れずに。",
+        "両辺から2を引く：x = -2 + 4 と x = -2 - 4。"
+      ]
+    },
+    explanation: {
+      en: "Completing the square: move the number to get x² + 4x = 12. Half of 4 is 2, and (x + 2)² = x² + 2x + 2x + 4 = x² + 4x + 4, so adding 4 to both sides makes the left side (x + 2)². The right side is 12 + 4 = 16. Then x + 2 = ±4. x = -2 + 4 = 2 or x = -2 - 4 = -6, so x = -6 or x = 2.",
+      ja: "平方完成：数を移して x² + 4x = 12。4の半分は2で、(x + 2)² = x² + 2x + 2x + 4 = x² + 4x + 4。だから両辺に4を足すと、左辺は (x + 2)² になります。右辺は 12 + 4 = 16。x + 2 = ±4。x = -2 + 4 = 2、または x = -2 - 4 = -6 なので、x = -6 または x = 2。"
+    }
+  },
+  {
+    id: "roots_medium_03",
+    topic: "roots",
+    equation: "x² - 8x + 7 = 0",
+    answer: [1, 7],
+    difficulty: "medium",
+    type: "complete-square",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: 7, prompt: "moveNumberPrompt", target: "both-sides", result: "x² - 8x = -7" },
+      { action: "add", value: 16, prompt: "addSquarePrompt", target: "both-sides", result: "x² - 8x + 16 = -7 + 16",
+        moves: [{ action: "add", value: 64, kind: "halfB" }, { action: "add", value: 4, kind: "squareHalf" }, { action: "subtract", value: 16, kind: "wrongWay" }] },
+      { action: "complete", value: "(x - 4)² = 9", target: "both-sides", result: "(x - 4)² = 9",
+        wrong: ["(x - 16)² = 9", "(x + 4)² = 9", "(x - 4)² = -23"], wrongKinds: ["halfB", "undoSign", "generic"] },
+      { action: "sqrt", value: "x - 4 = ±3", target: "both-sides", result: "x - 4 = ±3",
+        wrong: ["x - 4 = 3", "x - 4 = ±9", "x + 4 = ±3"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = 1, 7", target: "both-sides", result: "x = 1, 7",
+        wrong: ["x = -7, -1", "x = 7", "x = -3, 3"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Move the number first: subtract 7 from both sides.",
+        "(x - n)² = x² - 2n·x + n². Here 2n = 8, so n = 4 and n² = 16: add 16 to both sides.",
+        "(x - 4)² = x² - 4x - 4x + 16 = x² - 8x + 16, so the left side is (x - 4)². Right side: -7 + 16 = 9.",
+        "Take the square root of both sides. √9 = 3, and don't forget ±.",
+        "Add 4 to both sides: x = 4 + 3 and x = 4 - 3."
+      ],
+      ja: [
+        "まず数を移す：両辺から7を引く。",
+        "(x - n)² = x² - 2n·x + n²。ここでは 2n = 8 なので n = 4、n² = 16：両辺に16を足す。",
+        "(x - 4)² = x² - 4x - 4x + 16 = x² - 8x + 16 なので、左辺は (x - 4)²。右辺は -7 + 16 = 9。",
+        "両辺の平方根をとる。√9 = 3、±を忘れずに。",
+        "両辺に4を足す：x = 4 + 3 と x = 4 - 3。"
+      ]
+    },
+    explanation: {
+      en: "Completing the square: move the number to get x² - 8x = -7. Half of -8 is -4, and (x - 4)² = x² - 4x - 4x + 16 = x² - 8x + 16, so adding 16 to both sides makes the left side (x - 4)². The right side is -7 + 16 = 9. Then x - 4 = ±3. x = 4 + 3 = 7 or x = 4 - 3 = 1, so x = 1 or x = 7.",
+      ja: "平方完成：数を移して x² - 8x = -7。-8の半分は-4で、(x - 4)² = x² - 4x - 4x + 16 = x² - 8x + 16。だから両辺に16を足すと、左辺は (x - 4)² になります。右辺は -7 + 16 = 9。x - 4 = ±3。x = 4 + 3 = 7、または x = 4 - 3 = 1 なので、x = 1 または x = 7。"
+    }
+  },
+  {
+    id: "roots_medium_04",
+    topic: "roots",
+    equation: "x² - 6x - 16 = 0",
+    answer: [-2, 8],
+    difficulty: "medium",
+    type: "complete-square",
+    basePoints: 20,
+    steps: [
+      { action: "add", value: 16, prompt: "moveNumberPrompt", target: "both-sides", result: "x² - 6x = 16" },
+      { action: "add", value: 9, prompt: "addSquarePrompt", target: "both-sides", result: "x² - 6x + 9 = 16 + 9",
+        moves: [{ action: "add", value: 36, kind: "halfB" }, { action: "add", value: 3, kind: "squareHalf" }, { action: "subtract", value: 9, kind: "wrongWay" }] },
+      { action: "complete", value: "(x - 3)² = 25", target: "both-sides", result: "(x - 3)² = 25",
+        wrong: ["(x - 9)² = 25", "(x + 3)² = 25", "(x - 3)² = 7"], wrongKinds: ["halfB", "undoSign", "generic"] },
+      { action: "sqrt", value: "x - 3 = ±5", target: "both-sides", result: "x - 3 = ±5",
+        wrong: ["x - 3 = 5", "x - 3 = ±25", "x + 3 = ±5"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -2, 8", target: "both-sides", result: "x = -2, 8",
+        wrong: ["x = -8, 2", "x = 8", "x = -5, 5"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Move the number first: add 16 to both sides.",
+        "(x - n)² = x² - 2n·x + n². Here 2n = 6, so n = 3 and n² = 9: add 9 to both sides.",
+        "(x - 3)² = x² - 3x - 3x + 9 = x² - 6x + 9, so the left side is (x - 3)². Right side: 16 + 9 = 25.",
+        "Take the square root of both sides. √25 = 5, and don't forget ±.",
+        "Add 3 to both sides: x = 3 + 5 and x = 3 - 5."
+      ],
+      ja: [
+        "まず数を移す：両辺に16を足す。",
+        "(x - n)² = x² - 2n·x + n²。ここでは 2n = 6 なので n = 3、n² = 9：両辺に9を足す。",
+        "(x - 3)² = x² - 3x - 3x + 9 = x² - 6x + 9 なので、左辺は (x - 3)²。右辺は 16 + 9 = 25。",
+        "両辺の平方根をとる。√25 = 5、±を忘れずに。",
+        "両辺に3を足す：x = 3 + 5 と x = 3 - 5。"
+      ]
+    },
+    explanation: {
+      en: "Completing the square: move the number to get x² - 6x = 16. Half of -6 is -3, and (x - 3)² = x² - 3x - 3x + 9 = x² - 6x + 9, so adding 9 to both sides makes the left side (x - 3)². The right side is 16 + 9 = 25. Then x - 3 = ±5. x = 3 + 5 = 8 or x = 3 - 5 = -2, so x = -2 or x = 8.",
+      ja: "平方完成：数を移して x² - 6x = 16。-6の半分は-3で、(x - 3)² = x² - 3x - 3x + 9 = x² - 6x + 9。だから両辺に9を足すと、左辺は (x - 3)² になります。右辺は 16 + 9 = 25。x - 3 = ±5。x = 3 + 5 = 8、または x = 3 - 5 = -2 なので、x = -2 または x = 8。"
+    }
+  },
+  {
+    id: "roots_medium_05",
+    topic: "roots",
+    equation: "x² + 10x + 9 = 0",
+    answer: [-9, -1],
+    difficulty: "medium",
+    type: "complete-square",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: 9, prompt: "moveNumberPrompt", target: "both-sides", result: "x² + 10x = -9" },
+      { action: "add", value: 25, prompt: "addSquarePrompt", target: "both-sides", result: "x² + 10x + 25 = -9 + 25",
+        moves: [{ action: "add", value: 100, kind: "halfB" }, { action: "add", value: 5, kind: "squareHalf" }, { action: "subtract", value: 25, kind: "wrongWay" }] },
+      { action: "complete", value: "(x + 5)² = 16", target: "both-sides", result: "(x + 5)² = 16",
+        wrong: ["(x + 25)² = 16", "(x - 5)² = 16", "(x + 5)² = -34"], wrongKinds: ["halfB", "undoSign", "generic"] },
+      { action: "sqrt", value: "x + 5 = ±4", target: "both-sides", result: "x + 5 = ±4",
+        wrong: ["x + 5 = 4", "x + 5 = ±16", "x - 5 = ±4"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -9, -1", target: "both-sides", result: "x = -9, -1",
+        wrong: ["x = 1, 9", "x = -1", "x = -4, 4"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Move the number first: subtract 9 from both sides.",
+        "(x + n)² = x² + 2n·x + n². Here 2n = 10, so n = 5 and n² = 25: add 25 to both sides.",
+        "(x + 5)² = x² + 5x + 5x + 25 = x² + 10x + 25, so the left side is (x + 5)². Right side: -9 + 25 = 16.",
+        "Take the square root of both sides. √16 = 4, and don't forget ±.",
+        "Subtract 5 from both sides: x = -5 + 4 and x = -5 - 4."
+      ],
+      ja: [
+        "まず数を移す：両辺から9を引く。",
+        "(x + n)² = x² + 2n·x + n²。ここでは 2n = 10 なので n = 5、n² = 25：両辺に25を足す。",
+        "(x + 5)² = x² + 5x + 5x + 25 = x² + 10x + 25 なので、左辺は (x + 5)²。右辺は -9 + 25 = 16。",
+        "両辺の平方根をとる。√16 = 4、±を忘れずに。",
+        "両辺から5を引く：x = -5 + 4 と x = -5 - 4。"
+      ]
+    },
+    explanation: {
+      en: "Completing the square: move the number to get x² + 10x = -9. Half of 10 is 5, and (x + 5)² = x² + 5x + 5x + 25 = x² + 10x + 25, so adding 25 to both sides makes the left side (x + 5)². The right side is -9 + 25 = 16. Then x + 5 = ±4. x = -5 + 4 = -1 or x = -5 - 4 = -9, so x = -9 or x = -1.",
+      ja: "平方完成：数を移して x² + 10x = -9。10の半分は5で、(x + 5)² = x² + 5x + 5x + 25 = x² + 10x + 25。だから両辺に25を足すと、左辺は (x + 5)² になります。右辺は -9 + 25 = 16。x + 5 = ±4。x = -5 + 4 = -1、または x = -5 - 4 = -9 なので、x = -9 または x = -1。"
+    }
+  },
+  {
+    id: "roots_medium_06",
+    topic: "roots",
+    equation: "x² - 4x - 60 = 0",
+    answer: [-6, 10],
+    difficulty: "medium",
+    type: "complete-square",
+    basePoints: 20,
+    steps: [
+      { action: "add", value: 60, prompt: "moveNumberPrompt", target: "both-sides", result: "x² - 4x = 60" },
+      { action: "add", value: 4, prompt: "addSquarePrompt", target: "both-sides", result: "x² - 4x + 4 = 60 + 4",
+        moves: [{ action: "add", value: 16, kind: "halfB" }, { action: "add", value: 2, kind: "squareHalf" }, { action: "subtract", value: 4, kind: "wrongWay" }] },
+      { action: "complete", value: "(x - 2)² = 64", target: "both-sides", result: "(x - 2)² = 64",
+        wrong: ["(x - 4)² = 64", "(x + 2)² = 64", "(x - 2)² = 56"], wrongKinds: ["halfB", "undoSign", "generic"] },
+      { action: "sqrt", value: "x - 2 = ±8", target: "both-sides", result: "x - 2 = ±8",
+        wrong: ["x - 2 = 8", "x - 2 = ±64", "x + 2 = ±8"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -6, 10", target: "both-sides", result: "x = -6, 10",
+        wrong: ["x = -10, 6", "x = 10", "x = -8, 8"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Move the number first: add 60 to both sides.",
+        "(x - n)² = x² - 2n·x + n². Here 2n = 4, so n = 2 and n² = 4: add 4 to both sides.",
+        "(x - 2)² = x² - 2x - 2x + 4 = x² - 4x + 4, so the left side is (x - 2)². Right side: 60 + 4 = 64.",
+        "Take the square root of both sides. √64 = 8, and don't forget ±.",
+        "Add 2 to both sides: x = 2 + 8 and x = 2 - 8."
+      ],
+      ja: [
+        "まず数を移す：両辺に60を足す。",
+        "(x - n)² = x² - 2n·x + n²。ここでは 2n = 4 なので n = 2、n² = 4：両辺に4を足す。",
+        "(x - 2)² = x² - 2x - 2x + 4 = x² - 4x + 4 なので、左辺は (x - 2)²。右辺は 60 + 4 = 64。",
+        "両辺の平方根をとる。√64 = 8、±を忘れずに。",
+        "両辺に2を足す：x = 2 + 8 と x = 2 - 8。"
+      ]
+    },
+    explanation: {
+      en: "Completing the square: move the number to get x² - 4x = 60. Half of -4 is -2, and (x - 2)² = x² - 2x - 2x + 4 = x² - 4x + 4, so adding 4 to both sides makes the left side (x - 2)². The right side is 60 + 4 = 64. Then x - 2 = ±8. x = 2 + 8 = 10 or x = 2 - 8 = -6, so x = -6 or x = 10.",
+      ja: "平方完成：数を移して x² - 4x = 60。-4の半分は-2で、(x - 2)² = x² - 2x - 2x + 4 = x² - 4x + 4。だから両辺に4を足すと、左辺は (x - 2)² になります。右辺は 60 + 4 = 64。x - 2 = ±8。x = 2 + 8 = 10、または x = 2 - 8 = -6 なので、x = -6 または x = 10。"
+    }
+  },
+  {
+    id: "roots_medium_07",
+    topic: "roots",
+    equation: "x² + 8x - 20 = 0",
+    answer: [-10, 2],
+    difficulty: "medium",
+    type: "complete-square",
+    basePoints: 20,
+    steps: [
+      { action: "add", value: 20, prompt: "moveNumberPrompt", target: "both-sides", result: "x² + 8x = 20" },
+      { action: "add", value: 16, prompt: "addSquarePrompt", target: "both-sides", result: "x² + 8x + 16 = 20 + 16",
+        moves: [{ action: "add", value: 64, kind: "halfB" }, { action: "add", value: 4, kind: "squareHalf" }, { action: "subtract", value: 16, kind: "wrongWay" }] },
+      { action: "complete", value: "(x + 4)² = 36", target: "both-sides", result: "(x + 4)² = 36",
+        wrong: ["(x + 16)² = 36", "(x - 4)² = 36", "(x + 4)² = 4"], wrongKinds: ["halfB", "undoSign", "generic"] },
+      { action: "sqrt", value: "x + 4 = ±6", target: "both-sides", result: "x + 4 = ±6",
+        wrong: ["x + 4 = 6", "x + 4 = ±36", "x - 4 = ±6"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -10, 2", target: "both-sides", result: "x = -10, 2",
+        wrong: ["x = -2, 10", "x = 2", "x = -6, 6"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Move the number first: add 20 to both sides.",
+        "(x + n)² = x² + 2n·x + n². Here 2n = 8, so n = 4 and n² = 16: add 16 to both sides.",
+        "(x + 4)² = x² + 4x + 4x + 16 = x² + 8x + 16, so the left side is (x + 4)². Right side: 20 + 16 = 36.",
+        "Take the square root of both sides. √36 = 6, and don't forget ±.",
+        "Subtract 4 from both sides: x = -4 + 6 and x = -4 - 6."
+      ],
+      ja: [
+        "まず数を移す：両辺に20を足す。",
+        "(x + n)² = x² + 2n·x + n²。ここでは 2n = 8 なので n = 4、n² = 16：両辺に16を足す。",
+        "(x + 4)² = x² + 4x + 4x + 16 = x² + 8x + 16 なので、左辺は (x + 4)²。右辺は 20 + 16 = 36。",
+        "両辺の平方根をとる。√36 = 6、±を忘れずに。",
+        "両辺から4を引く：x = -4 + 6 と x = -4 - 6。"
+      ]
+    },
+    explanation: {
+      en: "Completing the square: move the number to get x² + 8x = 20. Half of 8 is 4, and (x + 4)² = x² + 4x + 4x + 16 = x² + 8x + 16, so adding 16 to both sides makes the left side (x + 4)². The right side is 20 + 16 = 36. Then x + 4 = ±6. x = -4 + 6 = 2 or x = -4 - 6 = -10, so x = -10 or x = 2.",
+      ja: "平方完成：数を移して x² + 8x = 20。8の半分は4で、(x + 4)² = x² + 4x + 4x + 16 = x² + 8x + 16。だから両辺に16を足すと、左辺は (x + 4)² になります。右辺は 20 + 16 = 36。x + 4 = ±6。x = -4 + 6 = 2、または x = -4 - 6 = -10 なので、x = -10 または x = 2。"
+    }
+  },
+  {
+    id: "roots_medium_08",
+    topic: "roots",
+    equation: "x² - 10x - 24 = 0",
+    answer: [-2, 12],
+    difficulty: "medium",
+    type: "complete-square",
+    basePoints: 20,
+    steps: [
+      { action: "add", value: 24, prompt: "moveNumberPrompt", target: "both-sides", result: "x² - 10x = 24" },
+      { action: "add", value: 25, prompt: "addSquarePrompt", target: "both-sides", result: "x² - 10x + 25 = 24 + 25",
+        moves: [{ action: "add", value: 100, kind: "halfB" }, { action: "add", value: 5, kind: "squareHalf" }, { action: "subtract", value: 25, kind: "wrongWay" }] },
+      { action: "complete", value: "(x - 5)² = 49", target: "both-sides", result: "(x - 5)² = 49",
+        wrong: ["(x - 25)² = 49", "(x + 5)² = 49", "(x - 5)² = -1"], wrongKinds: ["halfB", "undoSign", "generic"] },
+      { action: "sqrt", value: "x - 5 = ±7", target: "both-sides", result: "x - 5 = ±7",
+        wrong: ["x - 5 = 7", "x - 5 = ±49", "x + 5 = ±7"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -2, 12", target: "both-sides", result: "x = -2, 12",
+        wrong: ["x = -12, 2", "x = 12", "x = -7, 7"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Move the number first: add 24 to both sides.",
+        "(x - n)² = x² - 2n·x + n². Here 2n = 10, so n = 5 and n² = 25: add 25 to both sides.",
+        "(x - 5)² = x² - 5x - 5x + 25 = x² - 10x + 25, so the left side is (x - 5)². Right side: 24 + 25 = 49.",
+        "Take the square root of both sides. √49 = 7, and don't forget ±.",
+        "Add 5 to both sides: x = 5 + 7 and x = 5 - 7."
+      ],
+      ja: [
+        "まず数を移す：両辺に24を足す。",
+        "(x - n)² = x² - 2n·x + n²。ここでは 2n = 10 なので n = 5、n² = 25：両辺に25を足す。",
+        "(x - 5)² = x² - 5x - 5x + 25 = x² - 10x + 25 なので、左辺は (x - 5)²。右辺は 24 + 25 = 49。",
+        "両辺の平方根をとる。√49 = 7、±を忘れずに。",
+        "両辺に5を足す：x = 5 + 7 と x = 5 - 7。"
+      ]
+    },
+    explanation: {
+      en: "Completing the square: move the number to get x² - 10x = 24. Half of -10 is -5, and (x - 5)² = x² - 5x - 5x + 25 = x² - 10x + 25, so adding 25 to both sides makes the left side (x - 5)². The right side is 24 + 25 = 49. Then x - 5 = ±7. x = 5 + 7 = 12 or x = 5 - 7 = -2, so x = -2 or x = 12.",
+      ja: "平方完成：数を移して x² - 10x = 24。-10の半分は-5で、(x - 5)² = x² - 5x - 5x + 25 = x² - 10x + 25。だから両辺に25を足すと、左辺は (x - 5)² になります。右辺は 24 + 25 = 49。x - 5 = ±7。x = 5 + 7 = 12、または x = 5 - 7 = -2 なので、x = -2 または x = 12。"
+    }
+  },
+  {
+    id: "roots_medium_09",
+    topic: "roots",
+    equation: "x² + 6x + 5 = 0",
+    answer: [-5, -1],
+    difficulty: "medium",
+    type: "complete-square",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: 5, prompt: "moveNumberPrompt", target: "both-sides", result: "x² + 6x = -5" },
+      { action: "add", value: 9, prompt: "addSquarePrompt", target: "both-sides", result: "x² + 6x + 9 = -5 + 9",
+        moves: [{ action: "add", value: 36, kind: "halfB" }, { action: "add", value: 3, kind: "squareHalf" }, { action: "subtract", value: 9, kind: "wrongWay" }] },
+      { action: "complete", value: "(x + 3)² = 4", target: "both-sides", result: "(x + 3)² = 4",
+        wrong: ["(x + 9)² = 4", "(x - 3)² = 4", "(x + 3)² = -14"], wrongKinds: ["halfB", "undoSign", "generic"] },
+      { action: "sqrt", value: "x + 3 = ±2", target: "both-sides", result: "x + 3 = ±2",
+        wrong: ["x + 3 = 2", "x + 3 = ±4", "x - 3 = ±2"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -5, -1", target: "both-sides", result: "x = -5, -1",
+        wrong: ["x = 1, 5", "x = -1", "x = -2, 2"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Move the number first: subtract 5 from both sides.",
+        "(x + n)² = x² + 2n·x + n². Here 2n = 6, so n = 3 and n² = 9: add 9 to both sides.",
+        "(x + 3)² = x² + 3x + 3x + 9 = x² + 6x + 9, so the left side is (x + 3)². Right side: -5 + 9 = 4.",
+        "Take the square root of both sides. √4 = 2, and don't forget ±.",
+        "Subtract 3 from both sides: x = -3 + 2 and x = -3 - 2."
+      ],
+      ja: [
+        "まず数を移す：両辺から5を引く。",
+        "(x + n)² = x² + 2n·x + n²。ここでは 2n = 6 なので n = 3、n² = 9：両辺に9を足す。",
+        "(x + 3)² = x² + 3x + 3x + 9 = x² + 6x + 9 なので、左辺は (x + 3)²。右辺は -5 + 9 = 4。",
+        "両辺の平方根をとる。√4 = 2、±を忘れずに。",
+        "両辺から3を引く：x = -3 + 2 と x = -3 - 2。"
+      ]
+    },
+    explanation: {
+      en: "Completing the square: move the number to get x² + 6x = -5. Half of 6 is 3, and (x + 3)² = x² + 3x + 3x + 9 = x² + 6x + 9, so adding 9 to both sides makes the left side (x + 3)². The right side is -5 + 9 = 4. Then x + 3 = ±2. x = -3 + 2 = -1 or x = -3 - 2 = -5, so x = -5 or x = -1.",
+      ja: "平方完成：数を移して x² + 6x = -5。6の半分は3で、(x + 3)² = x² + 3x + 3x + 9 = x² + 6x + 9。だから両辺に9を足すと、左辺は (x + 3)² になります。右辺は -5 + 9 = 4。x + 3 = ±2。x = -3 + 2 = -1、または x = -3 - 2 = -5 なので、x = -5 または x = -1。"
+    }
+  },
+  {
+    id: "roots_medium_10",
+    topic: "roots",
+    equation: "x² - 12x - 45 = 0",
+    answer: [-3, 15],
+    difficulty: "medium",
+    type: "complete-square",
+    basePoints: 20,
+    steps: [
+      { action: "add", value: 45, prompt: "moveNumberPrompt", target: "both-sides", result: "x² - 12x = 45" },
+      { action: "add", value: 36, prompt: "addSquarePrompt", target: "both-sides", result: "x² - 12x + 36 = 45 + 36",
+        moves: [{ action: "add", value: 144, kind: "halfB" }, { action: "add", value: 6, kind: "squareHalf" }, { action: "subtract", value: 36, kind: "wrongWay" }] },
+      { action: "complete", value: "(x - 6)² = 81", target: "both-sides", result: "(x - 6)² = 81",
+        wrong: ["(x - 36)² = 81", "(x + 6)² = 81", "(x - 6)² = 9"], wrongKinds: ["halfB", "undoSign", "generic"] },
+      { action: "sqrt", value: "x - 6 = ±9", target: "both-sides", result: "x - 6 = ±9",
+        wrong: ["x - 6 = 9", "x - 6 = ±81", "x + 6 = ±9"], wrongKinds: ["plusMinus", "rootSlip", "undoSign"] },
+      { action: "roots", value: "x = -3, 15", target: "both-sides", result: "x = -3, 15",
+        wrong: ["x = -15, 3", "x = 15", "x = -9, 9"], wrongKinds: ["undoSign", "plusMinus", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Move the number first: add 45 to both sides.",
+        "(x - n)² = x² - 2n·x + n². Here 2n = 12, so n = 6 and n² = 36: add 36 to both sides.",
+        "(x - 6)² = x² - 6x - 6x + 36 = x² - 12x + 36, so the left side is (x - 6)². Right side: 45 + 36 = 81.",
+        "Take the square root of both sides. √81 = 9, and don't forget ±.",
+        "Add 6 to both sides: x = 6 + 9 and x = 6 - 9."
+      ],
+      ja: [
+        "まず数を移す：両辺に45を足す。",
+        "(x - n)² = x² - 2n·x + n²。ここでは 2n = 12 なので n = 6、n² = 36：両辺に36を足す。",
+        "(x - 6)² = x² - 6x - 6x + 36 = x² - 12x + 36 なので、左辺は (x - 6)²。右辺は 45 + 36 = 81。",
+        "両辺の平方根をとる。√81 = 9、±を忘れずに。",
+        "両辺に6を足す：x = 6 + 9 と x = 6 - 9。"
+      ]
+    },
+    explanation: {
+      en: "Completing the square: move the number to get x² - 12x = 45. Half of -12 is -6, and (x - 6)² = x² - 6x - 6x + 36 = x² - 12x + 36, so adding 36 to both sides makes the left side (x - 6)². The right side is 45 + 36 = 81. Then x - 6 = ±9. x = 6 + 9 = 15 or x = 6 - 9 = -3, so x = -3 or x = 15.",
+      ja: "平方完成：数を移して x² - 12x = 45。-12の半分は-6で、(x - 6)² = x² - 6x - 6x + 36 = x² - 12x + 36。だから両辺に36を足すと、左辺は (x - 6)² になります。右辺は 45 + 36 = 81。x - 6 = ±9。x = 6 + 9 = 15、または x = 6 - 9 = -3 なので、x = -3 または x = 15。"
+    }
+  },
+
+  // ---- Hard: the quadratic formula, x = (-b ± √(b² - 4ac))/2a (b² - 4ac a perfect square) ----
+  // Five steps: read off a, b and c (the formula panel under the card then fills them in), work out
+  // b² - 4ac on its own (the sign of -4ac is where most slips happen), put it into the formula,
+  // work out the √, and find both answers. `abc` is [a, b, c] for the panel.
+  // Levels 7-10 have a number in front of x²: 2a is then 4 or 6.
+  {
+    id: "roots_hard_01",
+    topic: "roots",
+    equation: "x² + 5x - 24 = 0",
+    answer: [-8, 3],
+    difficulty: "hard",
+    type: "formula",
+    basePoints: 30,
+    abc: [1, 5, -24],
+    steps: [
+      { action: "coef", value: "1, 5, -24", prompt: "coefPrompt", fill: "formula", target: "both-sides", result: "x² + 5x - 24 = 0\na = 1, b = 5, c = -24",
+        wrong: ["1, 5, 24", "1, -5, -24", "0, 5, -24"], wrongKinds: ["readCoef", "readCoef", "readCoef"] },
+      { action: "discriminant", value: "b² - 4ac = 121", prompt: "discriminantPrompt", focus: "disc", target: "both-sides", result: "a = 1, b = 5, c = -24\nb² - 4ac = 121",
+        wrong: ["b² - 4ac = -71", "b² - 4ac = 49", "b² - 4ac = 106"], wrongKinds: ["discriminant", "discriminant", "discriminant"] },
+      { action: "formula", value: "x = (-5 ± √121)/2", focus: "top", target: "both-sides", result: "x = (-5 ± √121)/2",
+        wrong: ["x = (5 ± √121)/2", "x = (-5 ± 121)/2", "x = -5 ± √121"], wrongKinds: ["undoSign", "rootSlip", "twoA"] },
+      { action: "evalRoot", value: "x = (-5 ± 11)/2", target: "both-sides", result: "x = (-5 ± 11)/2",
+        wrong: ["x = (-5 + 11)/2", "x = (-5 ± 12)/2", "x = -5 ± 11"], wrongKinds: ["plusMinus", "rootSlip", "twoA"] },
+      { action: "roots", value: "x = -8, 3", target: "both-sides", result: "x = -8, 3",
+        wrong: ["x = 3", "x = -16, 6", "x = -3, 8"], wrongKinds: ["plusMinus", "twoA", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "a is the number in front of x², b the number in front of x, c the number on its own. Keep their signs: a = 1, b = 5, c = -24. (x² is 1x², so a = 1.)",
+        "Put the numbers in: b² - 4ac = 5² - 4 × 1 × (-24) = 25 + 96 = 121. Careful: c is -24, so -4ac is +96.",
+        "Quadratic formula: x = (-b ± √(b² - 4ac))/2a. Here -b = -5 and 2a = 2, so put in √121.",
+        "√121 = 11, because 11² = 121. Keep the ±: it gives both answers.",
+        "Work out both: (-5 + 11)/2 = 3 and (-5 - 11)/2 = -8."
+      ],
+      ja: [
+        "aはx²の前の数、bはxの前の数、cは単独の数。符号もそのまま：a = 1、b = 5、c = -24。（x² は 1x² なので a = 1。）",
+        "数を入れる：b² - 4ac = 5² - 4 × 1 × (-24) = 25 + 96 = 121。注意：c は -24 なので、-4ac は +96。",
+        "解の公式：x = (-b ± √(b² - 4ac))/2a。-b = -5、2a = 2 なので、√121 を入れる。",
+        "11² = 121 なので √121 = 11。±はそのまま：答えが2つ出ます。",
+        "両方計算する：(-5 + 11)/2 = 3、(-5 - 11)/2 = -8。"
+      ]
+    },
+    explanation: {
+      en: "The quadratic formula works on any quadratic. Read off a = 1, b = 5, c = -24: b² - 4ac = 5² - 4 × 1 × (-24) = 25 + 96 = 121, and √121 = 11. So x = (-5 ± 11)/2: x = -8 or x = 3.",
+      ja: "解の公式はどんな二次方程式にも使えます。a = 1、b = 5、c = -24 を読み取って、b² - 4ac = 5² - 4 × 1 × (-24) = 25 + 96 = 121、√121 = 11。x = (-5 ± 11)/2 なので、x = -8 または x = 3。"
+    }
+  },
+  {
+    id: "roots_hard_02",
+    topic: "roots",
+    equation: "x² - 3x - 40 = 0",
+    answer: [-5, 8],
+    difficulty: "hard",
+    type: "formula",
+    basePoints: 30,
+    abc: [1, -3, -40],
+    steps: [
+      { action: "coef", value: "1, -3, -40", prompt: "coefPrompt", fill: "formula", target: "both-sides", result: "x² - 3x - 40 = 0\na = 1, b = -3, c = -40",
+        wrong: ["1, -3, 40", "1, 3, -40", "0, -3, -40"], wrongKinds: ["readCoef", "readCoef", "readCoef"] },
+      { action: "discriminant", value: "b² - 4ac = 169", prompt: "discriminantPrompt", focus: "disc", target: "both-sides", result: "a = 1, b = -3, c = -40\nb² - 4ac = 169",
+        wrong: ["b² - 4ac = -151", "b² - 4ac = 49", "b² - 4ac = 154"], wrongKinds: ["discriminant", "discriminant", "discriminant"] },
+      { action: "formula", value: "x = (3 ± √169)/2", focus: "top", target: "both-sides", result: "x = (3 ± √169)/2",
+        wrong: ["x = (-3 ± √169)/2", "x = (3 ± 169)/2", "x = 3 ± √169"], wrongKinds: ["undoSign", "rootSlip", "twoA"] },
+      { action: "evalRoot", value: "x = (3 ± 13)/2", target: "both-sides", result: "x = (3 ± 13)/2",
+        wrong: ["x = (3 + 13)/2", "x = (3 ± 14)/2", "x = 3 ± 13"], wrongKinds: ["plusMinus", "rootSlip", "twoA"] },
+      { action: "roots", value: "x = -5, 8", target: "both-sides", result: "x = -5, 8",
+        wrong: ["x = 8", "x = -10, 16", "x = -8, 5"], wrongKinds: ["plusMinus", "twoA", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "a is the number in front of x², b the number in front of x, c the number on its own. Keep their signs: a = 1, b = -3, c = -40. (x² is 1x², so a = 1.)",
+        "Put the numbers in: b² - 4ac = (-3)² - 4 × 1 × (-40) = 9 + 160 = 169. Careful: c is -40, so -4ac is +160.",
+        "Quadratic formula: x = (-b ± √(b² - 4ac))/2a. Here -b = 3 and 2a = 2, so put in √169.",
+        "√169 = 13, because 13² = 169. Keep the ±: it gives both answers.",
+        "Work out both: (3 + 13)/2 = 8 and (3 - 13)/2 = -5."
+      ],
+      ja: [
+        "aはx²の前の数、bはxの前の数、cは単独の数。符号もそのまま：a = 1、b = -3、c = -40。（x² は 1x² なので a = 1。）",
+        "数を入れる：b² - 4ac = (-3)² - 4 × 1 × (-40) = 9 + 160 = 169。注意：c は -40 なので、-4ac は +160。",
+        "解の公式：x = (-b ± √(b² - 4ac))/2a。-b = 3、2a = 2 なので、√169 を入れる。",
+        "13² = 169 なので √169 = 13。±はそのまま：答えが2つ出ます。",
+        "両方計算する：(3 + 13)/2 = 8、(3 - 13)/2 = -5。"
+      ]
+    },
+    explanation: {
+      en: "The quadratic formula works on any quadratic. Read off a = 1, b = -3, c = -40: b² - 4ac = (-3)² - 4 × 1 × (-40) = 9 + 160 = 169, and √169 = 13. So x = (3 ± 13)/2: x = -5 or x = 8.",
+      ja: "解の公式はどんな二次方程式にも使えます。a = 1、b = -3、c = -40 を読み取って、b² - 4ac = (-3)² - 4 × 1 × (-40) = 9 + 160 = 169、√169 = 13。x = (3 ± 13)/2 なので、x = -5 または x = 8。"
+    }
+  },
+  {
+    id: "roots_hard_03",
+    topic: "roots",
+    equation: "x² + 7x - 44 = 0",
+    answer: [-11, 4],
+    difficulty: "hard",
+    type: "formula",
+    basePoints: 30,
+    abc: [1, 7, -44],
+    steps: [
+      { action: "coef", value: "1, 7, -44", prompt: "coefPrompt", fill: "formula", target: "both-sides", result: "x² + 7x - 44 = 0\na = 1, b = 7, c = -44",
+        wrong: ["1, 7, 44", "1, -7, -44", "0, 7, -44"], wrongKinds: ["readCoef", "readCoef", "readCoef"] },
+      { action: "discriminant", value: "b² - 4ac = 225", prompt: "discriminantPrompt", focus: "disc", target: "both-sides", result: "a = 1, b = 7, c = -44\nb² - 4ac = 225",
+        wrong: ["b² - 4ac = -127", "b² - 4ac = 93", "b² - 4ac = 190"], wrongKinds: ["discriminant", "discriminant", "discriminant"] },
+      { action: "formula", value: "x = (-7 ± √225)/2", focus: "top", target: "both-sides", result: "x = (-7 ± √225)/2",
+        wrong: ["x = (7 ± √225)/2", "x = (-7 ± 225)/2", "x = -7 ± √225"], wrongKinds: ["undoSign", "rootSlip", "twoA"] },
+      { action: "evalRoot", value: "x = (-7 ± 15)/2", target: "both-sides", result: "x = (-7 ± 15)/2",
+        wrong: ["x = (-7 + 15)/2", "x = (-7 ± 16)/2", "x = -7 ± 15"], wrongKinds: ["plusMinus", "rootSlip", "twoA"] },
+      { action: "roots", value: "x = -11, 4", target: "both-sides", result: "x = -11, 4",
+        wrong: ["x = 4", "x = -22, 8", "x = -4, 11"], wrongKinds: ["plusMinus", "twoA", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "a is the number in front of x², b the number in front of x, c the number on its own. Keep their signs: a = 1, b = 7, c = -44. (x² is 1x², so a = 1.)",
+        "Put the numbers in: b² - 4ac = 7² - 4 × 1 × (-44) = 49 + 176 = 225. Careful: c is -44, so -4ac is +176.",
+        "Quadratic formula: x = (-b ± √(b² - 4ac))/2a. Here -b = -7 and 2a = 2, so put in √225.",
+        "√225 = 15, because 15² = 225. Keep the ±: it gives both answers.",
+        "Work out both: (-7 + 15)/2 = 4 and (-7 - 15)/2 = -11."
+      ],
+      ja: [
+        "aはx²の前の数、bはxの前の数、cは単独の数。符号もそのまま：a = 1、b = 7、c = -44。（x² は 1x² なので a = 1。）",
+        "数を入れる：b² - 4ac = 7² - 4 × 1 × (-44) = 49 + 176 = 225。注意：c は -44 なので、-4ac は +176。",
+        "解の公式：x = (-b ± √(b² - 4ac))/2a。-b = -7、2a = 2 なので、√225 を入れる。",
+        "15² = 225 なので √225 = 15。±はそのまま：答えが2つ出ます。",
+        "両方計算する：(-7 + 15)/2 = 4、(-7 - 15)/2 = -11。"
+      ]
+    },
+    explanation: {
+      en: "The quadratic formula works on any quadratic. Read off a = 1, b = 7, c = -44: b² - 4ac = 7² - 4 × 1 × (-44) = 49 + 176 = 225, and √225 = 15. So x = (-7 ± 15)/2: x = -11 or x = 4.",
+      ja: "解の公式はどんな二次方程式にも使えます。a = 1、b = 7、c = -44 を読み取って、b² - 4ac = 7² - 4 × 1 × (-44) = 49 + 176 = 225、√225 = 15。x = (-7 ± 15)/2 なので、x = -11 または x = 4。"
+    }
+  },
+  {
+    id: "roots_hard_04",
+    topic: "roots",
+    equation: "x² - 9x - 52 = 0",
+    answer: [-4, 13],
+    difficulty: "hard",
+    type: "formula",
+    basePoints: 30,
+    abc: [1, -9, -52],
+    steps: [
+      { action: "coef", value: "1, -9, -52", prompt: "coefPrompt", fill: "formula", target: "both-sides", result: "x² - 9x - 52 = 0\na = 1, b = -9, c = -52",
+        wrong: ["1, -9, 52", "1, 9, -52", "0, -9, -52"], wrongKinds: ["readCoef", "readCoef", "readCoef"] },
+      { action: "discriminant", value: "b² - 4ac = 289", prompt: "discriminantPrompt", focus: "disc", target: "both-sides", result: "a = 1, b = -9, c = -52\nb² - 4ac = 289",
+        wrong: ["b² - 4ac = -127", "b² - 4ac = 133", "b² - 4ac = 190"], wrongKinds: ["discriminant", "discriminant", "discriminant"] },
+      { action: "formula", value: "x = (9 ± √289)/2", focus: "top", target: "both-sides", result: "x = (9 ± √289)/2",
+        wrong: ["x = (-9 ± √289)/2", "x = (9 ± 289)/2", "x = 9 ± √289"], wrongKinds: ["undoSign", "rootSlip", "twoA"] },
+      { action: "evalRoot", value: "x = (9 ± 17)/2", target: "both-sides", result: "x = (9 ± 17)/2",
+        wrong: ["x = (9 + 17)/2", "x = (9 ± 18)/2", "x = 9 ± 17"], wrongKinds: ["plusMinus", "rootSlip", "twoA"] },
+      { action: "roots", value: "x = -4, 13", target: "both-sides", result: "x = -4, 13",
+        wrong: ["x = 13", "x = -8, 26", "x = -13, 4"], wrongKinds: ["plusMinus", "twoA", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "a is the number in front of x², b the number in front of x, c the number on its own. Keep their signs: a = 1, b = -9, c = -52. (x² is 1x², so a = 1.)",
+        "Put the numbers in: b² - 4ac = (-9)² - 4 × 1 × (-52) = 81 + 208 = 289. Careful: c is -52, so -4ac is +208.",
+        "Quadratic formula: x = (-b ± √(b² - 4ac))/2a. Here -b = 9 and 2a = 2, so put in √289.",
+        "√289 = 17, because 17² = 289. Keep the ±: it gives both answers.",
+        "Work out both: (9 + 17)/2 = 13 and (9 - 17)/2 = -4."
+      ],
+      ja: [
+        "aはx²の前の数、bはxの前の数、cは単独の数。符号もそのまま：a = 1、b = -9、c = -52。（x² は 1x² なので a = 1。）",
+        "数を入れる：b² - 4ac = (-9)² - 4 × 1 × (-52) = 81 + 208 = 289。注意：c は -52 なので、-4ac は +208。",
+        "解の公式：x = (-b ± √(b² - 4ac))/2a。-b = 9、2a = 2 なので、√289 を入れる。",
+        "17² = 289 なので √289 = 17。±はそのまま：答えが2つ出ます。",
+        "両方計算する：(9 + 17)/2 = 13、(9 - 17)/2 = -4。"
+      ]
+    },
+    explanation: {
+      en: "The quadratic formula works on any quadratic. Read off a = 1, b = -9, c = -52: b² - 4ac = (-9)² - 4 × 1 × (-52) = 81 + 208 = 289, and √289 = 17. So x = (9 ± 17)/2: x = -4 or x = 13.",
+      ja: "解の公式はどんな二次方程式にも使えます。a = 1、b = -9、c = -52 を読み取って、b² - 4ac = (-9)² - 4 × 1 × (-52) = 81 + 208 = 289、√289 = 17。x = (9 ± 17)/2 なので、x = -4 または x = 13。"
+    }
+  },
+  {
+    id: "roots_hard_05",
+    topic: "roots",
+    equation: "x² + 11x - 60 = 0",
+    answer: [-15, 4],
+    difficulty: "hard",
+    type: "formula",
+    basePoints: 30,
+    abc: [1, 11, -60],
+    steps: [
+      { action: "coef", value: "1, 11, -60", prompt: "coefPrompt", fill: "formula", target: "both-sides", result: "x² + 11x - 60 = 0\na = 1, b = 11, c = -60",
+        wrong: ["1, 11, 60", "1, -11, -60", "0, 11, -60"], wrongKinds: ["readCoef", "readCoef", "readCoef"] },
+      { action: "discriminant", value: "b² - 4ac = 361", prompt: "discriminantPrompt", focus: "disc", target: "both-sides", result: "a = 1, b = 11, c = -60\nb² - 4ac = 361",
+        wrong: ["b² - 4ac = -119", "b² - 4ac = 181", "b² - 4ac = 262"], wrongKinds: ["discriminant", "discriminant", "discriminant"] },
+      { action: "formula", value: "x = (-11 ± √361)/2", focus: "top", target: "both-sides", result: "x = (-11 ± √361)/2",
+        wrong: ["x = (11 ± √361)/2", "x = (-11 ± 361)/2", "x = -11 ± √361"], wrongKinds: ["undoSign", "rootSlip", "twoA"] },
+      { action: "evalRoot", value: "x = (-11 ± 19)/2", target: "both-sides", result: "x = (-11 ± 19)/2",
+        wrong: ["x = (-11 + 19)/2", "x = (-11 ± 20)/2", "x = -11 ± 19"], wrongKinds: ["plusMinus", "rootSlip", "twoA"] },
+      { action: "roots", value: "x = -15, 4", target: "both-sides", result: "x = -15, 4",
+        wrong: ["x = 4", "x = -30, 8", "x = -4, 15"], wrongKinds: ["plusMinus", "twoA", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "a is the number in front of x², b the number in front of x, c the number on its own. Keep their signs: a = 1, b = 11, c = -60. (x² is 1x², so a = 1.)",
+        "Put the numbers in: b² - 4ac = 11² - 4 × 1 × (-60) = 121 + 240 = 361. Careful: c is -60, so -4ac is +240.",
+        "Quadratic formula: x = (-b ± √(b² - 4ac))/2a. Here -b = -11 and 2a = 2, so put in √361.",
+        "√361 = 19, because 19² = 361. Keep the ±: it gives both answers.",
+        "Work out both: (-11 + 19)/2 = 4 and (-11 - 19)/2 = -15."
+      ],
+      ja: [
+        "aはx²の前の数、bはxの前の数、cは単独の数。符号もそのまま：a = 1、b = 11、c = -60。（x² は 1x² なので a = 1。）",
+        "数を入れる：b² - 4ac = 11² - 4 × 1 × (-60) = 121 + 240 = 361。注意：c は -60 なので、-4ac は +240。",
+        "解の公式：x = (-b ± √(b² - 4ac))/2a。-b = -11、2a = 2 なので、√361 を入れる。",
+        "19² = 361 なので √361 = 19。±はそのまま：答えが2つ出ます。",
+        "両方計算する：(-11 + 19)/2 = 4、(-11 - 19)/2 = -15。"
+      ]
+    },
+    explanation: {
+      en: "The quadratic formula works on any quadratic. Read off a = 1, b = 11, c = -60: b² - 4ac = 11² - 4 × 1 × (-60) = 121 + 240 = 361, and √361 = 19. So x = (-11 ± 19)/2: x = -15 or x = 4.",
+      ja: "解の公式はどんな二次方程式にも使えます。a = 1、b = 11、c = -60 を読み取って、b² - 4ac = 11² - 4 × 1 × (-60) = 121 + 240 = 361、√361 = 19。x = (-11 ± 19)/2 なので、x = -15 または x = 4。"
+    }
+  },
+  {
+    id: "roots_hard_06",
+    topic: "roots",
+    equation: "x² - 12x - 28 = 0",
+    answer: [-2, 14],
+    difficulty: "hard",
+    type: "formula",
+    basePoints: 30,
+    abc: [1, -12, -28],
+    steps: [
+      { action: "coef", value: "1, -12, -28", prompt: "coefPrompt", fill: "formula", target: "both-sides", result: "x² - 12x - 28 = 0\na = 1, b = -12, c = -28",
+        wrong: ["1, -12, 28", "1, 12, -28", "0, -12, -28"], wrongKinds: ["readCoef", "readCoef", "readCoef"] },
+      { action: "discriminant", value: "b² - 4ac = 256", prompt: "discriminantPrompt", focus: "disc", target: "both-sides", result: "a = 1, b = -12, c = -28\nb² - 4ac = 256",
+        wrong: ["b² - 4ac = 32", "b² - 4ac = 172", "b² - 4ac = 88"], wrongKinds: ["discriminant", "discriminant", "discriminant"] },
+      { action: "formula", value: "x = (12 ± √256)/2", focus: "top", target: "both-sides", result: "x = (12 ± √256)/2",
+        wrong: ["x = (-12 ± √256)/2", "x = (12 ± 256)/2", "x = 12 ± √256"], wrongKinds: ["undoSign", "rootSlip", "twoA"] },
+      { action: "evalRoot", value: "x = (12 ± 16)/2", target: "both-sides", result: "x = (12 ± 16)/2",
+        wrong: ["x = (12 + 16)/2", "x = (12 ± 17)/2", "x = 12 ± 16"], wrongKinds: ["plusMinus", "rootSlip", "twoA"] },
+      { action: "roots", value: "x = -2, 14", target: "both-sides", result: "x = -2, 14",
+        wrong: ["x = 14", "x = -4, 28", "x = -14, 2"], wrongKinds: ["plusMinus", "twoA", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "a is the number in front of x², b the number in front of x, c the number on its own. Keep their signs: a = 1, b = -12, c = -28. (x² is 1x², so a = 1.)",
+        "Put the numbers in: b² - 4ac = (-12)² - 4 × 1 × (-28) = 144 + 112 = 256. Careful: c is -28, so -4ac is +112.",
+        "Quadratic formula: x = (-b ± √(b² - 4ac))/2a. Here -b = 12 and 2a = 2, so put in √256.",
+        "√256 = 16, because 16² = 256. Keep the ±: it gives both answers.",
+        "Work out both: (12 + 16)/2 = 14 and (12 - 16)/2 = -2."
+      ],
+      ja: [
+        "aはx²の前の数、bはxの前の数、cは単独の数。符号もそのまま：a = 1、b = -12、c = -28。（x² は 1x² なので a = 1。）",
+        "数を入れる：b² - 4ac = (-12)² - 4 × 1 × (-28) = 144 + 112 = 256。注意：c は -28 なので、-4ac は +112。",
+        "解の公式：x = (-b ± √(b² - 4ac))/2a。-b = 12、2a = 2 なので、√256 を入れる。",
+        "16² = 256 なので √256 = 16。±はそのまま：答えが2つ出ます。",
+        "両方計算する：(12 + 16)/2 = 14、(12 - 16)/2 = -2。"
+      ]
+    },
+    explanation: {
+      en: "The quadratic formula works on any quadratic. Read off a = 1, b = -12, c = -28: b² - 4ac = (-12)² - 4 × 1 × (-28) = 144 + 112 = 256, and √256 = 16. So x = (12 ± 16)/2: x = -2 or x = 14.",
+      ja: "解の公式はどんな二次方程式にも使えます。a = 1、b = -12、c = -28 を読み取って、b² - 4ac = (-12)² - 4 × 1 × (-28) = 144 + 112 = 256、√256 = 16。x = (12 ± 16)/2 なので、x = -2 または x = 14。"
+    }
+  },
+  {
+    id: "roots_hard_07",
+    topic: "roots",
+    equation: "2x² + 6x - 20 = 0",
+    answer: [-5, 2],
+    difficulty: "hard",
+    type: "formula",
+    basePoints: 30,
+    abc: [2, 6, -20],
+    steps: [
+      { action: "coef", value: "2, 6, -20", prompt: "coefPrompt", fill: "formula", target: "both-sides", result: "2x² + 6x - 20 = 0\na = 2, b = 6, c = -20",
+        wrong: ["2, 6, 20", "2, -6, -20", "6, 2, -20"], wrongKinds: ["readCoef", "readCoef", "readCoef"] },
+      { action: "discriminant", value: "b² - 4ac = 196", prompt: "discriminantPrompt", focus: "disc", target: "both-sides", result: "a = 2, b = 6, c = -20\nb² - 4ac = 196",
+        wrong: ["b² - 4ac = -124", "b² - 4ac = 76", "b² - 4ac = 172"], wrongKinds: ["discriminant", "discriminant", "discriminant"] },
+      { action: "formula", value: "x = (-6 ± √196)/4", focus: "top", target: "both-sides", result: "x = (-6 ± √196)/4",
+        wrong: ["x = (6 ± √196)/4", "x = (-6 ± 196)/4", "x = (-6 ± √196)/2"], wrongKinds: ["undoSign", "rootSlip", "twoA"] },
+      { action: "evalRoot", value: "x = (-6 ± 14)/4", target: "both-sides", result: "x = (-6 ± 14)/4",
+        wrong: ["x = (-6 + 14)/4", "x = (-6 ± 15)/4", "x = (-6 ± 14)/2"], wrongKinds: ["plusMinus", "rootSlip", "twoA"] },
+      { action: "roots", value: "x = -5, 2", target: "both-sides", result: "x = -5, 2",
+        wrong: ["x = 2", "x = -20, 8", "x = -2, 5"], wrongKinds: ["plusMinus", "twoA", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "a is the number in front of x², b the number in front of x, c the number on its own. Keep their signs: a = 2, b = 6, c = -20.",
+        "Put the numbers in: b² - 4ac = 6² - 4 × 2 × (-20) = 36 + 160 = 196. Careful: c is -20, so -4ac is +160.",
+        "Quadratic formula: x = (-b ± √(b² - 4ac))/2a. Here -b = -6 and 2a = 4, so put in √196.",
+        "√196 = 14, because 14² = 196. Keep the ±: it gives both answers.",
+        "Work out both: (-6 + 14)/4 = 2 and (-6 - 14)/4 = -5."
+      ],
+      ja: [
+        "aはx²の前の数、bはxの前の数、cは単独の数。符号もそのまま：a = 2、b = 6、c = -20。",
+        "数を入れる：b² - 4ac = 6² - 4 × 2 × (-20) = 36 + 160 = 196。注意：c は -20 なので、-4ac は +160。",
+        "解の公式：x = (-b ± √(b² - 4ac))/2a。-b = -6、2a = 4 なので、√196 を入れる。",
+        "14² = 196 なので √196 = 14。±はそのまま：答えが2つ出ます。",
+        "両方計算する：(-6 + 14)/4 = 2、(-6 - 14)/4 = -5。"
+      ]
+    },
+    explanation: {
+      en: "The quadratic formula works on any quadratic. Read off a = 2, b = 6, c = -20: b² - 4ac = 6² - 4 × 2 × (-20) = 36 + 160 = 196, and √196 = 14. So x = (-6 ± 14)/4: x = -5 or x = 2.",
+      ja: "解の公式はどんな二次方程式にも使えます。a = 2、b = 6、c = -20 を読み取って、b² - 4ac = 6² - 4 × 2 × (-20) = 36 + 160 = 196、√196 = 14。x = (-6 ± 14)/4 なので、x = -5 または x = 2。"
+    }
+  },
+  {
+    id: "roots_hard_08",
+    topic: "roots",
+    equation: "2x² - 8x - 42 = 0",
+    answer: [-3, 7],
+    difficulty: "hard",
+    type: "formula",
+    basePoints: 30,
+    abc: [2, -8, -42],
+    steps: [
+      { action: "coef", value: "2, -8, -42", prompt: "coefPrompt", fill: "formula", target: "both-sides", result: "2x² - 8x - 42 = 0\na = 2, b = -8, c = -42",
+        wrong: ["2, -8, 42", "2, 8, -42", "-8, 2, -42"], wrongKinds: ["readCoef", "readCoef", "readCoef"] },
+      { action: "discriminant", value: "b² - 4ac = 400", prompt: "discriminantPrompt", focus: "disc", target: "both-sides", result: "a = 2, b = -8, c = -42\nb² - 4ac = 400",
+        wrong: ["b² - 4ac = -272", "b² - 4ac = 148", "b² - 4ac = 320"], wrongKinds: ["discriminant", "discriminant", "discriminant"] },
+      { action: "formula", value: "x = (8 ± √400)/4", focus: "top", target: "both-sides", result: "x = (8 ± √400)/4",
+        wrong: ["x = (-8 ± √400)/4", "x = (8 ± 400)/4", "x = (8 ± √400)/2"], wrongKinds: ["undoSign", "rootSlip", "twoA"] },
+      { action: "evalRoot", value: "x = (8 ± 20)/4", target: "both-sides", result: "x = (8 ± 20)/4",
+        wrong: ["x = (8 + 20)/4", "x = (8 ± 21)/4", "x = (8 ± 20)/2"], wrongKinds: ["plusMinus", "rootSlip", "twoA"] },
+      { action: "roots", value: "x = -3, 7", target: "both-sides", result: "x = -3, 7",
+        wrong: ["x = 7", "x = -12, 28", "x = -7, 3"], wrongKinds: ["plusMinus", "twoA", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "a is the number in front of x², b the number in front of x, c the number on its own. Keep their signs: a = 2, b = -8, c = -42.",
+        "Put the numbers in: b² - 4ac = (-8)² - 4 × 2 × (-42) = 64 + 336 = 400. Careful: c is -42, so -4ac is +336.",
+        "Quadratic formula: x = (-b ± √(b² - 4ac))/2a. Here -b = 8 and 2a = 4, so put in √400.",
+        "√400 = 20, because 20² = 400. Keep the ±: it gives both answers.",
+        "Work out both: (8 + 20)/4 = 7 and (8 - 20)/4 = -3."
+      ],
+      ja: [
+        "aはx²の前の数、bはxの前の数、cは単独の数。符号もそのまま：a = 2、b = -8、c = -42。",
+        "数を入れる：b² - 4ac = (-8)² - 4 × 2 × (-42) = 64 + 336 = 400。注意：c は -42 なので、-4ac は +336。",
+        "解の公式：x = (-b ± √(b² - 4ac))/2a。-b = 8、2a = 4 なので、√400 を入れる。",
+        "20² = 400 なので √400 = 20。±はそのまま：答えが2つ出ます。",
+        "両方計算する：(8 + 20)/4 = 7、(8 - 20)/4 = -3。"
+      ]
+    },
+    explanation: {
+      en: "The quadratic formula works on any quadratic. Read off a = 2, b = -8, c = -42: b² - 4ac = (-8)² - 4 × 2 × (-42) = 64 + 336 = 400, and √400 = 20. So x = (8 ± 20)/4: x = -3 or x = 7.",
+      ja: "解の公式はどんな二次方程式にも使えます。a = 2、b = -8、c = -42 を読み取って、b² - 4ac = (-8)² - 4 × 2 × (-42) = 64 + 336 = 400、√400 = 20。x = (8 ± 20)/4 なので、x = -3 または x = 7。"
+    }
+  },
+  {
+    id: "roots_hard_09",
+    topic: "roots",
+    equation: "3x² + 9x - 12 = 0",
+    answer: [-4, 1],
+    difficulty: "hard",
+    type: "formula",
+    basePoints: 30,
+    abc: [3, 9, -12],
+    steps: [
+      { action: "coef", value: "3, 9, -12", prompt: "coefPrompt", fill: "formula", target: "both-sides", result: "3x² + 9x - 12 = 0\na = 3, b = 9, c = -12",
+        wrong: ["3, 9, 12", "3, -9, -12", "9, 3, -12"], wrongKinds: ["readCoef", "readCoef", "readCoef"] },
+      { action: "discriminant", value: "b² - 4ac = 225", prompt: "discriminantPrompt", focus: "disc", target: "both-sides", result: "a = 3, b = 9, c = -12\nb² - 4ac = 225",
+        wrong: ["b² - 4ac = -63", "b² - 4ac = 117", "b² - 4ac = 162"], wrongKinds: ["discriminant", "discriminant", "discriminant"] },
+      { action: "formula", value: "x = (-9 ± √225)/6", focus: "top", target: "both-sides", result: "x = (-9 ± √225)/6",
+        wrong: ["x = (9 ± √225)/6", "x = (-9 ± 225)/6", "x = (-9 ± √225)/3"], wrongKinds: ["undoSign", "rootSlip", "twoA"] },
+      { action: "evalRoot", value: "x = (-9 ± 15)/6", target: "both-sides", result: "x = (-9 ± 15)/6",
+        wrong: ["x = (-9 + 15)/6", "x = (-9 ± 16)/6", "x = (-9 ± 15)/3"], wrongKinds: ["plusMinus", "rootSlip", "twoA"] },
+      { action: "roots", value: "x = -4, 1", target: "both-sides", result: "x = -4, 1",
+        wrong: ["x = 1", "x = -24, 6", "x = -1, 4"], wrongKinds: ["plusMinus", "twoA", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "a is the number in front of x², b the number in front of x, c the number on its own. Keep their signs: a = 3, b = 9, c = -12.",
+        "Put the numbers in: b² - 4ac = 9² - 4 × 3 × (-12) = 81 + 144 = 225. Careful: c is -12, so -4ac is +144.",
+        "Quadratic formula: x = (-b ± √(b² - 4ac))/2a. Here -b = -9 and 2a = 6, so put in √225.",
+        "√225 = 15, because 15² = 225. Keep the ±: it gives both answers.",
+        "Work out both: (-9 + 15)/6 = 1 and (-9 - 15)/6 = -4."
+      ],
+      ja: [
+        "aはx²の前の数、bはxの前の数、cは単独の数。符号もそのまま：a = 3、b = 9、c = -12。",
+        "数を入れる：b² - 4ac = 9² - 4 × 3 × (-12) = 81 + 144 = 225。注意：c は -12 なので、-4ac は +144。",
+        "解の公式：x = (-b ± √(b² - 4ac))/2a。-b = -9、2a = 6 なので、√225 を入れる。",
+        "15² = 225 なので √225 = 15。±はそのまま：答えが2つ出ます。",
+        "両方計算する：(-9 + 15)/6 = 1、(-9 - 15)/6 = -4。"
+      ]
+    },
+    explanation: {
+      en: "The quadratic formula works on any quadratic. Read off a = 3, b = 9, c = -12: b² - 4ac = 9² - 4 × 3 × (-12) = 81 + 144 = 225, and √225 = 15. So x = (-9 ± 15)/6: x = -4 or x = 1.",
+      ja: "解の公式はどんな二次方程式にも使えます。a = 3、b = 9、c = -12 を読み取って、b² - 4ac = 9² - 4 × 3 × (-12) = 81 + 144 = 225、√225 = 15。x = (-9 ± 15)/6 なので、x = -4 または x = 1。"
+    }
+  },
+  {
+    id: "roots_hard_10",
+    topic: "roots",
+    equation: "3x² - 6x - 24 = 0",
+    answer: [-2, 4],
+    difficulty: "hard",
+    type: "formula",
+    basePoints: 30,
+    abc: [3, -6, -24],
+    steps: [
+      { action: "coef", value: "3, -6, -24", prompt: "coefPrompt", fill: "formula", target: "both-sides", result: "3x² - 6x - 24 = 0\na = 3, b = -6, c = -24",
+        wrong: ["3, -6, 24", "3, 6, -24", "-6, 3, -24"], wrongKinds: ["readCoef", "readCoef", "readCoef"] },
+      { action: "discriminant", value: "b² - 4ac = 324", prompt: "discriminantPrompt", focus: "disc", target: "both-sides", result: "a = 3, b = -6, c = -24\nb² - 4ac = 324",
+        wrong: ["b² - 4ac = -252", "b² - 4ac = 108", "b² - 4ac = 276"], wrongKinds: ["discriminant", "discriminant", "discriminant"] },
+      { action: "formula", value: "x = (6 ± √324)/6", focus: "top", target: "both-sides", result: "x = (6 ± √324)/6",
+        wrong: ["x = (-6 ± √324)/6", "x = (6 ± 324)/6", "x = (6 ± √324)/3"], wrongKinds: ["undoSign", "rootSlip", "twoA"] },
+      { action: "evalRoot", value: "x = (6 ± 18)/6", target: "both-sides", result: "x = (6 ± 18)/6",
+        wrong: ["x = (6 + 18)/6", "x = (6 ± 19)/6", "x = (6 ± 18)/3"], wrongKinds: ["plusMinus", "rootSlip", "twoA"] },
+      { action: "roots", value: "x = -2, 4", target: "both-sides", result: "x = -2, 4",
+        wrong: ["x = 4", "x = -12, 24", "x = -4, 2"], wrongKinds: ["plusMinus", "twoA", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "a is the number in front of x², b the number in front of x, c the number on its own. Keep their signs: a = 3, b = -6, c = -24.",
+        "Put the numbers in: b² - 4ac = (-6)² - 4 × 3 × (-24) = 36 + 288 = 324. Careful: c is -24, so -4ac is +288.",
+        "Quadratic formula: x = (-b ± √(b² - 4ac))/2a. Here -b = 6 and 2a = 6, so put in √324.",
+        "√324 = 18, because 18² = 324. Keep the ±: it gives both answers.",
+        "Work out both: (6 + 18)/6 = 4 and (6 - 18)/6 = -2."
+      ],
+      ja: [
+        "aはx²の前の数、bはxの前の数、cは単独の数。符号もそのまま：a = 3、b = -6、c = -24。",
+        "数を入れる：b² - 4ac = (-6)² - 4 × 3 × (-24) = 36 + 288 = 324。注意：c は -24 なので、-4ac は +288。",
+        "解の公式：x = (-b ± √(b² - 4ac))/2a。-b = 6、2a = 6 なので、√324 を入れる。",
+        "18² = 324 なので √324 = 18。±はそのまま：答えが2つ出ます。",
+        "両方計算する：(6 + 18)/6 = 4、(6 - 18)/6 = -2。"
+      ]
+    },
+    explanation: {
+      en: "The quadratic formula works on any quadratic. Read off a = 3, b = -6, c = -24: b² - 4ac = (-6)² - 4 × 3 × (-24) = 36 + 288 = 324, and √324 = 18. So x = (6 ± 18)/6: x = -2 or x = 4.",
+      ja: "解の公式はどんな二次方程式にも使えます。a = 3、b = -6、c = -24 を読み取って、b² - 4ac = (-6)² - 4 × 3 × (-24) = 36 + 288 = 324、√324 = 18。x = (6 ± 18)/6 なので、x = -2 または x = 4。"
+    }
   }
 ];
 
@@ -7679,6 +8823,7 @@ const LEVELS_BY_TOPIC_AND_DIFFICULTY = LEVELS.reduce((acc, lvl) => {
 // Tiers without a tip are left out on purpose: Easy tiers and Equations Medium use moves
 // the player already knows, and Inequalities Medium (the flip) and Quadratics Medium
 // (factorising) are covered by the topic tutorials.
+// `picture` (optional) names a small diagram drawn above the demo (TIP_PICTURES in index.html).
 // `text` is per-language ({ en, ja }), like hints. `demo` is shown in the tip overlay as
 // from → move → to; `from` may be two lines ("\n") for systems, and `move` is per-language.
 const TIER_TIPS = {
@@ -7846,6 +8991,30 @@ const TIER_TIPS = {
       move: { en: "Write with a positive power", ja: "正の指数で書く" },
       to: "1/x^3"
     }
+  },
+  roots_medium: {
+    text: {
+      en: "Want to √ both sides like in Easy? Make the left side a square first. Every (x + n)² is x² + 2n·x + n², so x² + 6x is (x + 3)² missing its 9. Halve 6 → 3, square it → 9, then add 9 to both sides.",
+      ja: "やさしいレベルのように両辺の平方根をとりたい？まず左辺を2乗の形にしよう。(x + n)² はいつも x² + 2n·x + n² だから、x² + 6x は (x + 3)² から9が欠けた形。6を半分にして3、2乗して9。両辺に9を足そう！"
+    },
+    // `picture` draws a small diagram above the demo (TIP_PICTURES in index.html): here, the x² + 6x tiles
+    picture: "squareTiles",
+    demo: {
+      from: "x² + 6x = 16",
+      move: { en: "Half of 6 is 3, and 3² = 9: add 9 to both sides", ja: "6の半分は3、3² = 9：両辺に9を足す" },
+      to: "x² + 6x + 9 = 16 + 9"
+    }
+  },
+  roots_hard: {
+    text: {
+      en: "Meet the quadratic formula: x = (-b ± √(b² - 4ac))/2a. First read off a, b and c: a is the number in front of x², b the number in front of x, c the number on its own, signs included. The formula under the card fills them in for you. Then work out b² - 4ac, and the rest follows. It works on every quadratic!",
+      ja: "解の公式の登場！x = (-b ± √(b² - 4ac))/2a。まず a、b、c を読み取ろう：aはx²の前の数、bはxの前の数、cは単独の数（符号も含めて）。カードの下の公式に自動で入るよ。次に b² - 4ac を計算すれば、あとは順番に。どんな二次方程式でも解けるよ！"
+    },
+    demo: {
+      from: "x = (-b ± √(b² - 4ac))/2a",
+      move: { en: "x² + 5x - 24 = 0: a = 1, b = 5, c = -24", ja: "x² + 5x - 24 = 0：a = 1、b = 5、c = -24" },
+      to: "x = (-5 ± √121)/2"
+    }
   }
 };
 
@@ -7864,7 +9033,8 @@ const TOPIC_NAMES = {
   fraction:   { en: "Fractions",    ja: "分数" },
   subject:    { en: "Formulas",     ja: "等式の変形" },
   expression: { en: "Expressions",  ja: "式の計算" },
-  indices:    { en: "Indices",      ja: "指数法則" }
+  indices:    { en: "Indices",      ja: "指数法則" },
+  roots:      { en: "Completing the square", ja: "平方完成" }
 };
 
 // One template per per-topic achievement type. {topic} = topic name, {n} = level or star count.
