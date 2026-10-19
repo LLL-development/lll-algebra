@@ -2,7 +2,9 @@
 
 // Powers are written x^3 / x^-1 in level data and drawn as a half-size raised <span class="pow">,
 // because neither Press Start 2P nor IBM Plex Mono has ⁰ ⁴–⁹ ⁻ (only ¹ ² ³).
-const POW = /\^([-−]?\d+)/g;
+// The formula sheet (formulas.js) also uses letter powers: x^m, x^-n, and x^(m+n) for more than
+// one character (the brackets are dropped when drawn).
+const POW = /\^(\([^()]*\)|[-−]?(?:\d+|[a-z]))/g;
 
 // Square roots are written with the real √ in level data: √16, √x, or √(A/π) for more than one
 // term. Neither font has √, so on the pixel card it's drawn as a pixel hook with a bar over the
@@ -69,7 +71,7 @@ function makeSqrtParen(ch) {
 function makePow(digits, minus = "−") {
   const s = document.createElement("span");
   s.className = "pow";
-  s.textContent = digits.replace(/[-−]/, minus);
+  s.textContent = digits.replace(/^\((.*)\)$/, "$1").replace(/[-−]/g, minus);
   return s;
 }
 
@@ -100,14 +102,14 @@ function appendPowers(el, text, minus = "−") {
 // What the typewriter types one at a time: single characters, with each power
 // ("^3", "^-1") and each root ("√16", "√(A/π)") kept whole so it never appears half-typed.
 function eqUnits(text) {
-  return text.match(/√(?:\([^()]*\)|\d+|[A-Za-z])|\^[-−]?\d+|[\s\S]/gu) || [];
+  return text.match(/√(?:\([^()]*\)|\d+|[A-Za-z])|\^(?:\([^()]*\)|[-−]?(?:\d+|[a-z]))|[\s\S]/gu) || [];
 }
 
 // A line's width in characters, for --eq-len: a power's digits are half size; a root is the
 // hook (1.25) plus what's under the bar (no brackets on the pixel card) plus the bar's overhang.
 function eqLineLen(line) {
   return eqUnits(line).reduce((n, u) => {
-    if (u.length > 1 && u[0] === "^") return n + (u.length - 1) / 2;
+    if (u.length > 1 && u[0] === "^") return n + (u[1] === "(" ? u.length - 3 : u.length - 1) / 2;
     if (u.length > 1 && u[0] === "√") {
       const inner = u[1] === "(" ? u.slice(2, -1) : u.slice(1);
       return n + 1.25 + eqLineLen(inner) + 0.125;

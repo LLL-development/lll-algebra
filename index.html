@@ -80,6 +80,22 @@
   </div>
 </div>
 
+<!-- Formula sheet: 📐 on level select and next to Hint. Entries in formulas.js -->
+<div class="formula-overlay" id="formulaOverlay" hidden>
+  <div class="formula-backdrop" id="formulaBackdrop"></div>
+  <div class="formula-wrap">
+    <div class="buddy-sprite formula-buddy" id="formulaBuddy" aria-hidden="true"></div>
+    <div class="formula-card pixel-card" role="dialog" aria-modal="true" aria-labelledby="formulaTitle">
+      <div class="formula-head">
+        <h2 class="formula-title" id="formulaTitle"></h2>
+        <button class="formula-close-btn" id="formulaCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="formula-list" id="formulaList"></div>
+      <button class="complete-btn primary formula-ok-btn" id="formulaOkBtn"></button>
+    </div>
+  </div>
+</div>
+
 <div id="achievementToast" class="achievement-toast">
   <span class="achievement-toast-icon">🏆</span>
   <span class="achievement-toast-text" id="achievementToastText"></span>
@@ -300,6 +316,7 @@
   <section class="screen" id="screenLevels" hidden>
     <div class="play-header">
       <button class="back-btn" id="levelsBackBtn"><span aria-hidden="true">←</span> <span data-i18n="backHome">Home</span></button>
+      <button class="howto-btn levels-help-btn levels-formula-btn" id="levelsFormulaBtn" aria-label="Show the formulas for this topic" data-i18n-aria="formulaSheetAria" hidden>📐</button>
       <button class="howto-btn levels-help-btn" id="levelsHelpBtn" aria-label="How this topic works" data-i18n-aria="tutHelpAria">❔</button>
     </div>
     <div class="levels-head">
@@ -355,6 +372,7 @@
       <div class="hint-group">
         <button class="hint-btn" id="hintBtn" data-i18n="hintBtn">Hint (−2 pts)</button>
         <button class="hint-btn show-me-btn" id="showMeBtn" data-i18n="showMeBtn" hidden>Show me</button>
+        <button class="hint-btn formula-btn" id="formulaBtn" data-i18n="formulaSheetBtn" hidden>📐 Formulas</button>
       </div>
       <div class="buddy">
         <p class="buddy-bubble" id="buddyBubble" aria-live="polite"></p>
@@ -371,6 +389,7 @@
   import { sfx, updateSoundBtn } from "./sound.js";
   import { showSystemGraph, clearSystemGraph, showNumberLine, clearNumberLine, afterGraphDrawn } from "./graph.js";
   import { setMathText, appendWithPowers, makePow, eqUnits, eqLineLen } from "./mathtext.js";
+  import { TOPIC_FORMULAS, formulaText, hasFormulas } from "./formulas.js";
   import { BUDDY_SVG, CHALKY_IDLES, buddyLine, makeBuddy } from "./chalky.js";
   import { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors, practiceKinds, isLongChoice } from "./choices.js";
   import { initFloatingSymbols, burstGrandConfetti } from "./effects.js";
@@ -389,6 +408,7 @@
     if ($tutorialOverlay.classList.contains("show")) openTutorial(tutTopic, tutAuto);
     if ($introOverlay.classList.contains("show")) showIntroStep(introStep);
     if (!$tipOverlay.hidden) { fillTierTip(); showTipText(false); }
+    if (!$formulaOverlay.hidden) fillFormulaSheet();
     fillReplayText();
     // The play screen's top label and Chalky's end-of-replay line stay up during and after a replay,
     // which return below before render(), so they're redone here
@@ -497,6 +517,9 @@
   const $levelsSummary = document.getElementById("levelsSummary");
   const $levelsTiers = document.getElementById("levelsTiers");
   const $showMeBtn = document.getElementById("showMeBtn");
+  const $formulaBtn = document.getElementById("formulaBtn");
+  const $levelsFormulaBtn = document.getElementById("levelsFormulaBtn");
+  const $formulaOverlay = document.getElementById("formulaOverlay");
   const $replayBanner = document.getElementById("replayBanner");
   const $replayEnd = document.getElementById("replayEnd");
   const $replayEndNote = document.getElementById("replayEndNote");
@@ -667,7 +690,7 @@
     idles: {
       delay: () => 10000,
       pick: () => CHALKY_IDLES.dozeNudge,
-      canPlay: () => !$screenPlay.hidden && $completeOverlay.hidden && $tipOverlay.hidden && !replaying && !document.hidden
+      canPlay: () => !$screenPlay.hidden && $completeOverlay.hidden && $tipOverlay.hidden && $formulaOverlay.hidden && !replaying && !document.hidden
     }
   });
   function buddyIdle() { playBuddy.idle(); }
@@ -1231,6 +1254,7 @@
     $equationCard.classList.toggle("system-card", level.topic === "system" || level.steps.some(s => s.result.includes("\n")));
 
     syncFormulaPanel(level);
+    updateFormulaBtn(level);   // follows each question's topic (Mixed Review, Tricky spots, Today's Challenge)
 
     const step = currentStep();
     // Authored-choice steps (expand, factor, roots) carry their own wrong options;
@@ -1465,6 +1489,7 @@
     $replayBanner.hidden = !on;
     if (on) $trickyBanner.hidden = true;   // one banner at a time; render() brings it back after
     $hintBtn.hidden = on;
+    updateFormulaBtn();
     $replayEnd.hidden = true;
     updateShowMeBtn();
   }
@@ -1985,6 +2010,7 @@
     appendWithPowers($levelsSample, TOPIC_SAMPLES[topic], "-");
     $levelsTitle.textContent = t(TOPIC_LABEL_KEYS[topic]) || topic;
     $levelsSummary.textContent = statsText(topicStats(topic));
+    $levelsFormulaBtn.hidden = !hasFormulas(topic);
     $levelsTiers.innerHTML = "";
 
     TIERS.forEach(tier => {
@@ -2162,6 +2188,7 @@
     cancelReplay();
     hideCompleteOverlay();
     if (!$tipOverlay.hidden) closeTierTip(false);   // left before reading it, so it shows again next time
+    closeFormulaSheet(false);
     if ($tutorialOverlay.classList.contains("show") && !$tutorialOverlay.classList.contains("hiding")) closeTutorial(false);
     const [screen, arg] = location.hash.replace(/^#/, "").split("/");
     if (screen === "play" && LEVELS_BY_ID[arg]) {
@@ -2634,6 +2661,108 @@
   $tipOkBtn.addEventListener("click", () => closeTierTip());
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !$tipOverlay.hidden) closeTierTip();
+  });
+
+  // ---------- formula sheet ----------
+  // 📐 on level select (next to ❔) and next to Hint during play. Free: it's a reference, not an answer.
+  // Shows the current level's topic (formulas.js), so Mixed Review, Tricky spots and Today's Challenge
+  // follow each question. Topics with no entries get no button. Hidden during "Show me".
+  // Level select: Chalky stands beside the sheet, taking turns reading and writing an x.
+  // Play: no second Chalky; the play-screen one puts his glasses on and reads until it closes.
+  const $formulaTitle = document.getElementById("formulaTitle");
+  const $formulaList = document.getElementById("formulaList");
+  const $formulaOkBtn = document.getElementById("formulaOkBtn");
+  let formulaTopic = null;
+  let formulaInPlay = false;
+  let formulaReadNext = true;
+  const formulaBuddy = makeBuddy(document.getElementById("formulaBuddy"), null, {
+    idles: {
+      delay: () => 2500 + Math.random() * 2000,
+      pick: () => {
+        const anim = formulaReadNext ? CHALKY_IDLES.reading : CHALKY_IDLES.writing;
+        formulaReadNext = !formulaReadNext;
+        return anim;
+      },
+      canPlay: () => !$formulaOverlay.hidden && !document.hidden
+    }
+  });
+
+  function updateFormulaBtn(level = currentLevel()) {
+    $formulaBtn.hidden = replaying || !hasFormulas(level.topic);
+  }
+
+  // Narrow screens: a line may only break after " = " or " → ", so each side stays whole
+  // ("(x + a)(x + b) =" / "x² + (a + b)x + ab", never "(a +" / "b)x").
+  function setFormulaMath(el, text) {
+    el.textContent = "";
+    const parts = text.split(/(?<= [=→]) /);
+    parts.forEach((part, i) => {
+      const span = document.createElement("span");
+      span.className = "nowrap";
+      setMathText(span, part);
+      el.append(span);
+      if (i < parts.length - 1) el.append(" ");
+    });
+  }
+
+  function fillFormulaSheet() {
+    const t = k => LLL_I18N.t(k) || "";
+    const lang = currentLang();
+    $formulaTitle.textContent = t("formulaSheetTitle").split("{topic}").join(t(TOPIC_LABEL_KEYS[formulaTopic]) || formulaTopic);
+    $formulaList.innerHTML = "";
+    TOPIC_FORMULAS[formulaTopic].forEach(entry => {
+      const block = document.createElement("div");
+      block.className = "formula-entry";
+      const name = document.createElement("p");
+      name.className = entry.rule ? "formula-name formula-rule" : "formula-name";
+      name.textContent = entry.rule ? t("formulaSheetRule") : formulaText(entry.name, lang);
+      const math = document.createElement("p");
+      math.className = "formula-math";
+      setFormulaMath(math, formulaText(entry.formula, lang));
+      block.append(name, math);
+      if (entry.example || entry.note) {
+        const ex = document.createElement("p");
+        ex.className = "formula-example";
+        setFormulaMath(ex, entry.example
+          ? t("formulaSheetExample") + formulaText(entry.example, lang)
+          : formulaText(entry.note, lang));
+        block.append(ex);
+      }
+      $formulaList.append(block);
+    });
+    $formulaOkBtn.textContent = t("formulaSheetOk");
+  }
+
+  function openFormulaSheet(topic, inPlay) {
+    if (!hasFormulas(topic)) return;
+    formulaTopic = topic;
+    formulaInPlay = inPlay;
+    fillFormulaSheet();
+    $formulaOverlay.classList.toggle("in-play", inPlay);
+    $formulaOverlay.hidden = false;
+    $formulaOkBtn.focus({ preventScroll: true });
+    if (inPlay) playBuddy.react("idle", { look: "reading", stay: true });
+    else if (REDUCED_MOTION) formulaBuddy.react("idle", { look: "reading", stay: true });   // still pose, no idles
+    else { formulaReadNext = true; formulaBuddy.idle(); }
+  }
+
+  // restoreFocus: back to the 📐 that opened it (not when the sheet closes because the screen changed)
+  function closeFormulaSheet(restoreFocus = true) {
+    if ($formulaOverlay.hidden) return;
+    $formulaOverlay.hidden = true;
+    formulaBuddy.stop();
+    if (formulaInPlay) playBuddy.idle();
+    if (restoreFocus) (formulaInPlay ? $formulaBtn : $levelsFormulaBtn).focus({ preventScroll: true });
+    formulaTopic = null;
+  }
+
+  $levelsFormulaBtn.addEventListener("click", () => openFormulaSheet(location.hash.split("/")[1], false));
+  $formulaBtn.addEventListener("click", () => openFormulaSheet(currentLevel().topic, true));
+  $formulaOkBtn.addEventListener("click", () => closeFormulaSheet());
+  document.getElementById("formulaCloseBtn").addEventListener("click", () => closeFormulaSheet());
+  document.getElementById("formulaBackdrop").addEventListener("click", () => closeFormulaSheet());
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$formulaOverlay.hidden) closeFormulaSheet();
   });
 
   initFloatingSymbols();
