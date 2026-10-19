@@ -168,10 +168,12 @@ const CHALKY_IDLES = (() => {
   const home = [READING, SIPPING, WRITING, DOZING, DUSTING].map(frames => ({ frames }));
   const dozeNudge = { frames: [...DOZE_START, ...DOZE_LOOP], loopFrom: DOZE_START.length, line: () => buddyLine("buddyDoze") };
   [...home, dozeNudge].forEach(a => a.frames.forEach(f => { f.svg = f.svg || buildBuddySvg(f); }));   // build each SVG once
-  return { home, dozeNudge, hat: HAT };
+  return { home, dozeNudge, hat: HAT, reading: home[0], writing: home[2] };   // reading/writing: the formula sheet
 })();
 // The hat only appears on the topic-mastered card (a design change, so it's kept to that one moment)
 BUDDY_SVG.celebratingHat = buildBuddySvg({ face: "celebrating", px: CHALKY_IDLES.hat });
+// Glasses on, book open: the play-screen Chalky holds this while the formula sheet is open
+BUDDY_SVG.reading = CHALKY_IDLES.reading.frames[0].svg;
 
 // Random line from a "a|b|c" string in STRINGS
 function buddyLine(key) {

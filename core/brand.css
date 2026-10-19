@@ -1168,6 +1168,88 @@ body:has(.tip-overlay:not([hidden])) { overflow: hidden; }   /* no page scroll b
   .tip-demo { transition: none !important; }
 }
 
+/* ---------- Formula sheet ----------
+   📐 on level select (next to ❔) and next to Hint. Same overlay as the tier tip.
+   Level select: Chalky stands beside the card (above it on narrow phones).
+   Play (.in-play): no sheet Chalky; the play-screen one reads instead. */
+.formula-overlay:not([hidden]) {
+  position: fixed; inset: 0; z-index: 560;
+  display: grid; place-items: center; padding: 20px;
+}
+body:has(.formula-overlay:not([hidden])) { overflow: hidden; }
+.formula-backdrop {
+  position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55);
+  animation: completeFade .2s ease;
+}
+/* The wrap is exactly the card's width, so the card sits dead centre; Chalky stands just off its
+   bottom-right corner (clear of the 6px shadow, ~14px gap) and takes no space */
+.formula-wrap {
+  position: relative; width: min(400px, 100%);
+  display: flex; flex-direction: column; align-items: center;
+}
+.formula-buddy, .formula-buddy svg { width: 72px; height: 72px; }
+.formula-buddy { position: absolute; right: -92px; bottom: 0; z-index: 1; }
+.formula-overlay.in-play .formula-buddy { display: none; }
+.formula-card {
+  position: relative; width: 100%;
+  max-height: calc(100dvh - 40px); overflow-y: auto;
+  background: var(--surface);
+  padding: 20px 20px 18px;
+  display: flex; flex-direction: column; gap: 14px;
+  animation: completePop .32s cubic-bezier(.34,1.56,.64,1);
+}
+.formula-head { display: flex; align-items: center; gap: 8px; }
+.formula-title {
+  flex: 1; min-width: 0; margin: 0;
+  font-family: var(--display); font-size: 18px; font-weight: 700; color: var(--ink);
+}
+.formula-close-btn {
+  flex: none; width: 32px; height: 32px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--muted); background: transparent;
+  border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+}
+.formula-close-btn:hover { color: var(--ink); background: var(--accent-tint); }
+.formula-list { display: flex; flex-direction: column; }
+.formula-entry { padding: 12px 0; border-top: 1px solid var(--border); }
+.formula-entry:first-child { padding-top: 2px; border-top: none; }
+.formula-name {
+  margin: 0 0 4px;
+  font-family: var(--sans); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted);
+}
+.formula-name.formula-rule {
+  display: inline-block; padding: 2px 8px;
+  color: var(--accent); background: var(--accent-tint); border-radius: 8px;
+}
+.formula-math {
+  margin: 0;
+  font-family: var(--mono); font-size: 16px; font-weight: 600; line-height: 1.6; color: var(--ink);
+}
+.formula-example {
+  margin: 4px 0 0;
+  font-family: var(--mono); font-size: 13px; line-height: 1.5; color: var(--muted);
+}
+.formula-ok-btn { width: 100%; }
+
+/* Level select header: 📐 sits beside ❔ on the right (the header spreads its buttons apart).
+   [hidden]: .howto-btn sets display, which would otherwise override hidden on topics with no sheet. */
+.play-header .levels-formula-btn { margin-left: auto; }
+.levels-formula-btn + .levels-help-btn { margin-left: -4px; }   /* 8px between them, not the header's 12px */
+.levels-formula-btn[hidden] { display: none; }
+
+/* Narrower screens: no room to his right, so Chalky peeks over the top of the card instead */
+@media (max-width: 620px) {
+  .formula-buddy, .formula-buddy svg { width: 52px; height: 52px; }
+  .formula-buddy { position: relative; right: auto; bottom: auto; margin-bottom: -10px; }
+  .formula-card { width: 100%; max-height: calc(100dvh - 82px); }
+  .formula-overlay.in-play .formula-card { max-height: calc(100dvh - 40px); }
+  .formula-math { font-size: 15px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .formula-backdrop, .formula-card { animation: none !important; }
+}
+
 /* ---------- Chalky on the level-complete card ----------
    Chalky on the left, his line in a bubble on the right (tail pointing back at him). */
 .complete-buddy-row { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; margin: 2px 0; }
