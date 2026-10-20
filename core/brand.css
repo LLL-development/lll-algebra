@@ -517,6 +517,25 @@ body {
    (for the border), and their explanation text is in the normal font. */
 .pixel-card .equation .pow, .topic-card-sample .pow { font-size: .5em; vertical-align: .875em; }
 
+/* Subscripts (x_1 in level data, Straight lines): half size and lowered, like .pow but below the line.
+   Neither font has ₁ ₂. */
+.sub { font-size: .75em; vertical-align: -.25em; line-height: 0; }
+.pixel-card .equation .sub, .topic-card-sample .sub { font-size: .5em; vertical-align: -.4em; }
+
+/* Stacked fractions ({top}/{bottom} in level data, makeFrac() in mathtext.js): top over bottom with a
+   line between. Only Straight lines' gradient uses them; plain a/b (Fractions) stays inline. */
+.frac {
+  display: inline-flex; flex-direction: column; align-items: stretch;
+  vertical-align: middle; line-height: 1.3; margin: 0 .2em; text-align: center;
+}
+.frac-top { border-bottom: .125em solid currentColor; padding: 0 .2em .2em; }
+.frac-bot { padding: .2em .2em 0; }
+/* On the card, a little space between the points line and the top of the fraction */
+.pixel-card .equation .frac { margin: .45em .25em .15em; }
+/* A card with a stacked fraction (index.html sets frac-card): room for the points line plus the
+   fraction, so the card doesn't jump in height between steps */
+.pixel-card.frac-card .equation { min-height: 4.8em; }
+
 /* Square roots (√ in level data, drawn by makeSqrt() in mathtext.js).
    Normal text shows the √ character and keeps the brackets. On the pixel card and topic
    samples, the √ is a pixel hook (neither font has √) with a 2-pixel bar over the root,
@@ -1312,6 +1331,25 @@ body:has(.formula-overlay:not([hidden])) { overflow: hidden; }
 /* Short screens: a smaller graph so less of the card needs scrolling */
 @media (max-height: 700px) {
   .complete-graph:not([hidden]) { width: min(200px, 100%); }
+}
+
+/* ---------- Straight lines: the play-screen graph ----------
+   Drawn by showPlayGraph() in graph.js under the equation card on two-point levels: point 1 in the accent,
+   point 2 in chalk-blue, then the run (across) and rise (up or down) between them once they're worked out. */
+.play-graph:not([hidden]) { width: min(220px, 62vw); margin: 0 auto; }
+.play-graph-svg { display: block; width: 100%; height: auto; }
+.graph-dot.pg-p1 { fill: var(--accent); }
+.graph-dot.pg-p2 { fill: var(--graph-line2); }
+.graph-ring.pg-p1 { stroke: var(--accent); }
+.graph-ring.pg-p2 { stroke: var(--graph-line2); }
+.pg-leg { stroke: var(--correct); stroke-width: 3; stroke-linecap: round; }
+.pg-leg-label {
+  font-family: "Press Start 2P", var(--mono); font-size: 11px; fill: var(--correct);
+  paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round;
+}
+/* Short screens: smaller, so the choices stay in view */
+@media (max-height: 760px) {
+  .play-graph:not([hidden]) { width: min(170px, 50vw); }
 }
 /* Systems: on wider screens the graph sits to the left of the rest of the card,
    so the card gets wider and much shorter. Phones keep the single column. */

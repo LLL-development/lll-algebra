@@ -12,15 +12,22 @@ const CHOICE_PROMPT_KEYS = {
   combine: "combinePrompt", substitute: "substitutePrompt", scale: "scalePrompt",
   simplify: "simplifyPrompt",
   // Completing the square: √ both sides, complete the square, the quadratic formula, work out the √
-  sqrt: "sqrtPrompt", complete: "completePrompt", formula: "formulaPrompt", evalRoot: "evalRootPrompt"
+  sqrt: "sqrtPrompt", complete: "completePrompt", formula: "formulaPrompt", evalRoot: "evalRootPrompt",
+  // Straight lines: read or work out m and c, put two points into the gradient formula and work it out,
+  // or get y on its own first (Medium's last step names its own prompt, "Divide to find m:")
+  gradient: "gradientPrompt", intercept: "interceptPrompt", gradSub: "gradSubPrompt", gradCalc: "gradCalcPrompt",
+  isolate: "isolatePrompt"
 };
 
 // Options longer than this (e.g. the quadratic formula "x = (−11 ± √361)/2") get the `long` class,
 // which drops them to 12px on narrow phones so they stay on one line (brand.css, 420px block).
-// A power's "^" isn't drawn, so it doesn't count.
+// A power's "^" isn't drawn, so it doesn't count; a stacked fraction ({top}/{bottom}, Straight lines)
+// is only as wide as its wider half.
 const LONG_CHOICE = 16;
 function isLongChoice(label) {
-  return String(label).replace(/\^/g, "").length > LONG_CHOICE;
+  return String(label)
+    .replace(/\{([^{}]*)\}\/\{([^{}]*)\}/g, (_, top, bottom) => (top.length > bottom.length ? top : bottom))
+    .replace(/\^/g, "").length > LONG_CHOICE;
 }
 
 function actionLabel(action, value) {

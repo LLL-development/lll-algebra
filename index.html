@@ -309,6 +309,15 @@
           <span class="topic-card-count"></span>
         </span>
       </button>
+      <button class="topic-card" data-topic="line">
+        <span class="topic-card-sample">y = 2x + 3</span>
+        <span class="topic-card-title" data-i18n="topicLine">Straight lines</span>
+        <span class="topic-card-desc" data-i18n="topicLineDesc">Gradient, intercept and the equation of a line</span>
+        <span class="topic-card-progress" data-progress="line">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -354,6 +363,11 @@
       <div class="fp-math" id="fpMath"></div>
     </div>
 
+    <!-- Straight lines with two points: the points on a grid, then the rise and run (graph.js showPlayGraph) -->
+    <div class="play-graph" id="playGraph" hidden>
+      <svg class="play-graph-svg" id="playGraphSvg" viewBox="0 0 280 280" role="img"></svg>
+    </div>
+
     <p class="expand-prompt" id="expandPrompt" hidden></p>
 
     <div class="choices" id="choicesGrid"></div>
@@ -387,7 +401,7 @@
   import { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS, TIER_TIPS } from "./levels.js";
   import { STRINGS } from "./strings.js";
   import { sfx, updateSoundBtn } from "./sound.js";
-  import { showSystemGraph, clearSystemGraph, showNumberLine, clearNumberLine, afterGraphDrawn } from "./graph.js";
+  import { showSystemGraph, showLineGraph, clearSystemGraph, showNumberLine, clearNumberLine, afterGraphDrawn, showPlayGraph } from "./graph.js";
   import { setMathText, appendWithPowers, makePow, eqUnits, eqLineLen } from "./mathtext.js";
   import { TOPIC_FORMULAS, formulaText, hasFormulas } from "./formulas.js";
   import { BUDDY_SVG, CHALKY_IDLES, buddyLine, makeBuddy } from "./chalky.js";
@@ -862,7 +876,11 @@
     // Completing the square (also authored, tagged with wrongKinds)
     plusMinus: "mistakePlusMinus", rootSlip: "mistakeRootSlip", undoSign: "mistakeUndoSign",
     halfB: "mistakeHalfB", addSquare: "mistakeAddSquare", discriminant: "mistakeDiscriminant", twoA: "mistakeTwoA",
-    squareHalf: "mistakeSquareHalf", readCoef: "mistakeReadCoef"
+    squareHalf: "mistakeSquareHalf", readCoef: "mistakeReadCoef",
+    // Straight lines (also authored, tagged with wrongKinds; loneLetter is shared with Expressions)
+    swapMC: "mistakeSwapMC", lineSign: "mistakeLineSign", riseRun: "mistakeRiseRun",
+    subtractOrder: "mistakeSubtractOrder", findC: "mistakeFindC", rearrangeSlip: "mistakeRearrangeSlip",
+    minusNegative: "mistakeMinusNegative"
   };
   const AUTHORED_TIP_KEYS = {
     expand: "mistakeTipExpand", factor: "mistakeTipFactor", roots: "mistakeTipRoots",
@@ -1007,7 +1025,7 @@
       $eq.appendChild(s);
     } else if (ch.length > 1 && ch[0] === "^") {   // a whole power from eqUnits(), e.g. "^3" or "^-1"
       $eq.appendChild(makePow(ch.slice(1), "-"));
-    } else if (ch.length > 1 && ch[0] === "√") {   // a whole root, e.g. "√121": the pixel hook and bar
+    } else if (ch.length > 1 && "√{_".includes(ch[0])) {   // a whole root ("√121"), stacked fraction ("{9}/{3}") or subscript ("_1")
       appendWithPowers($eq, ch, "-");
     } else if (INEQ_SIGN.test(ch)) {
       const s = document.createElement("span");
@@ -1252,8 +1270,11 @@
     if (stepIndex === 0) $equationCard.classList.remove("solved");
     // Reserve two lines when any step shows two (Systems, and Completing the square Hard's a, b, c and b² − 4ac lines)
     $equationCard.classList.toggle("system-card", level.topic === "system" || level.steps.some(s => s.result.includes("\n")));
+    // Straight lines Medium: room for a stacked fraction under the points
+    $equationCard.classList.toggle("frac-card", level.equation.includes("}/{"));
 
     syncFormulaPanel(level);
+    showPlayGraph(level, stepIndex);   // Straight lines with two points; hidden for everything else
     updateFormulaBtn(level);   // follows each question's topic (Mixed Review, Tricky spots, Today's Challenge)
 
     const step = currentStep();
@@ -1280,6 +1301,9 @@
       const label = actionLabel(choice.action, choice.value);
       if (isLongChoice(label)) btn.classList.add("long");   // 12px on narrow phones (e.g. the quadratic formula)
       appendWithPowers(btn, label);
+      // What Chalky says for this move in a replay: a stacked fraction's textContent would run its top and
+      // bottom together ("4 − (−5)1 − (−2)"), so it's written inline instead: "(4 − (−5))/(1 − (−2))"
+      btn.dataset.say = label.replace(/\{([^{}]*)\}\/\{([^{}]*)\}/g, "($1)/($2)");
       if (choice.action === step.action && choice.value === step.value) btn.dataset.correct = "1";
       btn.addEventListener("click", () => handleChoice(choice, btn, step));
       $choices.appendChild(btn);
@@ -1537,7 +1561,7 @@
     setMathText($hintText, hints[stepIndex] || hints[hints.length - 1]);
     const line = (buddyLine("replayStepLine") || "Step {n}: {move}")
       .split("{n}").join(stepIndex + 1)
-      .split("{move}").join(correctBtn ? correctBtn.textContent : "");
+      .split("{move}").join(correctBtn ? (correctBtn.dataset.say || correctBtn.textContent) : "");
     buddyReact("thinking", { line, stay: true });
 
     replayLater(() => correctBtn && correctBtn.classList.add("intro-demo-tap"), REPLAY_TAP_MS);
@@ -1553,6 +1577,7 @@
         : null);
       burstChalkDust();
       stepIndex++;
+      showPlayGraph(level, stepIndex);   // the replay doesn't re-render between steps, so the rise and run draw in here
       const done = stepIndex >= level.steps.length;
       updateStepDots(stepIndex, level.steps.length, done);
       sfx.step(stepIndex);
@@ -1672,10 +1697,12 @@
     $completeReview.hidden = true;
 
     // Systems levels (Today's Challenge too): graph both lines meeting at the answer
-    const graphShown = r.level.topic === "system" && showSystemGraph(r.level);
+    // Straight lines (Today's Challenge too): the line, with its points or its y-intercept
+    const graphShown = (r.level.topic === "system" && showSystemGraph(r.level))
+      || (r.level.topic === "line" && showLineGraph(r.level));
     // Inequality levels (Today's Challenge too): the answer on a number line
     const lineShown = r.level.topic === "inequality" && showNumberLine(r.level);
-    const graphLineKey = graphShown ? "chalkyLinesMeet" : "chalkyNumberLine";
+    const graphLineKey = !graphShown ? "chalkyNumberLine" : r.level.topic === "line" ? "chalkyLineDrawn" : "chalkyLinesMeet";
 
     // Buttons: primary = Next level (or Level select / Home when there's nothing next)
     const next = r.daily ? null : nextLevelAfter(r.level);
@@ -1990,8 +2017,8 @@
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
-  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject", expression: "topicExpression", indices: "topicIndices", roots: "topicRoots" };
-  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1", expression: "4x + 3 + 2x", indices: "x^3 × x^4", roots: "(x + 3)² = 16" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject", expression: "topicExpression", indices: "topicIndices", roots: "topicRoots", line: "topicLine" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1", expression: "4x + 3 + 2x", indices: "x^3 × x^4", roots: "(x + 3)² = 16", line: "y = 2x + 3" };
 
   // Levels unlock in order within a tier; the first level of every tier is always open.
   function isUnlocked(level) {
@@ -2364,7 +2391,7 @@
   // Shown once per topic on first visit, reopenable from the ❔ on the level-select screen.
   // Chalky explains the key idea, then a demo level plays step by step using the real game pieces.
   const TUTORIAL_SEEN_KEY = "lll_algebra_tutorials_seen";
-  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2, expression: 2, indices: 2, roots: 2 };
+  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2, expression: 2, indices: 2, roots: 2, line: 2 };
   const TUT_STEP_MS = 2600;   // time per demo step
 
   // Demo level per topic: normally the first Easy level, except where that level skips the
@@ -2425,7 +2452,7 @@
     for (const ch of eqUnits(text)) {
       if (ch.length > 1 && ch[0] === "^") {
         el.appendChild(makePow(ch.slice(1), "-"));
-      } else if (ch.length > 1 && ch[0] === "√") {   // a whole root: the pixel hook and bar
+      } else if (ch.length > 1 && "√{_".includes(ch[0])) {   // a whole root, stacked fraction or subscript
         appendWithPowers(el, ch, "-");
       } else if (INEQ_SIGN.test(ch)) {
         const s = document.createElement("span");
@@ -2463,7 +2490,7 @@
     const steps = level.steps;
     $tutStepDots.innerHTML = steps.map(() => '<span class="step-dot"></span>').join("");
     $tutEquationCard.classList.remove("solved");
-    $tutEquationCard.classList.toggle("system-card", level.topic === "system");
+    $tutEquationCard.classList.toggle("system-card", level.topic === "system" || steps.some(s => s.result.includes("\n")));
     $tutEquation.classList.remove("updating");
     setPixelEq($tutEquation, level.equation);
     $tutChoices.innerHTML = "";
