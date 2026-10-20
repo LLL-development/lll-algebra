@@ -1,6 +1,7 @@
 // LLL Algebra — formula sheet entries (📐 on level select and next to Hint)
 // Only topics listed here get the 📐 button. Each entry is drawn with setMathText(), so
 // powers use ^ (x^m, x^(m+n)) and roots use √ (√k, √(b² − 4ac)), as in levels.js.
+// Straight lines also use {top}/{bottom} for a stacked fraction and y_2 for a subscript.
 //   name:    label above the formula ({ en, ja }); omitted when rule: true (shows "Rule" instead)
 //   formula: string, or { en, ja } when it contains words
 //   example: shown after "e.g." / "例：" (string or { en, ja })
@@ -92,6 +93,23 @@ const TOPIC_FORMULAS = {
       rule: true,
       formula: { en: "× or ÷ by a negative → flip the sign", ja: "負の数で × か ÷ → 不等号の向きが逆" },
       example: "−2x < 6 → x > −3",
+    },
+  ],
+  line: [
+    {
+      name: { en: "Gradient m, intercept c", ja: "傾き m・切片 c" },
+      formula: "y = mx + c",
+      example: "y = 3 − 2x → m = −2, c = 3",
+    },
+    {
+      name: { en: "Gradient from two points", ja: "2点から傾き" },
+      formula: "m = {y_2 − y_1}/{x_2 − x_1}",
+      example: "(1, 2), (3, 6) → m = {6 − 2}/{3 − 1} = 2",
+    },
+    {
+      name: { en: "Finding c", ja: "c を求める" },
+      formula: "c = y − mx",
+      example: "m = 2, (1, 5) → c = 5 − 2 = 3",
     },
   ],
 };

@@ -42,6 +42,13 @@
 //   "discriminant" — work out b² - 4ac before using the formula (roots topic). Authored: `value` is e.g.
 //                   "b² - 4ac = 121"; its prompt comes from the step's own `prompt`. Its `result` keeps the
 //                   a, b, c line first ("a = 1, b = 5, c = -24\nb² - 4ac = 121"), since b² - 4ac is a side calculation.
+//   "gradient"    — read or work out the gradient m (line topic). Authored: `value` is e.g. "m = 2".
+//   "intercept"   — read or work out the y-intercept c (line topic). Authored: `value` is e.g. "c = 3".
+//   "gradSub"     — put two points into m = (y_2 - y_1)/(x_2 - x_1) (line topic, Medium). Authored: `value`
+//                   is a stacked fraction, e.g. "{4 - (-5)}/{1 - (-2)}".
+//   "gradCalc"    — work out the top and bottom of that fraction (line topic, Medium), e.g. "{9}/{3}".
+//   "isolate"     — get y on its own before reading m and c (line topic, Hard). Authored: `value` is
+//                   the line in y = mx + c form (e.g. "y = 2x - 1"). Not "rearrange": that's Quadratics Hard's type.
 //
 // Systems: `equation` is two lines joined by "\n" (e.g. "x + y = 9\n2x - y = 3"), and
 // `answer` is { x, y }. A step whose result the player must substitute into keeps that
@@ -103,7 +110,18 @@
 // step with `fill: "formula"`, and a later step's `focus` lights up the part it uses: "disc" (b² - 4ac) or
 // "top" (the top of the fraction).
 //
-// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject", "expression", "indices" or "roots". `target` is "both-sides"
+// Straight lines (topic key `line`): every step is authored, with `wrongKinds`: "swapMC" (m and c swapped),
+// "lineSign" (a sign dropped from m or c), "loneLetter" (shared with Expressions: x read as 0x, not 1x),
+// "riseRun" (the gradient fraction upside down: x's on top), "subtractOrder" (the points subtracted in
+// different orders on top and bottom), "minusNegative" (4 - (-5) worked out as -1), "findC" (c = y + mx
+// instead of y - mx), "rearrangeSlip" (only some terms divided, or the move undone the wrong way) or "generic"
+// (not tracked). Cards keep what's been found as a second line (like `coef`). Two-point cards show the points
+// as "(1, 2), (3, 6)" (no words, so no Japanese is needed in the pixel font). {top}/{bottom} is drawn as a
+// stacked fraction and x_1 as a subscript (mathtext.js); plain a/b stays inline. Every level carries
+// `line: { m, c, points }` for the graph; gradients are whole numbers, and every point and intercept stays
+// within -6..6 so the grid stays at 1 unit.
+//
+// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject", "expression", "indices", "roots" or "line". `target` is "both-sides"
 // for every move that changes a side's value; only "expand" and "simplify" rewrite one side,
 // because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
@@ -8806,6 +8824,962 @@ const LEVELS = [
       en: "The quadratic formula works on any quadratic. Read off a = 3, b = -6, c = -24: b² - 4ac = (-6)² - 4 × 3 × (-24) = 36 + 288 = 324, and √324 = 18. So x = (6 ± 18)/6: x = -2 or x = 4.",
       ja: "解の公式はどんな二次方程式にも使えます。a = 3、b = -6、c = -24 を読み取って、b² - 4ac = (-6)² - 4 × 3 × (-24) = 36 + 288 = 324、√324 = 18。x = (6 ± 18)/6 なので、x = -2 または x = 4。"
     }
+  },
+
+  // =====================================================================
+  // STRAIGHT LINES
+  // =====================================================================
+  {
+    id: "line_easy_01",
+    topic: "line",
+    equation: "y = 2x + 3",
+    answer: "m = 2, c = 3",
+    difficulty: "easy",
+    type: "read",
+    basePoints: 10,
+    line: { m: 2, c: 3, points: [] },
+    steps: [
+      { action: "gradient", value: "m = 2", target: "both-sides", result: "y = 2x + 3\nm = 2",
+        wrong: ["m = 3", "m = -2", "m = 2x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
+      { action: "intercept", value: "c = 3", target: "both-sides", result: "y = 2x + 3\nm = 2, c = 3",
+        wrong: ["c = 2", "c = -3", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "In y = mx + c, m is the number in front of x, sign included. Here m = 2.",
+        "c is the number on its own: 3. That's where the line crosses the y-axis, at (0, 3)."
+      ],
+      ja: [
+        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = 2。",
+        "c は単独の数：3。直線がy軸と交わる点 (0, 3)。"
+      ]
+    },
+    explanation: {
+      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. So m = 2 and c = 3: the line goes up 2 for every 1 across, and it crosses the y-axis at (0, 3).",
+      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。よって m = 2、c = 3。右に1進むと上に2進む直線で、y軸と (0, 3) で交わります。"
+    }
+  },
+  {
+    id: "line_easy_02",
+    topic: "line",
+    equation: "y = 4x - 1",
+    answer: "m = 4, c = -1",
+    difficulty: "easy",
+    type: "read",
+    basePoints: 10,
+    line: { m: 4, c: -1, points: [] },
+    steps: [
+      { action: "gradient", value: "m = 4", target: "both-sides", result: "y = 4x - 1\nm = 4",
+        wrong: ["m = -1", "m = -4", "m = 4x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
+      { action: "intercept", value: "c = -1", target: "both-sides", result: "y = 4x - 1\nm = 4, c = -1",
+        wrong: ["c = 4", "c = 1", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "In y = mx + c, m is the number in front of x, sign included. Here m = 4.",
+        "c is the number on its own, sign included: the - 1 means c = -1. That's where the line crosses the y-axis."
+      ],
+      ja: [
+        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = 4。",
+        "c は単独の数（符号も含む）：- 1 なので c = -1。直線がy軸と交わる点。"
+      ]
+    },
+    explanation: {
+      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. So m = 4 and c = -1: the line goes up 4 for every 1 across, and it crosses the y-axis at (0, -1).",
+      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。よって m = 4、c = -1。右に1進むと上に4進む直線で、y軸と (0, -1) で交わります。"
+    }
+  },
+  {
+    id: "line_easy_03",
+    topic: "line",
+    equation: "y = x + 4",
+    answer: "m = 1, c = 4",
+    difficulty: "easy",
+    type: "read",
+    basePoints: 10,
+    line: { m: 1, c: 4, points: [] },
+    steps: [
+      { action: "gradient", value: "m = 1", target: "both-sides", result: "y = x + 4\nm = 1",
+        wrong: ["m = 4", "m = 0", "m = -1"], wrongKinds: ["swapMC", "loneLetter", "lineSign"] },
+      { action: "intercept", value: "c = 4", target: "both-sides", result: "y = x + 4\nm = 1, c = 4",
+        wrong: ["c = 1", "c = -4", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "In y = mx + c, m is the number in front of x. x on its own means 1x, so m = 1.",
+        "c is the number on its own: 4. That's where the line crosses the y-axis, at (0, 4)."
+      ],
+      ja: [
+        "y = mx + c では、m はxの前の数。x は 1x のことなので m = 1。",
+        "c は単独の数：4。直線がy軸と交わる点 (0, 4)。"
+      ]
+    },
+    explanation: {
+      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. x on its own counts as 1x. So m = 1 and c = 4: the line goes up 1 for every 1 across, and it crosses the y-axis at (0, 4).",
+      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。x は 1x と数えます。よって m = 1、c = 4。右に1進むと上に1進む直線で、y軸と (0, 4) で交わります。"
+    }
+  },
+  {
+    id: "line_easy_04",
+    topic: "line",
+    equation: "y = 3 - 2x",
+    answer: "m = -2, c = 3",
+    difficulty: "easy",
+    type: "read",
+    basePoints: 10,
+    line: { m: -2, c: 3, points: [] },
+    steps: [
+      { action: "gradient", value: "m = -2", target: "both-sides", result: "y = 3 - 2x\nm = -2",
+        wrong: ["m = 3", "m = 2", "m = -2x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
+      { action: "intercept", value: "c = 3", target: "both-sides", result: "y = 3 - 2x\nm = -2, c = 3",
+        wrong: ["c = -2", "c = -3", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "The x term can come second: 3 - 2x is the same as -2x + 3. The number in front of x, sign included, is -2.",
+        "c is the number on its own: 3. That's where the line crosses the y-axis, at (0, 3)."
+      ],
+      ja: [
+        "xの項が後ろに来ることもある：3 - 2x は -2x + 3 と同じ。xの前の数（符号も含む）は -2。",
+        "c は単独の数：3。直線がy軸と交わる点 (0, 3)。"
+      ]
+    },
+    explanation: {
+      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. 3 - 2x is just -2x + 3 written the other way round. So m = -2 and c = 3: the line goes down 2 for every 1 across, and it crosses the y-axis at (0, 3).",
+      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。3 - 2x は -2x + 3 を逆の順に書いただけです。よって m = -2、c = 3。右に1進むと下に2進む直線で、y軸と (0, 3) で交わります。"
+    }
+  },
+  {
+    id: "line_easy_05",
+    topic: "line",
+    equation: "y = -x + 2",
+    answer: "m = -1, c = 2",
+    difficulty: "easy",
+    type: "read",
+    basePoints: 10,
+    line: { m: -1, c: 2, points: [] },
+    steps: [
+      { action: "gradient", value: "m = -1", target: "both-sides", result: "y = -x + 2\nm = -1",
+        wrong: ["m = 2", "m = 0", "m = 1"], wrongKinds: ["swapMC", "loneLetter", "lineSign"] },
+      { action: "intercept", value: "c = 2", target: "both-sides", result: "y = -x + 2\nm = -1, c = 2",
+        wrong: ["c = -1", "c = -2", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "In y = mx + c, m is the number in front of x. -x on its own means -1x, so m = -1.",
+        "c is the number on its own: 2. That's where the line crosses the y-axis, at (0, 2)."
+      ],
+      ja: [
+        "y = mx + c では、m はxの前の数。-x は -1x のことなので m = -1。",
+        "c は単独の数：2。直線がy軸と交わる点 (0, 2)。"
+      ]
+    },
+    explanation: {
+      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. -x on its own counts as -1x. So m = -1 and c = 2: the line goes down 1 for every 1 across, and it crosses the y-axis at (0, 2).",
+      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。-x は -1x と数えます。よって m = -1、c = 2。右に1進むと下に1進む直線で、y軸と (0, 2) で交わります。"
+    }
+  },
+  {
+    id: "line_easy_06",
+    topic: "line",
+    equation: "y = 4",
+    answer: "m = 0, c = 4",
+    difficulty: "easy",
+    type: "read",
+    basePoints: 10,
+    line: { m: 0, c: 4, points: [] },
+    steps: [
+      { action: "gradient", value: "m = 0", target: "both-sides", result: "y = 4\nm = 0",
+        wrong: ["m = 4", "m = 1", "m = -4"], wrongKinds: ["swapMC", "generic", "generic"] },
+      { action: "intercept", value: "c = 4", target: "both-sides", result: "y = 4\nm = 0, c = 4",
+        wrong: ["c = 0", "c = -4", "c = 2"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "There's no x term at all, so think of it as y = 0x + 4. m = 0.",
+        "c is the number on its own: 4. That's where the line crosses the y-axis, at (0, 4)."
+      ],
+      ja: [
+        "xの項がないので、y = 0x + 4 と考える。m = 0。",
+        "c は単独の数：4。直線がy軸と交わる点 (0, 4)。"
+      ]
+    },
+    explanation: {
+      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. With no x term, the number in front of x is 0. So m = 0 and c = 4: the line is flat, and it crosses the y-axis at (0, 4).",
+      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。xの項がないので、xの前の数は0です。よって m = 0、c = 4。直線は水平で、y軸と (0, 4) で交わります。"
+    }
+  },
+  {
+    id: "line_easy_07",
+    topic: "line",
+    equation: "y = -3x - 4",
+    answer: "m = -3, c = -4",
+    difficulty: "easy",
+    type: "read",
+    basePoints: 10,
+    line: { m: -3, c: -4, points: [] },
+    steps: [
+      { action: "gradient", value: "m = -3", target: "both-sides", result: "y = -3x - 4\nm = -3",
+        wrong: ["m = -4", "m = 3", "m = -3x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
+      { action: "intercept", value: "c = -4", target: "both-sides", result: "y = -3x - 4\nm = -3, c = -4",
+        wrong: ["c = -3", "c = 4", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "In y = mx + c, m is the number in front of x, sign included. Here m = -3.",
+        "c is the number on its own, sign included: the - 4 means c = -4. That's where the line crosses the y-axis."
+      ],
+      ja: [
+        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = -3。",
+        "c は単独の数（符号も含む）：- 4 なので c = -4。直線がy軸と交わる点。"
+      ]
+    },
+    explanation: {
+      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. So m = -3 and c = -4: the line goes down 3 for every 1 across, and it crosses the y-axis at (0, -4).",
+      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。よって m = -3、c = -4。右に1進むと下に3進む直線で、y軸と (0, -4) で交わります。"
+    }
+  },
+  {
+    id: "line_easy_08",
+    topic: "line",
+    equation: "y = 6 + x",
+    answer: "m = 1, c = 6",
+    difficulty: "easy",
+    type: "read",
+    basePoints: 10,
+    line: { m: 1, c: 6, points: [] },
+    steps: [
+      { action: "gradient", value: "m = 1", target: "both-sides", result: "y = 6 + x\nm = 1",
+        wrong: ["m = 6", "m = 0", "m = -1"], wrongKinds: ["swapMC", "loneLetter", "lineSign"] },
+      { action: "intercept", value: "c = 6", target: "both-sides", result: "y = 6 + x\nm = 1, c = 6",
+        wrong: ["c = 1", "c = -6", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "6 + x is the same as x + 6, and x on its own means 1x, so m = 1.",
+        "c is the number on its own: 6. That's where the line crosses the y-axis, at (0, 6)."
+      ],
+      ja: [
+        "6 + x は x + 6 と同じ。x は 1x のことなので m = 1。",
+        "c は単独の数：6。直線がy軸と交わる点 (0, 6)。"
+      ]
+    },
+    explanation: {
+      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. 6 + x is just x + 6 the other way round, and x counts as 1x. So m = 1 and c = 6: the line goes up 1 for every 1 across, and it crosses the y-axis at (0, 6).",
+      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。6 + x は x + 6 を逆に書いただけで、x は 1x と数えます。よって m = 1、c = 6。右に1進むと上に1進む直線で、y軸と (0, 6) で交わります。"
+    }
+  },
+  {
+    id: "line_easy_09",
+    topic: "line",
+    equation: "y = -2x",
+    answer: "m = -2, c = 0",
+    difficulty: "easy",
+    type: "read",
+    basePoints: 10,
+    line: { m: -2, c: 0, points: [] },
+    steps: [
+      { action: "gradient", value: "m = -2", target: "both-sides", result: "y = -2x\nm = -2",
+        wrong: ["m = 0", "m = 2", "m = -2x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
+      { action: "intercept", value: "c = 0", target: "both-sides", result: "y = -2x\nm = -2, c = 0",
+        wrong: ["c = -2", "c = 2", "c = 1"], wrongKinds: ["swapMC", "generic", "generic"] }
+    ],
+    hints: {
+      en: [
+        "In y = mx + c, m is the number in front of x, sign included. Here m = -2.",
+        "c is the number on its own, but there isn't one, so c = 0. The line goes through (0, 0)."
+      ],
+      ja: [
+        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = -2。",
+        "c は単独の数だが、ここにはないので c = 0。直線は (0, 0) を通る。"
+      ]
+    },
+    explanation: {
+      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. There's no number on its own, so c = 0. So m = -2 and c = 0: the line goes down 2 for every 1 across, and it crosses the y-axis at (0, 0).",
+      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。単独の数がないので c = 0 です。よって m = -2、c = 0。右に1進むと下に2進む直線で、y軸と (0, 0) で交わります。"
+    }
+  },
+  {
+    id: "line_easy_10",
+    topic: "line",
+    equation: "y = 1 - 3x",
+    answer: "m = -3, c = 1",
+    difficulty: "easy",
+    type: "read",
+    basePoints: 10,
+    line: { m: -3, c: 1, points: [] },
+    steps: [
+      { action: "gradient", value: "m = -3", target: "both-sides", result: "y = 1 - 3x\nm = -3",
+        wrong: ["m = 1", "m = 3", "m = -3x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
+      { action: "intercept", value: "c = 1", target: "both-sides", result: "y = 1 - 3x\nm = -3, c = 1",
+        wrong: ["c = -3", "c = -1", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "The x term can come second: 1 - 3x is the same as -3x + 1. The number in front of x, sign included, is -3.",
+        "c is the number on its own: 1. That's where the line crosses the y-axis, at (0, 1)."
+      ],
+      ja: [
+        "xの項が後ろに来ることもある：1 - 3x は -3x + 1 と同じ。xの前の数（符号も含む）は -3。",
+        "c は単独の数：1。直線がy軸と交わる点 (0, 1)。"
+      ]
+    },
+    explanation: {
+      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. 1 - 3x is just -3x + 1 written the other way round. So m = -3 and c = 1: the line goes down 3 for every 1 across, and it crosses the y-axis at (0, 1).",
+      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。1 - 3x は -3x + 1 を逆の順に書いただけです。よって m = -3、c = 1。右に1進むと下に3進む直線で、y軸と (0, 1) で交わります。"
+    }
+  },
+  {
+    id: "line_medium_01",
+    topic: "line",
+    equation: "(1, 2), (3, 6)\nm = {y_2 - y_1}/{x_2 - x_1}",
+    answer: "m = 2",
+    difficulty: "medium",
+    type: "two-point-gradient",
+    basePoints: 20,
+    line: { m: 2, c: 0, points: [[1, 2], [3, 6]] },
+    steps: [
+      { action: "gradSub", value: "{6 - 2}/{3 - 1}", target: "both-sides", result: "(1, 2), (3, 6)\nm = {6 - 2}/{3 - 1}",
+        wrong: ["{3 - 1}/{6 - 2}", "{6 - 2}/{1 - 3}", "{6 - 3}/{2 - 1}"], wrongKinds: ["riseRun", "subtractOrder", "generic"] },
+      { action: "gradCalc", value: "{4}/{2}", target: "both-sides", result: "(1, 2), (3, 6)\nm = {4}/{2}",
+        wrong: ["{-4}/{2}", "{4}/{-2}", "{4}/{3}"], wrongKinds: ["generic", "generic", "generic"] },
+      { action: "gradient", value: "m = 2", prompt: "gradDividePrompt", target: "both-sides", result: "(1, 2), (3, 6)\nm = 2",
+        wrong: ["m = 1/2", "m = -2", "m = 4"], wrongKinds: ["riseRun", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Label the points: (x_1, y_1) = (1, 2) and (x_2, y_2) = (3, 6). Then the top is y_2 - y_1 = 6 - 2 and the bottom is x_2 - x_1 = 3 - 1.",
+        "Top: 6 - 2 = 4. Bottom: 3 - 1 = 2.",
+        "4 ÷ 2 = 2, so m = 2."
+      ],
+      ja: [
+        "点に名前をつける：(x_1, y_1) = (1, 2)、(x_2, y_2) = (3, 6)。上は y_2 - y_1 = 6 - 2、下は x_2 - x_1 = 3 - 1。",
+        "上：6 - 2 = 4。下：3 - 1 = 2。",
+        "4 ÷ 2 = 2 なので m = 2。"
+      ]
+    },
+    explanation: {
+      en: "Label the points (x_1, y_1) = (1, 2) and (x_2, y_2) = (3, 6). The formula is m = (y_2 - y_1) ÷ (x_2 - x_1). Putting the points in: m = (6 - 2) ÷ (3 - 1). That's 4 ÷ 2, so m = 2: the line goes up 2 for every 1 across.",
+      ja: "点に名前をつけます：(x_1, y_1) = (1, 2)、(x_2, y_2) = (3, 6)。公式は m = (y_2 - y_1) ÷ (x_2 - x_1)。点を代入すると m = (6 - 2) ÷ (3 - 1)。これは 4 ÷ 2 なので m = 2。右に1進むと上に2進む直線です。"
+    }
+  },
+  {
+    id: "line_medium_02",
+    topic: "line",
+    equation: "(0, -5), (2, 1)\nm = {y_2 - y_1}/{x_2 - x_1}",
+    answer: "m = 3",
+    difficulty: "medium",
+    type: "two-point-gradient",
+    basePoints: 20,
+    line: { m: 3, c: -5, points: [[0, -5], [2, 1]] },
+    steps: [
+      { action: "gradSub", value: "{1 - (-5)}/{2 - 0}", target: "both-sides", result: "(0, -5), (2, 1)\nm = {1 - (-5)}/{2 - 0}",
+        wrong: ["{2 - 0}/{1 - (-5)}", "{1 - (-5)}/{0 - 2}", "{1 - 2}/{-5 - 0}"], wrongKinds: ["riseRun", "subtractOrder", "generic"] },
+      { action: "gradCalc", value: "{6}/{2}", target: "both-sides", result: "(0, -5), (2, 1)\nm = {6}/{2}",
+        wrong: ["{-4}/{2}", "{-6}/{2}", "{6}/{-2}"], wrongKinds: ["minusNegative", "generic", "generic"] },
+      { action: "gradient", value: "m = 3", prompt: "gradDividePrompt", target: "both-sides", result: "(0, -5), (2, 1)\nm = 3",
+        wrong: ["m = 1/3", "m = -3", "m = 6"], wrongKinds: ["riseRun", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Label the points: (x_1, y_1) = (0, -5) and (x_2, y_2) = (2, 1). Then the top is y_2 - y_1 = 1 - (-5) and the bottom is x_2 - x_1 = 2 - 0.",
+        "Top: 1 - (-5) = 1 + 5 = 6. Bottom: 2 - 0 = 2. Minus a negative is a plus.",
+        "6 ÷ 2 = 3, so m = 3."
+      ],
+      ja: [
+        "点に名前をつける：(x_1, y_1) = (0, -5)、(x_2, y_2) = (2, 1)。上は y_2 - y_1 = 1 - (-5)、下は x_2 - x_1 = 2 - 0。",
+        "上：1 - (-5) = 1 + 5 = 6。下：2 - 0 = 2。マイナスのマイナスはプラス。",
+        "6 ÷ 2 = 3 なので m = 3。"
+      ]
+    },
+    explanation: {
+      en: "Label the points (x_1, y_1) = (0, -5) and (x_2, y_2) = (2, 1). The formula is m = (y_2 - y_1) ÷ (x_2 - x_1). Putting the points in: m = (1 - (-5)) ÷ (2 - 0). That's 6 ÷ 2, so m = 3: the line goes up 3 for every 1 across.",
+      ja: "点に名前をつけます：(x_1, y_1) = (0, -5)、(x_2, y_2) = (2, 1)。公式は m = (y_2 - y_1) ÷ (x_2 - x_1)。点を代入すると m = (1 - (-5)) ÷ (2 - 0)。これは 6 ÷ 2 なので m = 3。右に1進むと上に3進む直線です。"
+    }
+  },
+  {
+    id: "line_medium_03",
+    topic: "line",
+    equation: "(-2, -5), (1, 4)\nm = {y_2 - y_1}/{x_2 - x_1}",
+    answer: "m = 3",
+    difficulty: "medium",
+    type: "two-point-gradient",
+    basePoints: 20,
+    line: { m: 3, c: 1, points: [[-2, -5], [1, 4]] },
+    steps: [
+      { action: "gradSub", value: "{4 - (-5)}/{1 - (-2)}", target: "both-sides", result: "(-2, -5), (1, 4)\nm = {4 - (-5)}/{1 - (-2)}",
+        wrong: ["{1 - (-2)}/{4 - (-5)}", "{4 - (-5)}/{-2 - 1}", "{4 - 1}/{-5 - (-2)}"], wrongKinds: ["riseRun", "subtractOrder", "generic"] },
+      { action: "gradCalc", value: "{9}/{3}", target: "both-sides", result: "(-2, -5), (1, 4)\nm = {9}/{3}",
+        wrong: ["{-1}/{3}", "{9}/{-1}", "{-9}/{3}"], wrongKinds: ["minusNegative", "minusNegative", "generic"] },
+      { action: "gradient", value: "m = 3", prompt: "gradDividePrompt", target: "both-sides", result: "(-2, -5), (1, 4)\nm = 3",
+        wrong: ["m = 1/3", "m = -3", "m = 9"], wrongKinds: ["riseRun", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Label the points: (x_1, y_1) = (-2, -5) and (x_2, y_2) = (1, 4). Then the top is y_2 - y_1 = 4 - (-5) and the bottom is x_2 - x_1 = 1 - (-2).",
+        "Top: 4 - (-5) = 4 + 5 = 9. Bottom: 1 - (-2) = 1 + 2 = 3. Minus a negative is a plus.",
+        "9 ÷ 3 = 3, so m = 3."
+      ],
+      ja: [
+        "点に名前をつける：(x_1, y_1) = (-2, -5)、(x_2, y_2) = (1, 4)。上は y_2 - y_1 = 4 - (-5)、下は x_2 - x_1 = 1 - (-2)。",
+        "上：4 - (-5) = 4 + 5 = 9。下：1 - (-2) = 1 + 2 = 3。マイナスのマイナスはプラス。",
+        "9 ÷ 3 = 3 なので m = 3。"
+      ]
+    },
+    explanation: {
+      en: "Label the points (x_1, y_1) = (-2, -5) and (x_2, y_2) = (1, 4). The formula is m = (y_2 - y_1) ÷ (x_2 - x_1). Putting the points in: m = (4 - (-5)) ÷ (1 - (-2)). That's 9 ÷ 3, so m = 3: the line goes up 3 for every 1 across.",
+      ja: "点に名前をつけます：(x_1, y_1) = (-2, -5)、(x_2, y_2) = (1, 4)。公式は m = (y_2 - y_1) ÷ (x_2 - x_1)。点を代入すると m = (4 - (-5)) ÷ (1 - (-2))。これは 9 ÷ 3 なので m = 3。右に1進むと上に3進む直線です。"
+    }
+  },
+  {
+    id: "line_medium_04",
+    topic: "line",
+    equation: "(1, 3), (3, -1)\nm = {y_2 - y_1}/{x_2 - x_1}",
+    answer: "m = -2",
+    difficulty: "medium",
+    type: "two-point-gradient",
+    basePoints: 20,
+    line: { m: -2, c: 5, points: [[1, 3], [3, -1]] },
+    steps: [
+      { action: "gradSub", value: "{-1 - 3}/{3 - 1}", target: "both-sides", result: "(1, 3), (3, -1)\nm = {-1 - 3}/{3 - 1}",
+        wrong: ["{3 - 1}/{-1 - 3}", "{-1 - 3}/{1 - 3}", "{3 - (-1)}/{3 - 1}"], wrongKinds: ["riseRun", "subtractOrder", "subtractOrder"] },
+      { action: "gradCalc", value: "{-4}/{2}", target: "both-sides", result: "(1, 3), (3, -1)\nm = {-4}/{2}",
+        wrong: ["{4}/{2}", "{-4}/{-2}", "{-4}/{3}"], wrongKinds: ["generic", "generic", "generic"] },
+      { action: "gradient", value: "m = -2", prompt: "gradDividePrompt", target: "both-sides", result: "(1, 3), (3, -1)\nm = -2",
+        wrong: ["m = -1/2", "m = 2", "m = -4"], wrongKinds: ["riseRun", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Label the points: (x_1, y_1) = (1, 3) and (x_2, y_2) = (3, -1). Then the top is y_2 - y_1 = -1 - 3 and the bottom is x_2 - x_1 = 3 - 1.",
+        "Top: -1 - 3 = -4. Bottom: 3 - 1 = 2.",
+        "-4 ÷ 2 = -2, so m = -2."
+      ],
+      ja: [
+        "点に名前をつける：(x_1, y_1) = (1, 3)、(x_2, y_2) = (3, -1)。上は y_2 - y_1 = -1 - 3、下は x_2 - x_1 = 3 - 1。",
+        "上：-1 - 3 = -4。下：3 - 1 = 2。",
+        "-4 ÷ 2 = -2 なので m = -2。"
+      ]
+    },
+    explanation: {
+      en: "Label the points (x_1, y_1) = (1, 3) and (x_2, y_2) = (3, -1). The formula is m = (y_2 - y_1) ÷ (x_2 - x_1). Putting the points in: m = (-1 - 3) ÷ (3 - 1). That's -4 ÷ 2, so m = -2: the line goes down 2 for every 1 across.",
+      ja: "点に名前をつけます：(x_1, y_1) = (1, 3)、(x_2, y_2) = (3, -1)。公式は m = (y_2 - y_1) ÷ (x_2 - x_1)。点を代入すると m = (-1 - 3) ÷ (3 - 1)。これは -4 ÷ 2 なので m = -2。右に1進むと下に2進む直線です。"
+    }
+  },
+  {
+    id: "line_medium_05",
+    topic: "line",
+    equation: "(-1, -3), (1, 5)\nm = {y_2 - y_1}/{x_2 - x_1}",
+    answer: "m = 4",
+    difficulty: "medium",
+    type: "two-point-gradient",
+    basePoints: 20,
+    line: { m: 4, c: 1, points: [[-1, -3], [1, 5]] },
+    steps: [
+      { action: "gradSub", value: "{5 - (-3)}/{1 - (-1)}", target: "both-sides", result: "(-1, -3), (1, 5)\nm = {5 - (-3)}/{1 - (-1)}",
+        wrong: ["{1 - (-1)}/{5 - (-3)}", "{5 - (-3)}/{-1 - 1}", "{5 - 1}/{-3 - (-1)}"], wrongKinds: ["riseRun", "subtractOrder", "generic"] },
+      { action: "gradCalc", value: "{8}/{2}", target: "both-sides", result: "(-1, -3), (1, 5)\nm = {8}/{2}",
+        wrong: ["{2}/{2}", "{8}/{0}", "{-8}/{2}"], wrongKinds: ["minusNegative", "minusNegative", "generic"] },
+      { action: "gradient", value: "m = 4", prompt: "gradDividePrompt", target: "both-sides", result: "(-1, -3), (1, 5)\nm = 4",
+        wrong: ["m = 1/4", "m = -4", "m = 8"], wrongKinds: ["riseRun", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Label the points: (x_1, y_1) = (-1, -3) and (x_2, y_2) = (1, 5). Then the top is y_2 - y_1 = 5 - (-3) and the bottom is x_2 - x_1 = 1 - (-1).",
+        "Top: 5 - (-3) = 5 + 3 = 8. Bottom: 1 - (-1) = 1 + 1 = 2. Minus a negative is a plus.",
+        "8 ÷ 2 = 4, so m = 4."
+      ],
+      ja: [
+        "点に名前をつける：(x_1, y_1) = (-1, -3)、(x_2, y_2) = (1, 5)。上は y_2 - y_1 = 5 - (-3)、下は x_2 - x_1 = 1 - (-1)。",
+        "上：5 - (-3) = 5 + 3 = 8。下：1 - (-1) = 1 + 1 = 2。マイナスのマイナスはプラス。",
+        "8 ÷ 2 = 4 なので m = 4。"
+      ]
+    },
+    explanation: {
+      en: "Label the points (x_1, y_1) = (-1, -3) and (x_2, y_2) = (1, 5). The formula is m = (y_2 - y_1) ÷ (x_2 - x_1). Putting the points in: m = (5 - (-3)) ÷ (1 - (-1)). That's 8 ÷ 2, so m = 4: the line goes up 4 for every 1 across.",
+      ja: "点に名前をつけます：(x_1, y_1) = (-1, -3)、(x_2, y_2) = (1, 5)。公式は m = (y_2 - y_1) ÷ (x_2 - x_1)。点を代入すると m = (5 - (-3)) ÷ (1 - (-1))。これは 8 ÷ 2 なので m = 4。右に1進むと上に4進む直線です。"
+    }
+  },
+  {
+    id: "line_medium_06",
+    topic: "line",
+    equation: "(-1, 4), (2, -2)\nm = {y_2 - y_1}/{x_2 - x_1}",
+    answer: "m = -2",
+    difficulty: "medium",
+    type: "two-point-gradient",
+    basePoints: 20,
+    line: { m: -2, c: 2, points: [[-1, 4], [2, -2]] },
+    steps: [
+      { action: "gradSub", value: "{-2 - 4}/{2 - (-1)}", target: "both-sides", result: "(-1, 4), (2, -2)\nm = {-2 - 4}/{2 - (-1)}",
+        wrong: ["{2 - (-1)}/{-2 - 4}", "{-2 - 4}/{-1 - 2}", "{-2 - 2}/{4 - (-1)}"], wrongKinds: ["riseRun", "subtractOrder", "generic"] },
+      { action: "gradCalc", value: "{-6}/{3}", target: "both-sides", result: "(-1, 4), (2, -2)\nm = {-6}/{3}",
+        wrong: ["{-6}/{1}", "{6}/{3}", "{-6}/{-3}"], wrongKinds: ["minusNegative", "generic", "generic"] },
+      { action: "gradient", value: "m = -2", prompt: "gradDividePrompt", target: "both-sides", result: "(-1, 4), (2, -2)\nm = -2",
+        wrong: ["m = -1/2", "m = 2", "m = -6"], wrongKinds: ["riseRun", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Label the points: (x_1, y_1) = (-1, 4) and (x_2, y_2) = (2, -2). Then the top is y_2 - y_1 = -2 - 4 and the bottom is x_2 - x_1 = 2 - (-1).",
+        "Top: -2 - 4 = -6. Bottom: 2 - (-1) = 2 + 1 = 3. Minus a negative is a plus.",
+        "-6 ÷ 3 = -2, so m = -2."
+      ],
+      ja: [
+        "点に名前をつける：(x_1, y_1) = (-1, 4)、(x_2, y_2) = (2, -2)。上は y_2 - y_1 = -2 - 4、下は x_2 - x_1 = 2 - (-1)。",
+        "上：-2 - 4 = -6。下：2 - (-1) = 2 + 1 = 3。マイナスのマイナスはプラス。",
+        "-6 ÷ 3 = -2 なので m = -2。"
+      ]
+    },
+    explanation: {
+      en: "Label the points (x_1, y_1) = (-1, 4) and (x_2, y_2) = (2, -2). The formula is m = (y_2 - y_1) ÷ (x_2 - x_1). Putting the points in: m = (-2 - 4) ÷ (2 - (-1)). That's -6 ÷ 3, so m = -2: the line goes down 2 for every 1 across.",
+      ja: "点に名前をつけます：(x_1, y_1) = (-1, 4)、(x_2, y_2) = (2, -2)。公式は m = (y_2 - y_1) ÷ (x_2 - x_1)。点を代入すると m = (-2 - 4) ÷ (2 - (-1))。これは -6 ÷ 3 なので m = -2。右に1進むと下に2進む直線です。"
+    }
+  },
+  {
+    id: "line_medium_07",
+    topic: "line",
+    equation: "(1, -2), (3, 4)\nm = {y_2 - y_1}/{x_2 - x_1}",
+    answer: "m = 3",
+    difficulty: "medium",
+    type: "two-point-gradient",
+    basePoints: 20,
+    line: { m: 3, c: -5, points: [[1, -2], [3, 4]] },
+    steps: [
+      { action: "gradSub", value: "{4 - (-2)}/{3 - 1}", target: "both-sides", result: "(1, -2), (3, 4)\nm = {4 - (-2)}/{3 - 1}",
+        wrong: ["{3 - 1}/{4 - (-2)}", "{4 - (-2)}/{1 - 3}", "{4 - 3}/{-2 - 1}"], wrongKinds: ["riseRun", "subtractOrder", "generic"] },
+      { action: "gradCalc", value: "{6}/{2}", target: "both-sides", result: "(1, -2), (3, 4)\nm = {6}/{2}",
+        wrong: ["{2}/{2}", "{-6}/{2}", "{6}/{-2}"], wrongKinds: ["minusNegative", "generic", "generic"] },
+      { action: "gradient", value: "m = 3", prompt: "gradDividePrompt", target: "both-sides", result: "(1, -2), (3, 4)\nm = 3",
+        wrong: ["m = 1/3", "m = -3", "m = 6"], wrongKinds: ["riseRun", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Label the points: (x_1, y_1) = (1, -2) and (x_2, y_2) = (3, 4). Then the top is y_2 - y_1 = 4 - (-2) and the bottom is x_2 - x_1 = 3 - 1.",
+        "Top: 4 - (-2) = 4 + 2 = 6. Bottom: 3 - 1 = 2. Minus a negative is a plus.",
+        "6 ÷ 2 = 3, so m = 3."
+      ],
+      ja: [
+        "点に名前をつける：(x_1, y_1) = (1, -2)、(x_2, y_2) = (3, 4)。上は y_2 - y_1 = 4 - (-2)、下は x_2 - x_1 = 3 - 1。",
+        "上：4 - (-2) = 4 + 2 = 6。下：3 - 1 = 2。マイナスのマイナスはプラス。",
+        "6 ÷ 2 = 3 なので m = 3。"
+      ]
+    },
+    explanation: {
+      en: "Label the points (x_1, y_1) = (1, -2) and (x_2, y_2) = (3, 4). The formula is m = (y_2 - y_1) ÷ (x_2 - x_1). Putting the points in: m = (4 - (-2)) ÷ (3 - 1). That's 6 ÷ 2, so m = 3: the line goes up 3 for every 1 across.",
+      ja: "点に名前をつけます：(x_1, y_1) = (1, -2)、(x_2, y_2) = (3, 4)。公式は m = (y_2 - y_1) ÷ (x_2 - x_1)。点を代入すると m = (4 - (-2)) ÷ (3 - 1)。これは 6 ÷ 2 なので m = 3。右に1進むと上に3進む直線です。"
+    }
+  },
+  {
+    id: "line_medium_08",
+    topic: "line",
+    equation: "(0, 6), (2, -2)\nm = {y_2 - y_1}/{x_2 - x_1}",
+    answer: "m = -4",
+    difficulty: "medium",
+    type: "two-point-gradient",
+    basePoints: 20,
+    line: { m: -4, c: 6, points: [[0, 6], [2, -2]] },
+    steps: [
+      { action: "gradSub", value: "{-2 - 6}/{2 - 0}", target: "both-sides", result: "(0, 6), (2, -2)\nm = {-2 - 6}/{2 - 0}",
+        wrong: ["{2 - 0}/{-2 - 6}", "{-2 - 6}/{0 - 2}", "{-2 - 2}/{6 - 0}"], wrongKinds: ["riseRun", "subtractOrder", "generic"] },
+      { action: "gradCalc", value: "{-8}/{2}", target: "both-sides", result: "(0, 6), (2, -2)\nm = {-8}/{2}",
+        wrong: ["{8}/{2}", "{-8}/{-2}", "{-8}/{3}"], wrongKinds: ["generic", "generic", "generic"] },
+      { action: "gradient", value: "m = -4", prompt: "gradDividePrompt", target: "both-sides", result: "(0, 6), (2, -2)\nm = -4",
+        wrong: ["m = -1/4", "m = 4", "m = -8"], wrongKinds: ["riseRun", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Label the points: (x_1, y_1) = (0, 6) and (x_2, y_2) = (2, -2). Then the top is y_2 - y_1 = -2 - 6 and the bottom is x_2 - x_1 = 2 - 0.",
+        "Top: -2 - 6 = -8. Bottom: 2 - 0 = 2.",
+        "-8 ÷ 2 = -4, so m = -4."
+      ],
+      ja: [
+        "点に名前をつける：(x_1, y_1) = (0, 6)、(x_2, y_2) = (2, -2)。上は y_2 - y_1 = -2 - 6、下は x_2 - x_1 = 2 - 0。",
+        "上：-2 - 6 = -8。下：2 - 0 = 2。",
+        "-8 ÷ 2 = -4 なので m = -4。"
+      ]
+    },
+    explanation: {
+      en: "Label the points (x_1, y_1) = (0, 6) and (x_2, y_2) = (2, -2). The formula is m = (y_2 - y_1) ÷ (x_2 - x_1). Putting the points in: m = (-2 - 6) ÷ (2 - 0). That's -8 ÷ 2, so m = -4: the line goes down 4 for every 1 across.",
+      ja: "点に名前をつけます：(x_1, y_1) = (0, 6)、(x_2, y_2) = (2, -2)。公式は m = (y_2 - y_1) ÷ (x_2 - x_1)。点を代入すると m = (-2 - 6) ÷ (2 - 0)。これは -8 ÷ 2 なので m = -4。右に1進むと下に4進む直線です。"
+    }
+  },
+  {
+    id: "line_medium_09",
+    topic: "line",
+    equation: "(-2, 6), (0, 0)\nm = {y_2 - y_1}/{x_2 - x_1}",
+    answer: "m = -3",
+    difficulty: "medium",
+    type: "two-point-gradient",
+    basePoints: 20,
+    line: { m: -3, c: 0, points: [[-2, 6], [0, 0]] },
+    steps: [
+      { action: "gradSub", value: "{0 - 6}/{0 - (-2)}", target: "both-sides", result: "(-2, 6), (0, 0)\nm = {0 - 6}/{0 - (-2)}",
+        wrong: ["{0 - (-2)}/{0 - 6}", "{0 - 6}/{-2 - 0}", "{0 - 0}/{6 - (-2)}"], wrongKinds: ["riseRun", "subtractOrder", "generic"] },
+      { action: "gradCalc", value: "{-6}/{2}", target: "both-sides", result: "(-2, 6), (0, 0)\nm = {-6}/{2}",
+        wrong: ["{-6}/{-2}", "{6}/{2}", "{-6}/{3}"], wrongKinds: ["minusNegative", "generic", "generic"] },
+      { action: "gradient", value: "m = -3", prompt: "gradDividePrompt", target: "both-sides", result: "(-2, 6), (0, 0)\nm = -3",
+        wrong: ["m = -1/3", "m = 3", "m = -6"], wrongKinds: ["riseRun", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Label the points: (x_1, y_1) = (-2, 6) and (x_2, y_2) = (0, 0). Then the top is y_2 - y_1 = 0 - 6 and the bottom is x_2 - x_1 = 0 - (-2).",
+        "Top: 0 - 6 = -6. Bottom: 0 - (-2) = 0 + 2 = 2. Minus a negative is a plus.",
+        "-6 ÷ 2 = -3, so m = -3."
+      ],
+      ja: [
+        "点に名前をつける：(x_1, y_1) = (-2, 6)、(x_2, y_2) = (0, 0)。上は y_2 - y_1 = 0 - 6、下は x_2 - x_1 = 0 - (-2)。",
+        "上：0 - 6 = -6。下：0 - (-2) = 0 + 2 = 2。マイナスのマイナスはプラス。",
+        "-6 ÷ 2 = -3 なので m = -3。"
+      ]
+    },
+    explanation: {
+      en: "Label the points (x_1, y_1) = (-2, 6) and (x_2, y_2) = (0, 0). The formula is m = (y_2 - y_1) ÷ (x_2 - x_1). Putting the points in: m = (0 - 6) ÷ (0 - (-2)). That's -6 ÷ 2, so m = -3: the line goes down 3 for every 1 across.",
+      ja: "点に名前をつけます：(x_1, y_1) = (-2, 6)、(x_2, y_2) = (0, 0)。公式は m = (y_2 - y_1) ÷ (x_2 - x_1)。点を代入すると m = (0 - 6) ÷ (0 - (-2))。これは -6 ÷ 2 なので m = -3。右に1進むと下に3進む直線です。"
+    }
+  },
+  {
+    id: "line_medium_10",
+    topic: "line",
+    equation: "(4, 3), (1, -3)\nm = {y_2 - y_1}/{x_2 - x_1}",
+    answer: "m = 2",
+    difficulty: "medium",
+    type: "two-point-gradient",
+    basePoints: 20,
+    line: { m: 2, c: -5, points: [[4, 3], [1, -3]] },
+    steps: [
+      { action: "gradSub", value: "{-3 - 3}/{1 - 4}", target: "both-sides", result: "(4, 3), (1, -3)\nm = {-3 - 3}/{1 - 4}",
+        wrong: ["{1 - 4}/{-3 - 3}", "{-3 - 3}/{4 - 1}", "{-3 - 1}/{3 - 4}"], wrongKinds: ["riseRun", "subtractOrder", "generic"] },
+      { action: "gradCalc", value: "{-6}/{-3}", target: "both-sides", result: "(4, 3), (1, -3)\nm = {-6}/{-3}",
+        wrong: ["{6}/{-3}", "{-6}/{3}", "{-6}/{-2}"], wrongKinds: ["generic", "generic", "generic"] },
+      { action: "gradient", value: "m = 2", prompt: "gradDividePrompt", target: "both-sides", result: "(4, 3), (1, -3)\nm = 2",
+        wrong: ["m = 1/2", "m = -2", "m = -6"], wrongKinds: ["riseRun", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Label the points: (x_1, y_1) = (4, 3) and (x_2, y_2) = (1, -3). Then the top is y_2 - y_1 = -3 - 3 and the bottom is x_2 - x_1 = 1 - 4.",
+        "Top: -3 - 3 = -6. Bottom: 1 - 4 = -3.",
+        "-6 ÷ (-3) = 2, so m = 2."
+      ],
+      ja: [
+        "点に名前をつける：(x_1, y_1) = (4, 3)、(x_2, y_2) = (1, -3)。上は y_2 - y_1 = -3 - 3、下は x_2 - x_1 = 1 - 4。",
+        "上：-3 - 3 = -6。下：1 - 4 = -3。",
+        "-6 ÷ (-3) = 2 なので m = 2。"
+      ]
+    },
+    explanation: {
+      en: "Label the points (x_1, y_1) = (4, 3) and (x_2, y_2) = (1, -3). The formula is m = (y_2 - y_1) ÷ (x_2 - x_1). Putting the points in: m = (-3 - 3) ÷ (1 - 4). That's -6 ÷ (-3), so m = 2: the line goes up 2 for every 1 across. The second point is to the left, so the top and bottom both come out negative, and that's fine: what matters is taking both in the same order.",
+      ja: "点に名前をつけます：(x_1, y_1) = (4, 3)、(x_2, y_2) = (1, -3)。公式は m = (y_2 - y_1) ÷ (x_2 - x_1)。点を代入すると m = (-3 - 3) ÷ (1 - 4)。これは -6 ÷ (-3) なので m = 2。右に1進むと上に2進む直線です。2つ目の点が左にあるので上も下も負になりますが、問題ありません。大事なのは同じ順番で引くことです。"
+    }
+  },
+  {
+    id: "line_hard_01",
+    topic: "line",
+    equation: "(-1, 1), (1, 5)",
+    answer: "y = 2x + 3",
+    difficulty: "hard",
+    type: "two-point-equation",
+    basePoints: 30,
+    line: { m: 2, c: 3, points: [[-1, 1], [1, 5]] },
+    steps: [
+      { action: "gradient", value: "m = 2", target: "both-sides", result: "(-1, 1), (1, 5)\nm = 2",
+        wrong: ["m = -2", "m = 1/2", "m = 4"], wrongKinds: ["subtractOrder", "riseRun", "generic"] },
+      { action: "intercept", value: "c = 3", target: "both-sides", result: "y = 2x + 3",
+        wrong: ["c = -1", "c = 1", "c = -3"], wrongKinds: ["findC", "generic", "lineSign"] }
+    ],
+    hints: {
+      en: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1). Here that's (5 - 1) ÷ (1 - (-1)) = 2.",
+        "Put a point into y = 2x + c. Using (-1, 1): 1 = 2 × (-1) + c, so c = 1 - (-2) = 3."
+      ],
+      ja: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1)。ここでは (5 - 1) ÷ (1 - (-1)) = 2。",
+        "点を y = 2x + c に代入する。(-1, 1) を使うと：1 = 2 × (-1) + c なので、c = 1 - (-2) = 3。"
+      ]
+    },
+    explanation: {
+      en: "First the gradient: m = (5 - 1) ÷ (1 - (-1)), which is 4 ÷ 2 = 2. So y = 2x + c. Then put a point in to find c: (-1, 1) gives 1 = 2 × (-1) + c, so c = 3. The line is y = 2x + 3. Check with the other point: 2 × 1 + 3 = 5 ✓",
+      ja: "まず傾き：m = (5 - 1) ÷ (1 - (-1))、つまり 4 ÷ 2 = 2。よって y = 2x + c。次に点を代入して c を求めます：(-1, 1) から 1 = 2 × (-1) + c、よって c = 3。直線は y = 2x + 3。もう一方の点で確かめ：2 × 1 + 3 = 5 ✓"
+    }
+  },
+  {
+    id: "line_hard_02",
+    topic: "line",
+    equation: "(2, 1), (3, 4)",
+    answer: "y = 3x - 5",
+    difficulty: "hard",
+    type: "two-point-equation",
+    basePoints: 30,
+    line: { m: 3, c: -5, points: [[2, 1], [3, 4]] },
+    steps: [
+      { action: "gradient", value: "m = 3", target: "both-sides", result: "(2, 1), (3, 4)\nm = 3",
+        wrong: ["m = -3", "m = 1/3", "m = 4"], wrongKinds: ["subtractOrder", "riseRun", "generic"] },
+      { action: "intercept", value: "c = -5", target: "both-sides", result: "y = 3x - 5",
+        wrong: ["c = 7", "c = 1", "c = 5"], wrongKinds: ["findC", "generic", "lineSign"] }
+    ],
+    hints: {
+      en: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1). Here that's (4 - 1) ÷ (3 - 2) = 3.",
+        "Put a point into y = 3x + c. Using (2, 1): 1 = 3 × 2 + c, so c = 1 - 6 = -5."
+      ],
+      ja: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1)。ここでは (4 - 1) ÷ (3 - 2) = 3。",
+        "点を y = 3x + c に代入する。(2, 1) を使うと：1 = 3 × 2 + c なので、c = 1 - 6 = -5。"
+      ]
+    },
+    explanation: {
+      en: "First the gradient: m = (4 - 1) ÷ (3 - 2), which is 3 ÷ 1 = 3. So y = 3x + c. Then put a point in to find c: (2, 1) gives 1 = 3 × 2 + c, so c = -5. The line is y = 3x - 5. Check with the other point: 3 × 3 + (-5) = 4 ✓",
+      ja: "まず傾き：m = (4 - 1) ÷ (3 - 2)、つまり 3 ÷ 1 = 3。よって y = 3x + c。次に点を代入して c を求めます：(2, 1) から 1 = 3 × 2 + c、よって c = -5。直線は y = 3x - 5。もう一方の点で確かめ：3 × 3 + (-5) = 4 ✓"
+    }
+  },
+  {
+    id: "line_hard_03",
+    topic: "line",
+    equation: "(-1, 6), (2, 0)",
+    answer: "y = -2x + 4",
+    difficulty: "hard",
+    type: "two-point-equation",
+    basePoints: 30,
+    line: { m: -2, c: 4, points: [[-1, 6], [2, 0]] },
+    steps: [
+      { action: "gradient", value: "m = -2", target: "both-sides", result: "(-1, 6), (2, 0)\nm = -2",
+        wrong: ["m = 2", "m = -1/2", "m = -6"], wrongKinds: ["subtractOrder", "riseRun", "generic"] },
+      { action: "intercept", value: "c = 4", target: "both-sides", result: "y = -2x + 4",
+        wrong: ["c = 8", "c = 6", "c = -4"], wrongKinds: ["findC", "generic", "lineSign"] }
+    ],
+    hints: {
+      en: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1). Here that's (0 - 6) ÷ (2 - (-1)) = -2.",
+        "Put a point into y = -2x + c. Using (-1, 6): 6 = -2 × (-1) + c, so c = 6 - 2 = 4."
+      ],
+      ja: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1)。ここでは (0 - 6) ÷ (2 - (-1)) = -2。",
+        "点を y = -2x + c に代入する。(-1, 6) を使うと：6 = -2 × (-1) + c なので、c = 6 - 2 = 4。"
+      ]
+    },
+    explanation: {
+      en: "First the gradient: m = (0 - 6) ÷ (2 - (-1)), which is -6 ÷ 3 = -2. So y = -2x + c. Then put a point in to find c: (-1, 6) gives 6 = -2 × (-1) + c, so c = 4. The line is y = -2x + 4. Check with the other point: -2 × 2 + 4 = 0 ✓",
+      ja: "まず傾き：m = (0 - 6) ÷ (2 - (-1))、つまり -6 ÷ 3 = -2。よって y = -2x + c。次に点を代入して c を求めます：(-1, 6) から 6 = -2 × (-1) + c、よって c = 4。直線は y = -2x + 4。もう一方の点で確かめ：-2 × 2 + 4 = 0 ✓"
+    }
+  },
+  {
+    id: "line_hard_04",
+    topic: "line",
+    equation: "(1, -2), (3, 2)",
+    answer: "y = 2x - 4",
+    difficulty: "hard",
+    type: "two-point-equation",
+    basePoints: 30,
+    line: { m: 2, c: -4, points: [[1, -2], [3, 2]] },
+    steps: [
+      { action: "gradient", value: "m = 2", target: "both-sides", result: "(1, -2), (3, 2)\nm = 2",
+        wrong: ["m = -2", "m = 1/2", "m = 4"], wrongKinds: ["subtractOrder", "riseRun", "generic"] },
+      { action: "intercept", value: "c = -4", target: "both-sides", result: "y = 2x - 4",
+        wrong: ["c = 0", "c = -2", "c = 4"], wrongKinds: ["findC", "generic", "lineSign"] }
+    ],
+    hints: {
+      en: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1). Here that's (2 - (-2)) ÷ (3 - 1) = 2.",
+        "Put a point into y = 2x + c. Using (1, -2): -2 = 2 × 1 + c, so c = -2 - 2 = -4."
+      ],
+      ja: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1)。ここでは (2 - (-2)) ÷ (3 - 1) = 2。",
+        "点を y = 2x + c に代入する。(1, -2) を使うと：-2 = 2 × 1 + c なので、c = -2 - 2 = -4。"
+      ]
+    },
+    explanation: {
+      en: "First the gradient: m = (2 - (-2)) ÷ (3 - 1), which is 4 ÷ 2 = 2. So y = 2x + c. Then put a point in to find c: (1, -2) gives -2 = 2 × 1 + c, so c = -4. The line is y = 2x - 4. Check with the other point: 2 × 3 + (-4) = 2 ✓",
+      ja: "まず傾き：m = (2 - (-2)) ÷ (3 - 1)、つまり 4 ÷ 2 = 2。よって y = 2x + c。次に点を代入して c を求めます：(1, -2) から -2 = 2 × 1 + c、よって c = -4。直線は y = 2x - 4。もう一方の点で確かめ：2 × 3 + (-4) = 2 ✓"
+    }
+  },
+  {
+    id: "line_hard_05",
+    topic: "line",
+    equation: "(-2, 1), (2, 5)",
+    answer: "y = x + 3",
+    difficulty: "hard",
+    type: "two-point-equation",
+    basePoints: 30,
+    line: { m: 1, c: 3, points: [[-2, 1], [2, 5]] },
+    steps: [
+      { action: "gradient", value: "m = 1", target: "both-sides", result: "(-2, 1), (2, 5)\nm = 1",
+        wrong: ["m = -1", "m = 4", "m = 2"], wrongKinds: ["subtractOrder", "generic", "generic"] },
+      { action: "intercept", value: "c = 3", target: "both-sides", result: "y = x + 3",
+        wrong: ["c = -1", "c = 1", "c = -3"], wrongKinds: ["findC", "generic", "lineSign"] }
+    ],
+    hints: {
+      en: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1). Here that's (5 - 1) ÷ (2 - (-2)) = 1.",
+        "Put a point into y = x + c. Using (-2, 1): 1 = 1 × (-2) + c, so c = 1 - (-2) = 3."
+      ],
+      ja: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1)。ここでは (5 - 1) ÷ (2 - (-2)) = 1。",
+        "点を y = x + c に代入する。(-2, 1) を使うと：1 = 1 × (-2) + c なので、c = 1 - (-2) = 3。"
+      ]
+    },
+    explanation: {
+      en: "First the gradient: m = (5 - 1) ÷ (2 - (-2)), which is 4 ÷ 4 = 1. So y = x + c. Then put a point in to find c: (-2, 1) gives 1 = 1 × (-2) + c, so c = 3. The line is y = x + 3. Check with the other point: 1 × 2 + 3 = 5 ✓",
+      ja: "まず傾き：m = (5 - 1) ÷ (2 - (-2))、つまり 4 ÷ 4 = 1。よって y = x + c。次に点を代入して c を求めます：(-2, 1) から 1 = 1 × (-2) + c、よって c = 3。直線は y = x + 3。もう一方の点で確かめ：1 × 2 + 3 = 5 ✓"
+    }
+  },
+  {
+    id: "line_hard_06",
+    topic: "line",
+    equation: "(1, 1), (3, -5)",
+    answer: "y = -3x + 4",
+    difficulty: "hard",
+    type: "two-point-equation",
+    basePoints: 30,
+    line: { m: -3, c: 4, points: [[1, 1], [3, -5]] },
+    steps: [
+      { action: "gradient", value: "m = -3", target: "both-sides", result: "(1, 1), (3, -5)\nm = -3",
+        wrong: ["m = 3", "m = -1/3", "m = -6"], wrongKinds: ["subtractOrder", "riseRun", "generic"] },
+      { action: "intercept", value: "c = 4", target: "both-sides", result: "y = -3x + 4",
+        wrong: ["c = -2", "c = 1", "c = -4"], wrongKinds: ["findC", "generic", "lineSign"] }
+    ],
+    hints: {
+      en: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1). Here that's (-5 - 1) ÷ (3 - 1) = -3.",
+        "Put a point into y = -3x + c. Using (1, 1): 1 = -3 × 1 + c, so c = 1 - (-3) = 4."
+      ],
+      ja: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1)。ここでは (-5 - 1) ÷ (3 - 1) = -3。",
+        "点を y = -3x + c に代入する。(1, 1) を使うと：1 = -3 × 1 + c なので、c = 1 - (-3) = 4。"
+      ]
+    },
+    explanation: {
+      en: "First the gradient: m = (-5 - 1) ÷ (3 - 1), which is -6 ÷ 2 = -3. So y = -3x + c. Then put a point in to find c: (1, 1) gives 1 = -3 × 1 + c, so c = 4. The line is y = -3x + 4. Check with the other point: -3 × 3 + 4 = -5 ✓",
+      ja: "まず傾き：m = (-5 - 1) ÷ (3 - 1)、つまり -6 ÷ 2 = -3。よって y = -3x + c。次に点を代入して c を求めます：(1, 1) から 1 = -3 × 1 + c、よって c = 4。直線は y = -3x + 4。もう一方の点で確かめ：-3 × 3 + 4 = -5 ✓"
+    }
+  },
+  {
+    id: "line_hard_07",
+    topic: "line",
+    equation: "(-1, -5), (2, 4)",
+    answer: "y = 3x - 2",
+    difficulty: "hard",
+    type: "two-point-equation",
+    basePoints: 30,
+    line: { m: 3, c: -2, points: [[-1, -5], [2, 4]] },
+    steps: [
+      { action: "gradient", value: "m = 3", target: "both-sides", result: "(-1, -5), (2, 4)\nm = 3",
+        wrong: ["m = -3", "m = 1/3", "m = 9"], wrongKinds: ["subtractOrder", "riseRun", "generic"] },
+      { action: "intercept", value: "c = -2", target: "both-sides", result: "y = 3x - 2",
+        wrong: ["c = -8", "c = -5", "c = 2"], wrongKinds: ["findC", "generic", "lineSign"] }
+    ],
+    hints: {
+      en: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1). Here that's (4 - (-5)) ÷ (2 - (-1)) = 3.",
+        "Put a point into y = 3x + c. Using (-1, -5): -5 = 3 × (-1) + c, so c = -5 - (-3) = -2."
+      ],
+      ja: [
+        "m = (y_2 - y_1) ÷ (x_2 - x_1)。ここでは (4 - (-5)) ÷ (2 - (-1)) = 3。",
+        "点を y = 3x + c に代入する。(-1, -5) を使うと：-5 = 3 × (-1) + c なので、c = -5 - (-3) = -2。"
+      ]
+    },
+    explanation: {
+      en: "First the gradient: m = (4 - (-5)) ÷ (2 - (-1)), which is 9 ÷ 3 = 3. So y = 3x + c. Then put a point in to find c: (-1, -5) gives -5 = 3 × (-1) + c, so c = -2. The line is y = 3x - 2. Check with the other point: 3 × 2 + (-2) = 4 ✓",
+      ja: "まず傾き：m = (4 - (-5)) ÷ (2 - (-1))、つまり 9 ÷ 3 = 3。よって y = 3x + c。次に点を代入して c を求めます：(-1, -5) から -5 = 3 × (-1) + c、よって c = -2。直線は y = 3x - 2。もう一方の点で確かめ：3 × 2 + (-2) = 4 ✓"
+    }
+  },
+  {
+    id: "line_hard_08",
+    topic: "line",
+    equation: "2y = 4x - 2",
+    answer: "y = 2x - 1",
+    difficulty: "hard",
+    type: "isolate",
+    basePoints: 30,
+    line: { m: 2, c: -1, points: [] },
+    steps: [
+      { action: "isolate", value: "y = 2x - 1", target: "both-sides", result: "y = 2x - 1",
+        wrong: ["y = 2x - 2", "y = 4x - 1", "y = 8x - 4"], wrongKinds: ["rearrangeSlip", "rearrangeSlip", "generic"] },
+      { action: "gradient", value: "m = 2", target: "both-sides", result: "y = 2x - 1\nm = 2",
+        wrong: ["m = -1", "m = -2", "m = 2x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
+      { action: "intercept", value: "c = -1", target: "both-sides", result: "y = 2x - 1\nm = 2, c = -1",
+        wrong: ["c = 2", "c = 1", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Get y on its own: divide every term by 2, not just one. 2y ÷ 2 = y, 4x ÷ 2 = 2x, -2 ÷ 2 = -1.",
+        "In y = mx + c, m is the number in front of x, sign included. Here m = 2.",
+        "c is the number on its own, sign included: the - 1 means c = -1. That's where the line crosses the y-axis."
+      ],
+      ja: [
+        "yだけにする：1つの項だけでなく、すべての項を2で割る。2y ÷ 2 = y、4x ÷ 2 = 2x、-2 ÷ 2 = -1。",
+        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = 2。",
+        "c は単独の数（符号も含む）：- 1 なので c = -1。直線がy軸と交わる点。"
+      ]
+    },
+    explanation: {
+      en: "y isn't on its own yet, so divide both sides by 2, which means every term: y = 2x - 1. Now it's in y = mx + c form: m = 2 and c = -1.",
+      ja: "まだyだけになっていないので、両辺を2で割ります（すべての項を割る）：y = 2x - 1。これで y = mx + c の形になり、m = 2、c = -1。"
+    }
+  },
+  {
+    id: "line_hard_09",
+    topic: "line",
+    equation: "y - 1 = 3x",
+    answer: "y = 3x + 1",
+    difficulty: "hard",
+    type: "isolate",
+    basePoints: 30,
+    line: { m: 3, c: 1, points: [] },
+    steps: [
+      { action: "isolate", value: "y = 3x + 1", target: "both-sides", result: "y = 3x + 1",
+        wrong: ["y = 3x - 1", "y = -3x + 1", "y = 4x"], wrongKinds: ["rearrangeSlip", "lineSign", "generic"] },
+      { action: "gradient", value: "m = 3", target: "both-sides", result: "y = 3x + 1\nm = 3",
+        wrong: ["m = 1", "m = -3", "m = 3x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
+      { action: "intercept", value: "c = 1", target: "both-sides", result: "y = 3x + 1\nm = 3, c = 1",
+        wrong: ["c = 3", "c = -1", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Get y on its own: add 1 to both sides.",
+        "In y = mx + c, m is the number in front of x, sign included. Here m = 3.",
+        "c is the number on its own: 1. That's where the line crosses the y-axis, at (0, 1)."
+      ],
+      ja: [
+        "yだけにする：両辺に1を足す。",
+        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = 3。",
+        "c は単独の数：1。直線がy軸と交わる点 (0, 1)。"
+      ]
+    },
+    explanation: {
+      en: "Add 1 to both sides to get y on its own: y = 3x + 1. Now it's in y = mx + c form: m = 3 and c = 1.",
+      ja: "両辺に1を足してyだけにします：y = 3x + 1。これで y = mx + c の形になり、m = 3、c = 1。"
+    }
+  },
+  {
+    id: "line_hard_10",
+    topic: "line",
+    equation: "3y = 6 - 9x",
+    answer: "y = -3x + 2",
+    difficulty: "hard",
+    type: "isolate",
+    basePoints: 30,
+    line: { m: -3, c: 2, points: [] },
+    steps: [
+      { action: "isolate", value: "y = -3x + 2", target: "both-sides", result: "y = -3x + 2",
+        wrong: ["y = -9x + 2", "y = -3x + 6", "y = 3x + 2"], wrongKinds: ["rearrangeSlip", "rearrangeSlip", "lineSign"] },
+      { action: "gradient", value: "m = -3", target: "both-sides", result: "y = -3x + 2\nm = -3",
+        wrong: ["m = 2", "m = 3", "m = -3x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
+      { action: "intercept", value: "c = 2", target: "both-sides", result: "y = -3x + 2\nm = -3, c = 2",
+        wrong: ["c = -3", "c = -2", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Divide every term by 3: 6 ÷ 3 = 2 and -9x ÷ 3 = -3x. Then put the x term first: y = -3x + 2.",
+        "In y = mx + c, m is the number in front of x, sign included. Here m = -3.",
+        "c is the number on its own: 2. That's where the line crosses the y-axis, at (0, 2)."
+      ],
+      ja: [
+        "すべての項を3で割る：6 ÷ 3 = 2、-9x ÷ 3 = -3x。そしてxの項を前に：y = -3x + 2。",
+        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = -3。",
+        "c は単独の数：2。直線がy軸と交わる点 (0, 2)。"
+      ]
+    },
+    explanation: {
+      en: "Divide both sides by 3, which means every term: y = 2 - 3x, or y = -3x + 2 with the x term first. So m = -3 and c = 2: the line goes down 3 for every 1 across.",
+      ja: "両辺を3で割ります（すべての項を割る）：y = 2 - 3x、xの項を前にすると y = -3x + 2。よって m = -3、c = 2。右に1進むと下に3進む直線です。"
+    }
   }
 ];
 
@@ -9015,6 +9989,28 @@ const TIER_TIPS = {
       move: { en: "x² + 5x - 24 = 0: a = 1, b = 5, c = -24", ja: "x² + 5x - 24 = 0：a = 1、b = 5、c = -24" },
       to: "x = (-5 ± √121)/2"
     }
+  },
+  line_medium: {
+    text: {
+      en: "Two points? Call them point 1 and point 2. The gradient is the change in y divided by the change in x: y's on top, x's on the bottom, both taken in the same order. Watch out: minus a negative is a plus!",
+      ja: "2つの点を点1、点2としよう。傾きは「yの増加量 ÷ xの増加量」：上はyの差、下はxの差で、どちらも同じ順番で引く。マイナスのマイナスはプラスに注意！"
+    },
+    demo: {
+      from: "(1, 2), (3, 6)\nm = {y_2 - y_1}/{x_2 - x_1}",
+      move: { en: "Put the points into the formula", ja: "点を公式に代入する" },
+      to: "m = {6 - 2}/{3 - 1} = 2"
+    }
+  },
+  line_hard: {
+    text: {
+      en: "Now find the whole line. Work out m from the two points first, then put one point into y = mx + c to find c. If y isn't on its own, get it alone first, dividing every term.",
+      ja: "今度は直線の式を丸ごと求めよう。まず2つの点から m を出して、次に1つの点を y = mx + c に代入して c を求める。yだけになっていない式は、まずすべての項を割ってyだけにしよう。"
+    },
+    demo: {
+      from: "(-1, 1), (1, 5)",
+      move: { en: "m = 2, then 1 = 2 × (-1) + c", ja: "m = 2、次に 1 = 2 × (-1) + c" },
+      to: "y = 2x + 3"
+    }
   }
 };
 
@@ -9034,7 +10030,8 @@ const TOPIC_NAMES = {
   subject:    { en: "Formulas",     ja: "等式の変形" },
   expression: { en: "Expressions",  ja: "式の計算" },
   indices:    { en: "Indices",      ja: "指数法則" },
-  roots:      { en: "Completing the square", ja: "平方完成" }
+  roots:      { en: "Completing the square", ja: "平方完成" },
+  line:       { en: "Straight lines", ja: "直線のグラフ" }
 };
 
 // One template per per-topic achievement type. {topic} = topic name, {n} = level or star count.
