@@ -3,6 +3,10 @@
    Reused from lll-chem as-is — the engine itself is generic.
    Game-specific strings are passed in from index.html via
    LLL_I18N.init(toolStrings) and merged with these COMMON ones.
+   lll-algebra addition: LLL_I18N.set(code) switches the language from
+   code (the Settings screen). It does the same as picking it in the
+   top-bar <select>, but no "change" event fires, so the caller
+   refreshes its own screens afterwards.
    ============================================================ */
 (function (global) {
   "use strict";
@@ -81,6 +85,8 @@
     langs: LANGS,
     t: function (key) { return current[key]; },
     lang: function () { return document.documentElement.lang; },
+    // Switch the language from code; ignored for a language with no strings
+    set: function (code) { if (dicts[code]) apply(code); },
     init: function (toolStrings, opts) {
       opts = opts || {};
       onChangeCb = opts.onChange || null;

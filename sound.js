@@ -1,6 +1,6 @@
-// LLL Algebra — sound effects + the sound on/off button
-// sfx.* is called from index.html; updateSoundBtn() is called there too (after the strings
-// are loaded, and again on language change) so the button's label is in the right language.
+// LLL Algebra — sound effects + the sound on/off setting
+// sfx.* is called from index.html; the Settings screen there reads and changes the
+// on/off setting with isSoundOn() / setSoundOn().
 // Short chiptune blips made with the Web Audio API, so there are no audio files to ship.
 // The AudioContext is created on the first sound, which always follows a tap,
 // so browsers allow it to play.
@@ -76,18 +76,13 @@ const sfx = {
   }
 };
 
-const $soundBtn = document.getElementById("soundBtn");
-function updateSoundBtn() {
-  $soundBtn.textContent = soundOn ? "🔊" : "🔇";
-  $soundBtn.setAttribute("aria-label", soundOn
-    ? (LLL_I18N.t("soundMuteAria") || "Mute sound")
-    : (LLL_I18N.t("soundUnmuteAria") || "Turn sound on"));
-}
-$soundBtn.addEventListener("click", () => {
-  soundOn = !soundOn;
-  try { localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off"); } catch (e) { /* fail silently */ }
-  updateSoundBtn();
-  if (soundOn) sfx.step(1);   // short blip so the player hears sound is back on
-});
+// The on/off setting (Settings screen in index.html). It has its own key, so "Reset progress" leaves it alone.
+function isSoundOn() { return soundOn; }
 
-export { sfx, updateSoundBtn };
+function setSoundOn(on) {
+  soundOn = !!on;
+  try { localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off"); } catch (e) { /* fail silently */ }
+  if (soundOn) sfx.step(1);   // short blip so the player hears sound is back on
+}
+
+export { sfx, isSoundOn, setSoundOn };
