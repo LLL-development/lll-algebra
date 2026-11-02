@@ -363,7 +363,7 @@
       <div class="fp-math" id="fpMath"></div>
     </div>
 
-    <!-- Straight lines with two points: the points on a grid, then the rise and run (graph.js showPlayGraph) -->
+    <!-- Straight lines: two-point levels show the points then the rise and run; graph levels show the line (graph.js showPlayGraph) -->
     <div class="play-graph" id="playGraph" hidden>
       <svg class="play-graph-svg" id="playGraphSvg" viewBox="0 0 280 280" role="img"></svg>
     </div>
@@ -1274,7 +1274,7 @@
     $equationCard.classList.toggle("frac-card", level.equation.includes("}/{"));
 
     syncFormulaPanel(level);
-    showPlayGraph(level, stepIndex);   // Straight lines with two points; hidden for everything else
+    showPlayGraph(level, stepIndex);   // Straight lines with two points or a graph to read; hidden for everything else
     updateFormulaBtn(level);   // follows each question's topic (Mixed Review, Tricky spots, Today's Challenge)
 
     const step = currentStep();
@@ -2661,7 +2661,10 @@
   }
 
   function maybeShowTierTip(level) {
-    const key = `${level.topic}_${level.difficulty}`;
+    // A level type can have its own tip (Straight lines' graph levels: "line_easy_graph"); otherwise the tier's
+    const tierKey = `${level.topic}_${level.difficulty}`;
+    const typeKey = `${tierKey}_${level.type}`;
+    const key = TIER_TIPS[typeKey] ? typeKey : tierKey;
     if (!TIER_TIPS[key] || tierTipsSeen.has(key)) return;
     tipKey = key;
     fillTierTip();

@@ -120,6 +120,10 @@
 // stacked fraction and x_1 as a subscript (mathtext.js); plain a/b stays inline. Every level carries
 // `line: { m, c, points }` for the graph; gradients are whole numbers, and every point and intercept stays
 // within -6..6 so the grid stays at 1 unit.
+// Graph levels (Easy 6–10, `type: "graph"`) are read off a drawn line instead of an equation: `equation` is just
+// "y = mx + c", `points` stays empty, and `guide` holds two unlabelled dots on the line to count between (no
+// coordinates, so it can't become a two-point level). The play screen draws the line; the gradient step's result
+// keeps "y = mx + c" as the first line, and the intercept step ends on the full equation, like Hard.
 //
 // `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject", "expression", "indices", "roots" or "line". `target` is "both-sides"
 // for every move that changes a side's value; only "expand" and "simplify" rewrite one side,
@@ -8830,66 +8834,6 @@ const LEVELS = [
   // STRAIGHT LINES
   // =====================================================================
   {
-    id: "line_easy_01",
-    topic: "line",
-    equation: "y = 2x + 3",
-    answer: "m = 2, c = 3",
-    difficulty: "easy",
-    type: "read",
-    basePoints: 10,
-    line: { m: 2, c: 3, points: [] },
-    steps: [
-      { action: "gradient", value: "m = 2", target: "both-sides", result: "y = 2x + 3\nm = 2",
-        wrong: ["m = 3", "m = -2", "m = 2x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
-      { action: "intercept", value: "c = 3", target: "both-sides", result: "y = 2x + 3\nm = 2, c = 3",
-        wrong: ["c = 2", "c = -3", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
-    ],
-    hints: {
-      en: [
-        "In y = mx + c, m is the number in front of x, sign included. Here m = 2.",
-        "c is the number on its own: 3. That's where the line crosses the y-axis, at (0, 3)."
-      ],
-      ja: [
-        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = 2。",
-        "c は単独の数：3。直線がy軸と交わる点 (0, 3)。"
-      ]
-    },
-    explanation: {
-      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. So m = 2 and c = 3: the line goes up 2 for every 1 across, and it crosses the y-axis at (0, 3).",
-      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。よって m = 2、c = 3。右に1進むと上に2進む直線で、y軸と (0, 3) で交わります。"
-    }
-  },
-  {
-    id: "line_easy_02",
-    topic: "line",
-    equation: "y = 4x - 1",
-    answer: "m = 4, c = -1",
-    difficulty: "easy",
-    type: "read",
-    basePoints: 10,
-    line: { m: 4, c: -1, points: [] },
-    steps: [
-      { action: "gradient", value: "m = 4", target: "both-sides", result: "y = 4x - 1\nm = 4",
-        wrong: ["m = -1", "m = -4", "m = 4x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
-      { action: "intercept", value: "c = -1", target: "both-sides", result: "y = 4x - 1\nm = 4, c = -1",
-        wrong: ["c = 4", "c = 1", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
-    ],
-    hints: {
-      en: [
-        "In y = mx + c, m is the number in front of x, sign included. Here m = 4.",
-        "c is the number on its own, sign included: the - 1 means c = -1. That's where the line crosses the y-axis."
-      ],
-      ja: [
-        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = 4。",
-        "c は単独の数（符号も含む）：- 1 なので c = -1。直線がy軸と交わる点。"
-      ]
-    },
-    explanation: {
-      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. So m = 4 and c = -1: the line goes up 4 for every 1 across, and it crosses the y-axis at (0, -1).",
-      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。よって m = 4、c = -1。右に1進むと上に4進む直線で、y軸と (0, -1) で交わります。"
-    }
-  },
-  {
     id: "line_easy_03",
     topic: "line",
     equation: "y = x + 4",
@@ -8980,66 +8924,6 @@ const LEVELS = [
     }
   },
   {
-    id: "line_easy_06",
-    topic: "line",
-    equation: "y = 4",
-    answer: "m = 0, c = 4",
-    difficulty: "easy",
-    type: "read",
-    basePoints: 10,
-    line: { m: 0, c: 4, points: [] },
-    steps: [
-      { action: "gradient", value: "m = 0", target: "both-sides", result: "y = 4\nm = 0",
-        wrong: ["m = 4", "m = 1", "m = -4"], wrongKinds: ["swapMC", "generic", "generic"] },
-      { action: "intercept", value: "c = 4", target: "both-sides", result: "y = 4\nm = 0, c = 4",
-        wrong: ["c = 0", "c = -4", "c = 2"], wrongKinds: ["swapMC", "lineSign", "generic"] }
-    ],
-    hints: {
-      en: [
-        "There's no x term at all, so think of it as y = 0x + 4. m = 0.",
-        "c is the number on its own: 4. That's where the line crosses the y-axis, at (0, 4)."
-      ],
-      ja: [
-        "xの項がないので、y = 0x + 4 と考える。m = 0。",
-        "c は単独の数：4。直線がy軸と交わる点 (0, 4)。"
-      ]
-    },
-    explanation: {
-      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. With no x term, the number in front of x is 0. So m = 0 and c = 4: the line is flat, and it crosses the y-axis at (0, 4).",
-      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。xの項がないので、xの前の数は0です。よって m = 0、c = 4。直線は水平で、y軸と (0, 4) で交わります。"
-    }
-  },
-  {
-    id: "line_easy_07",
-    topic: "line",
-    equation: "y = -3x - 4",
-    answer: "m = -3, c = -4",
-    difficulty: "easy",
-    type: "read",
-    basePoints: 10,
-    line: { m: -3, c: -4, points: [] },
-    steps: [
-      { action: "gradient", value: "m = -3", target: "both-sides", result: "y = -3x - 4\nm = -3",
-        wrong: ["m = -4", "m = 3", "m = -3x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
-      { action: "intercept", value: "c = -4", target: "both-sides", result: "y = -3x - 4\nm = -3, c = -4",
-        wrong: ["c = -3", "c = 4", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
-    ],
-    hints: {
-      en: [
-        "In y = mx + c, m is the number in front of x, sign included. Here m = -3.",
-        "c is the number on its own, sign included: the - 4 means c = -4. That's where the line crosses the y-axis."
-      ],
-      ja: [
-        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = -3。",
-        "c は単独の数（符号も含む）：- 4 なので c = -4。直線がy軸と交わる点。"
-      ]
-    },
-    explanation: {
-      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. So m = -3 and c = -4: the line goes down 3 for every 1 across, and it crosses the y-axis at (0, -4).",
-      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。よって m = -3、c = -4。右に1進むと下に3進む直線で、y軸と (0, -4) で交わります。"
-    }
-  },
-  {
     id: "line_easy_08",
     topic: "line",
     equation: "y = 6 + x",
@@ -9070,36 +8954,6 @@ const LEVELS = [
     }
   },
   {
-    id: "line_easy_09",
-    topic: "line",
-    equation: "y = -2x",
-    answer: "m = -2, c = 0",
-    difficulty: "easy",
-    type: "read",
-    basePoints: 10,
-    line: { m: -2, c: 0, points: [] },
-    steps: [
-      { action: "gradient", value: "m = -2", target: "both-sides", result: "y = -2x\nm = -2",
-        wrong: ["m = 0", "m = 2", "m = -2x"], wrongKinds: ["swapMC", "lineSign", "generic"] },
-      { action: "intercept", value: "c = 0", target: "both-sides", result: "y = -2x\nm = -2, c = 0",
-        wrong: ["c = -2", "c = 2", "c = 1"], wrongKinds: ["swapMC", "generic", "generic"] }
-    ],
-    hints: {
-      en: [
-        "In y = mx + c, m is the number in front of x, sign included. Here m = -2.",
-        "c is the number on its own, but there isn't one, so c = 0. The line goes through (0, 0)."
-      ],
-      ja: [
-        "y = mx + c では、m はxの前の数（符号も含む）。ここでは m = -2。",
-        "c は単独の数だが、ここにはないので c = 0。直線は (0, 0) を通る。"
-      ]
-    },
-    explanation: {
-      en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. There's no number on its own, so c = 0. So m = -2 and c = 0: the line goes down 2 for every 1 across, and it crosses the y-axis at (0, 0).",
-      ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。単独の数がないので c = 0 です。よって m = -2、c = 0。右に1進むと下に2進む直線で、y軸と (0, 0) で交わります。"
-    }
-  },
-  {
     id: "line_easy_10",
     topic: "line",
     equation: "y = 1 - 3x",
@@ -9127,6 +8981,156 @@ const LEVELS = [
     explanation: {
       en: "In y = mx + c, m (the gradient) is the number in front of x and c (the y-intercept) is the number on its own. 1 - 3x is just -3x + 1 written the other way round. So m = -3 and c = 1: the line goes down 3 for every 1 across, and it crosses the y-axis at (0, 1).",
       ja: "y = mx + c では、m（傾き）はxの前の数、c（切片）は単独の数です。1 - 3x は -3x + 1 を逆の順に書いただけです。よって m = -3、c = 1。右に1進むと下に3進む直線で、y軸と (0, 1) で交わります。"
+    }
+  },
+  {
+    id: "line_easy_graph_01",
+    topic: "line",
+    equation: "y = mx + c",
+    answer: "y = 2x + 1",
+    difficulty: "easy",
+    type: "graph",
+    basePoints: 10,
+    line: { m: 2, c: 1, points: [], guide: [[-2, -3], [1, 3]] },
+    steps: [
+      { action: "gradient", value: "m = 2", target: "both-sides", result: "y = mx + c\nm = 2",
+        wrong: ["m = 1/2", "m = -2", "m = 1"], wrongKinds: ["riseRun", "lineSign", "swapMC"] },
+      { action: "intercept", value: "c = 1", target: "both-sides", result: "y = 2x + 1",
+        wrong: ["c = 2", "c = -1", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Go from the left dot to the right dot: 3 across and 6 up. m = up ÷ across = 6 ÷ 3 = 2.",
+        "c is where the line crosses the y-axis (the up-and-down axis). It crosses at 1, so c = 1."
+      ],
+      ja: [
+        "左の点から右の点へ：xの増加量は3、yの増加量は6。m = 6 ÷ 3 = 2。",
+        "c は直線がy軸（たての軸）と交わるところ。1 で交わっているので c = 1。"
+      ]
+    },
+    explanation: {
+      en: "From one dot to the other, the line goes 3 across and 6 up, so m = 6 ÷ 3 = 2. It crosses the y-axis at 1, so c = 1. The line is y = 2x + 1.",
+      ja: "一方の点からもう一方の点まで、xの増加量は3、yの増加量は6なので m = 6 ÷ 3 = 2。y軸と 1 で交わるので c = 1。直線は y = 2x + 1。"
+    }
+  },
+  {
+    id: "line_easy_graph_02",
+    topic: "line",
+    equation: "y = mx + c",
+    answer: "y = -x + 3",
+    difficulty: "easy",
+    type: "graph",
+    basePoints: 10,
+    line: { m: -1, c: 3, points: [], guide: [[-1, 4], [2, 1]] },
+    steps: [
+      { action: "gradient", value: "m = -1", target: "both-sides", result: "y = mx + c\nm = -1",
+        wrong: ["m = 1", "m = 3", "m = -3"], wrongKinds: ["lineSign", "swapMC", "generic"] },
+      { action: "intercept", value: "c = 3", target: "both-sides", result: "y = -x + 3",
+        wrong: ["c = -1", "c = -3", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Left dot to right dot: 3 across and 3 down. Down means the rise is -3, so m = -3 ÷ 3 = -1.",
+        "c is where the line crosses the y-axis. It crosses at 3, so c = 3."
+      ],
+      ja: [
+        "左の点から右の点へ：xの増加量は3、yは3下がるので増加量は -3。m = -3 ÷ 3 = -1。",
+        "c は直線がy軸と交わるところ。3 で交わっているので c = 3。"
+      ]
+    },
+    explanation: {
+      en: "Going right, the line goes down: 3 across and 3 down, so m = -3 ÷ 3 = -1. A line going down from left to right always has a negative gradient. It crosses the y-axis at 3, so c = 3: y = -x + 3.",
+      ja: "右に進むと直線は下がります：xの増加量は3、yの増加量は -3 なので m = -3 ÷ 3 = -1。右下がりの直線の傾きは、いつも負の数です。y軸と 3 で交わるので c = 3：y = -x + 3。"
+    }
+  },
+  {
+    id: "line_easy_graph_03",
+    topic: "line",
+    equation: "y = mx + c",
+    answer: "y = -2",
+    difficulty: "easy",
+    type: "graph",
+    basePoints: 10,
+    line: { m: 0, c: -2, points: [], guide: [[-3, -2], [2, -2]] },
+    steps: [
+      { action: "gradient", value: "m = 0", target: "both-sides", result: "y = mx + c\nm = 0",
+        wrong: ["m = -2", "m = 1", "m = 5"], wrongKinds: ["swapMC", "generic", "generic"] },
+      { action: "intercept", value: "c = -2", target: "both-sides", result: "y = -2",
+        wrong: ["c = 0", "c = 2", "c = -3"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Left dot to right dot: 5 across, but 0 up. The line is flat, so m = 0 ÷ 5 = 0.",
+        "The flat line crosses the y-axis at -2, so c = -2."
+      ],
+      ja: [
+        "左の点から右の点へ：xの増加量は5、でもyの増加量は0。直線は水平なので m = 0 ÷ 5 = 0。",
+        "水平な直線はy軸と -2 で交わっているので c = -2。"
+      ]
+    },
+    explanation: {
+      en: "A flat line doesn't go up or down, so m = 0. It crosses the y-axis at -2, so c = -2. That's y = 0x - 2, which is written y = -2.",
+      ja: "水平な直線は上にも下にも進まないので m = 0。y軸と -2 で交わるので c = -2。y = 0x - 2 で、ふつうは y = -2 と書きます。"
+    }
+  },
+  {
+    id: "line_easy_graph_04",
+    topic: "line",
+    equation: "y = mx + c",
+    answer: "y = -2x",
+    difficulty: "easy",
+    type: "graph",
+    basePoints: 10,
+    line: { m: -2, c: 0, points: [], guide: [[-2, 4], [1, -2]] },
+    steps: [
+      { action: "gradient", value: "m = -2", target: "both-sides", result: "y = mx + c\nm = -2",
+        wrong: ["m = -1/2", "m = 2", "m = 0"], wrongKinds: ["riseRun", "lineSign", "swapMC"] },
+      { action: "intercept", value: "c = 0", target: "both-sides", result: "y = -2x",
+        wrong: ["c = -2", "c = 2", "c = 1"], wrongKinds: ["swapMC", "generic", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Left dot to right dot: 3 across and 6 down, so the rise is -6. m = -6 ÷ 3 = -2.",
+        "The line goes through (0, 0), where the two axes cross, so c = 0."
+      ],
+      ja: [
+        "左の点から右の点へ：xの増加量は3、yは6下がるので増加量は -6。m = -6 ÷ 3 = -2。",
+        "直線は2つの軸が交わる (0, 0) を通るので c = 0。"
+      ]
+    },
+    explanation: {
+      en: "3 across and 6 down gives m = -6 ÷ 3 = -2. The line goes through (0, 0), so c = 0 and there's no number on its own: y = -2x.",
+      ja: "xの増加量3、yの増加量 -6 なので m = -6 ÷ 3 = -2。直線は (0, 0) を通るので c = 0 で、単独の数はありません：y = -2x。"
+    }
+  },
+  {
+    id: "line_easy_graph_05",
+    topic: "line",
+    equation: "y = mx + c",
+    answer: "y = 3x - 4",
+    difficulty: "easy",
+    type: "graph",
+    basePoints: 10,
+    line: { m: 3, c: -4, points: [], guide: [[1, -1], [3, 5]] },
+    steps: [
+      { action: "gradient", value: "m = 3", target: "both-sides", result: "y = mx + c\nm = 3",
+        wrong: ["m = 1/3", "m = -3", "m = -4"], wrongKinds: ["riseRun", "lineSign", "swapMC"] },
+      { action: "intercept", value: "c = -4", target: "both-sides", result: "y = 3x - 4",
+        wrong: ["c = 3", "c = 4", "c = 0"], wrongKinds: ["swapMC", "lineSign", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Left dot to right dot: 2 across and 6 up. m = 6 ÷ 2 = 3.",
+        "Follow the line down to the y-axis: it crosses at -4, so c = -4."
+      ],
+      ja: [
+        "左の点から右の点へ：xの増加量は2、yの増加量は6。m = 6 ÷ 2 = 3。",
+        "直線をたどってy軸まで下りよう：-4 で交わっているので c = -4。"
+      ]
+    },
+    explanation: {
+      en: "2 across and 6 up gives m = 6 ÷ 2 = 3, a steep line. The dots aren't on the y-axis, so follow the line down to where it crosses: -4. So c = -4 and the line is y = 3x - 4.",
+      ja: "xの増加量2、yの増加量6なので m = 6 ÷ 2 = 3、急な直線です。点はy軸の上にないので、直線をたどってy軸と交わるところを見ると -4。c = -4 で、直線は y = 3x - 4。"
     }
   },
   {
@@ -9800,6 +9804,8 @@ const LEVELS_BY_TOPIC_AND_DIFFICULTY = LEVELS.reduce((acc, lvl) => {
 // `picture` (optional) names a small diagram drawn above the demo (TIP_PICTURES in index.html).
 // `text` is per-language ({ en, ja }), like hints. `demo` is shown in the tip overlay as
 // from → move → to; `from` may be two lines ("\n") for systems, and `move` is per-language.
+// A level type can have its own tip, keyed `${topic}_${difficulty}_${type}` (Straight lines' graph levels):
+// it shows the first time a level of that type opens, and the tier label still reads from the second part.
 const TIER_TIPS = {
   equation_hard: {
     text: {
@@ -9988,6 +9994,17 @@ const TIER_TIPS = {
       from: "x = (-b ± √(b² - 4ac))/2a",
       move: { en: "x² + 5x - 24 = 0: a = 1, b = 5, c = -24", ja: "x² + 5x - 24 = 0：a = 1、b = 5、c = -24" },
       to: "x = (-5 ± √121)/2"
+    }
+  },
+  line_easy_graph: {
+    text: {
+      en: "No equation this time: read the line off the graph! Use the two dots: m is how far up ÷ how far across (a line going down has a negative m). c is where the line crosses the y-axis.",
+      ja: "今回は式がないよ：グラフから読み取ろう！2つの点を使って、m = yの増加量 ÷ xの増加量（右下がりならmは負）。c は直線がy軸と交わるところ。"
+    },
+    demo: {
+      from: "y = mx + c",
+      move: { en: "Between the dots: up 6, across 3", ja: "2つの点の間：yの増加量6、xの増加量3" },
+      to: "m = {6}/{3} = 2"
     }
   },
   line_medium: {

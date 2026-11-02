@@ -3,7 +3,8 @@
 //   Systems: both lines of a system, read from its equation text, drawn crossing at the answer.
 //   Straight lines: the level's line (level.line), with its two points or its y-intercept marked.
 //   Inequalities: the answer (e.g. "x < -4") on a number line.
-// Play screen (Straight lines with two points): the points on a grid, then the rise and run once they're worked out.
+// Play screen (Straight lines): two-point levels show the points, then the rise and run once they're worked out;
+// graph levels show the line with two guide dots, then the rise and run, then the y-intercept.
 // index.html calls showSystemGraph() / showLineGraph() / clearSystemGraph() / showNumberLine() / clearNumberLine() /
 // afterGraphDrawn() / showPlayGraph().
 
@@ -329,51 +330,31 @@ function showLineGraph(level) {
 // Two-point levels (Medium and Hard) show both points from the start. Once the step that works out the
 // top and bottom is done ("gradCalc" in Medium, "gradient" in Hard), the run (across, from point 1) and
 // the rise (up or down, to point 2) draw in, labelled with the same numbers as the fraction.
-// Easy and Hard's rearrange-first levels have no points, so it stays hidden (a drawn line would give it away).
+// Graph levels (Easy, type "graph") show the line itself with two unlabelled guide dots to count between:
+// the run and rise draw in once m is found, and the y-intercept pops in once c is found.
+// Easy's equation levels and Hard's rearrange-first levels have neither, so it stays hidden there
+// (a drawn line would give the answer away).
 const $playGraph = document.getElementById("playGraph");
 const $playGraphSvg = document.getElementById("playGraphSvg");
-let playGraphKey = null;   // what's drawn now ("<level id>:<legs shown>"), so a re-render doesn't redraw it
+let playGraphKey = null;   // what's drawn now ("<level id>:<what's shown>"), so a re-render doesn't redraw it
 let playAnims = [];
 
-function showPlayGraph(level, stepsDone) {
-  const pts = level && level.topic === "line" && level.line && level.line.points;
-  if (!pts || pts.length !== 2) {
-    playAnims.forEach(a => a.cancel());
-    playAnims = [];
-    playGraphKey = null;
-    $playGraph.hidden = true;
-    return;
-  }
-  const legsAfter = level.steps.findIndex(s => s.action === "gradCalc" || s.action === "gradient") + 1;
-  const legs = stepsDone >= legsAfter;
-  const key = `${level.id}:${legs}`;
-  if (key === playGraphKey) return;
-  const animateLegs = legs && playGraphKey === `${level.id}:false`;   // only when they appear mid-level
-  playGraphKey = key;
+function hidePlayGraph() {
   playAnims.forEach(a => a.cancel());
   playAnims = [];
+  playGraphKey = null;
+  $playGraph.hidden = true;
+}
 
-  const [[x1, y1], [x2, y2]] = pts;
-  const { m, c } = level.line;
-  const range = graphRange([x1, y1, x2, y2]);
-  const svg = $playGraphSvg;
-  const { X, Y } = drawGrid(svg, range, "playGraphClip");
-  // A faint dotted line between the points: what the gradient measures
-  svgEl("line", { x1: X(x1), y1: Y(y1), x2: X(x2), y2: Y(y2), class: "graph-leader" }, svg);
-
-  // The run (across, at point 1's height) and the rise (up or down, at point 2's x), drawn under the points
-  let run = null, rise = null;
-  if (legs) {
-    run = svgEl("line", { x1: X(x1), y1: Y(y1), x2: X(x2), y2: Y(y1), class: "pg-leg pg-run" }, svg);
-    rise = svgEl("line", { x1: X(x2), y1: Y(y1), x2: X(x2), y2: Y(y2), class: "pg-leg pg-rise" }, svg);
-  }
-  const abc = [-m, 1, c];
-  const placed = [[x1, y1], [x2, y2]].map((p, i) => drawPoint(svg, range.R, X, Y, p, [abc], `pg-p${i + 1}`));
-
-  // Leg numbers: each takes the first side of its leg that's clear of both point labels and inside the frame
-  const boxes = [];   // [left, top, right, bottom] of each leg number, so tick numbers keep out from under them
+// The run (across, at p1's height) and the rise (up or down, at p2's x) between two points. Each number takes
+// the first side of its leg that's clear of the avoid labels and inside the frame. The caller re-appends the
+// points and then the numbers on top once the ticks are drawn. boxes: each number's [left, top, right, bottom].
+function drawLegs(svg, X, Y, [x1, y1], [x2, y2], avoid) {
+  const run = svgEl("line", { x1: X(x1), y1: Y(y1), x2: X(x2), y2: Y(y1), class: "pg-leg pg-run" }, svg);
+  const rise = svgEl("line", { x1: X(x2), y1: Y(y1), x2: X(x2), y2: Y(y2), class: "pg-leg pg-rise" }, svg);
+  const boxes = [];
   const overlaps = ([l, tp, r, b]) => l < GRAPH_PAD || r > GRAPH_PAD + GRAPH_W || tp < GRAPH_PAD || b > GRAPH_PAD + GRAPH_W
-    || placed.some(({ spot }) => r > spot.x - 2 && l < spot.x + spot.w + 2 && b > spot.y - 13 && tp < spot.y + 2);
+    || avoid.some(({ spot }) => r > spot.x - 2 && l < spot.x + spot.w + 2 && b > spot.y - 13 && tp < spot.y + 2);
   const legLabel = (text, cls, candidates) => {
     const w = text.length * 11;
     const box = ([x, y, anchor]) => {
@@ -386,38 +367,113 @@ function showPlayGraph(level, stepsDone) {
     el.textContent = text;
     return el;
   };
-  let runLabel = null, riseLabel = null;
-  if (legs) {
-    const mx = (X(x1) + X(x2)) / 2, my = (Y(y1) + Y(y2)) / 2;
-    const away = x2 >= x1 ? 1 : -1;   // the rise's outer side, away from point 1
-    // Run: below its leg or above it, at the middle, then towards either end
-    runLabel = legLabel(fmtNum(x2 - x1), "pg-run", [
-      [mx, Y(y1) + 16, "middle"], [mx, Y(y1) - 7, "middle"],
-      [X(x1) + (X(x2) - X(x1)) / 4, Y(y1) + 16, "middle"], [X(x1) + (X(x2) - X(x1)) / 4, Y(y1) - 7, "middle"]
-    ]);
-    // Rise: on its outer side or inner side, at the middle, then towards point 1's height
-    const qy = Y(y1) + (Y(y2) - Y(y1)) / 4 + 5;
-    riseLabel = legLabel(fmtNum(y2 - y1), "pg-rise", [
-      [X(x2) + 7 * away, my + 5, away > 0 ? "start" : "end"], [X(x2) - 7 * away, my + 5, away > 0 ? "end" : "start"],
-      [X(x2) + 7 * away, qy, away > 0 ? "start" : "end"], [X(x2) - 7 * away, qy, away > 0 ? "end" : "start"]
-    ]);
-  }
-  const under = (l, tp, r, b) => placed.some(({ spot }) => r > spot.x - 3 && l < spot.x + spot.w + 3 && b > spot.y - 14 && tp < spot.y + 3)
+  const mx = (X(x1) + X(x2)) / 2, my = (Y(y1) + Y(y2)) / 2;
+  const away = x2 >= x1 ? 1 : -1;   // the rise's outer side, away from point 1
+  // Run: below its leg or above it, at the middle, then towards either end
+  const runLabel = legLabel(fmtNum(x2 - x1), "pg-run", [
+    [mx, Y(y1) + 16, "middle"], [mx, Y(y1) - 7, "middle"],
+    [X(x1) + (X(x2) - X(x1)) / 4, Y(y1) + 16, "middle"], [X(x1) + (X(x2) - X(x1)) / 4, Y(y1) - 7, "middle"]
+  ]);
+  // Rise: on its outer side or inner side, at the middle, then towards point 1's height
+  const qy = Y(y1) + (Y(y2) - Y(y1)) / 4 + 5;
+  const riseLabel = legLabel(fmtNum(y2 - y1), "pg-rise", [
+    [X(x2) + 7 * away, my + 5, away > 0 ? "start" : "end"], [X(x2) - 7 * away, my + 5, away > 0 ? "end" : "start"],
+    [X(x2) + 7 * away, qy, away > 0 ? "start" : "end"], [X(x2) - 7 * away, qy, away > 0 ? "end" : "start"]
+  ]);
+  return { run, rise, runLabel, riseLabel, boxes };
+}
+
+// The run draws in, then the rise, each number fading in as its leg finishes
+function animateLegs({ run, rise, runLabel, riseLabel }, X, Y, [x1, y1], [x2, y2]) {
+  drawIn(playAnims, run, Math.abs(X(x2) - X(x1)), 0, 450);
+  drawIn(playAnims, rise, Math.abs(Y(y2) - Y(y1)), 450, 450);
+  playAnims.push(
+    runLabel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 350, fill: "both" }),
+    riseLabel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 800, fill: "both" })
+  );
+}
+
+// Tick numbers keep out from under the point labels and the leg numbers
+function underLabels(placed, boxes) {
+  return (l, tp, r, b) => placed.some(({ spot }) => r > spot.x - 3 && l < spot.x + spot.w + 3 && b > spot.y - 14 && tp < spot.y + 3)
     || boxes.some(([bl, bt, br, bb]) => r > bl - 3 && l < br + 3 && b > bt - 3 && tp < bb + 3);
-  drawTicks(svg, range, X, Y, under);
+}
+
+function showPlayGraph(level, stepsDone) {
+  const ln = level && level.topic === "line" && level.line;
+  if (ln && level.type === "graph" && ln.guide && ln.guide.length === 2) return showGraphLevel(level, stepsDone);
+  const pts = ln && ln.points;
+  if (!pts || pts.length !== 2) return hidePlayGraph();
+  $playGraph.classList.remove("pg-read");
+  const legsAfter = level.steps.findIndex(s => s.action === "gradCalc" || s.action === "gradient") + 1;
+  const legs = stepsDone >= legsAfter;
+  const key = `${level.id}:${legs}`;
+  if (key === playGraphKey) return;
+  const animate = legs && playGraphKey === `${level.id}:false`;   // only when they appear mid-level
+  playGraphKey = key;
+  playAnims.forEach(a => a.cancel());
+  playAnims = [];
+
+  const [p1, p2] = pts;
+  const { m, c } = ln;
+  const range = graphRange(pts.flat());
+  const svg = $playGraphSvg;
+  const { X, Y } = drawGrid(svg, range, "playGraphClip");
+  // A faint dotted line between the points: what the gradient measures
+  svgEl("line", { x1: X(p1[0]), y1: Y(p1[1]), x2: X(p2[0]), y2: Y(p2[1]), class: "graph-leader" }, svg);
+  const abc = [-m, 1, c];
+  const placed = pts.map((p, i) => drawPoint(svg, range.R, X, Y, p, [abc], `pg-p${i + 1}`));
+  const legEls = legs ? drawLegs(svg, X, Y, p1, p2, placed) : null;
+  drawTicks(svg, range, X, Y, underLabels(placed, legEls ? legEls.boxes : []));
   // Back on top of the ticks: the points, then the leg numbers
   placed.forEach(({ dot, ring, label, leader }) => { svg.append(...[leader, ring, dot, label].filter(Boolean)); });
-  if (legs) svg.append(runLabel, riseLabel);
-  svg.setAttribute("aria-label", `(${fmtNum(x1)}, ${fmtNum(y1)}), (${fmtNum(x2)}, ${fmtNum(y2)})`);
+  if (legEls) svg.append(legEls.runLabel, legEls.riseLabel);
+  svg.setAttribute("aria-label", pts.map(([x, y]) => `(${fmtNum(x)}, ${fmtNum(y)})`).join(", "));
   $playGraph.hidden = false;
 
-  if (animateLegs && !REDUCED_MOTION) {
-    drawIn(playAnims, run, Math.abs(X(x2) - X(x1)), 0, 450);
-    drawIn(playAnims, rise, Math.abs(Y(y2) - Y(y1)), 450, 450);
-    playAnims.push(
-      runLabel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 350, fill: "both" }),
-      riseLabel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 800, fill: "both" })
-    );
+  if (animate && !REDUCED_MOTION) animateLegs(legEls, X, Y, p1, p2);
+}
+
+// Graph levels: the line across the grid with two unlabelled guide dots, so the player counts squares between them.
+// Once m is found, the run and rise draw in between the dots; once c is found, the y-intercept pops in with its label.
+function showGraphLevel(level, stepsDone) {
+  const { m, c, guide } = level.line;
+  const stepAt = action => level.steps.findIndex(s => s.action === action) + 1;
+  const legs = stepsDone >= stepAt("gradient");
+  const cShown = stepsDone >= stepAt("intercept");
+  const key = `${level.id}:${legs}:${cShown}`;
+  if (key === playGraphKey) return;
+  // Whatever is new since the last draw of this level animates in; opening or refreshing shows it finished
+  const [prevId, prevLegs, prevC] = (playGraphKey || "").split(":");
+  const sameLevel = prevId === level.id;
+  const newLegs = legs && sameLevel && prevLegs === "false";
+  const newC = cShown && sameLevel && prevC === "false";
+  playGraphKey = key;
+  playAnims.forEach(a => a.cancel());
+  playAnims = [];
+
+  const [p1, p2] = guide;
+  const range = graphRange([c, ...guide.flat()]);
+  const svg = $playGraphSvg;
+  const { X, Y, clipped } = drawGrid(svg, range, "playGraphClip");
+  const abc = [-m, 1, c];
+  const seg = clipSystemLine(abc, range.R);
+  if (seg) svgEl("line", { x1: X(seg[0][0]), y1: Y(seg[0][1]), x2: X(seg[1][0]), y2: Y(seg[1][1]), class: "graph-line l1" }, clipped);
+  const dots = guide.map(([x, y]) => svgEl("circle", { cx: X(x), cy: Y(y), r: 5, class: "pg-guide" }, svg));
+  const placed = cShown ? [drawPoint(svg, range.R, X, Y, [0, c], [abc], "pg-c")] : [];
+  const legEls = legs ? drawLegs(svg, X, Y, p1, p2, placed) : null;
+  drawTicks(svg, range, X, Y, underLabels(placed, legEls ? legEls.boxes : []));
+  // Back on top of the ticks: the guide dots, the y-intercept, then the leg numbers
+  svg.append(...dots);
+  placed.forEach(({ dot, ring, label, leader }) => { svg.append(...[leader, ring, dot, label].filter(Boolean)); });
+  if (legEls) svg.append(legEls.runLabel, legEls.riseLabel);
+  svg.setAttribute("aria-label", LLL_I18N.t("playGraphLineAria") || "A straight line on a grid, with two dots on it");
+  $playGraph.classList.add("pg-read");   // bigger, so the squares are easy to count
+  $playGraph.hidden = false;
+
+  if (!REDUCED_MOTION) {
+    if (newLegs) animateLegs(legEls, X, Y, p1, p2);
+    if (newC) popPoint(playAnims, placed[0], 0);
   }
 }
 
