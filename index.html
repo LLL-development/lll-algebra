@@ -96,6 +96,44 @@
   </div>
 </div>
 
+<!-- Settings: ⚙️ in the top bar. Sound, language, theme and Reset progress (with a confirm step) -->
+<div class="settings-overlay" id="settingsOverlay" hidden>
+  <div class="settings-backdrop" id="settingsBackdrop"></div>
+  <div class="settings-card pixel-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="settings-head">
+      <h2 class="settings-title" id="settingsTitle" data-i18n="settingsTitle">Settings</h2>
+      <button class="formula-close-btn" id="settingsCloseBtn" aria-label="Close">✕</button>
+    </div>
+    <div class="settings-main" id="settingsMain">
+      <div class="settings-row">
+        <span class="settings-label" id="settingsSoundLabel" data-i18n="settingsSound">Sound</span>
+        <div class="seg" id="settingsSound" role="group" aria-labelledby="settingsSoundLabel"></div>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label" id="settingsLangLabel" data-i18n="settingsLanguage">Language</span>
+        <div class="seg" id="settingsLang" role="group" aria-labelledby="settingsLangLabel"></div>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label" id="settingsThemeLabel" data-i18n="settingsTheme">Theme</span>
+        <div class="seg" id="settingsTheme" role="group" aria-labelledby="settingsThemeLabel"></div>
+      </div>
+      <div class="settings-reset">
+        <button class="complete-btn danger" id="settingsResetBtn" data-i18n="settingsReset">Reset progress</button>
+        <p class="settings-note" data-i18n="settingsResetNote">Clears your stars, scores and achievements. Sound, language and theme stay as they are.</p>
+      </div>
+      <button class="complete-btn primary settings-done-btn" id="settingsDoneBtn" data-i18n="settingsDone">Done</button>
+    </div>
+    <div class="settings-confirm" id="settingsConfirm" hidden>
+      <p class="settings-confirm-title" data-i18n="settingsResetTitle">Reset all progress?</p>
+      <p class="settings-note" data-i18n="settingsResetWarn">Every star, score, streak and achievement will be cleared, and the intro and tips will show again. This can't be undone.</p>
+      <div class="settings-confirm-actions">
+        <button class="complete-btn secondary" id="settingsCancelBtn" data-i18n="settingsCancel">Cancel</button>
+        <button class="complete-btn danger" id="settingsConfirmBtn" data-i18n="settingsResetYes">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="achievementToast" class="achievement-toast">
   <span class="achievement-toast-icon">🏆</span>
   <span class="achievement-toast-text" id="achievementToastText"></span>
@@ -170,7 +208,7 @@
   <div class="topbar-controls">
     <button class="howto-btn" id="howtoBtn" aria-label="How to play">❔</button>
     <button class="trophy-btn" id="trophyBtn" aria-label="Achievements">🏆<span class="trophy-dot" id="trophyDot" hidden></span></button>
-    <button class="howto-btn sound-btn" id="soundBtn" aria-label="Mute sound">🔊</button>
+    <button class="howto-btn" id="settingsBtn" aria-label="Settings" data-i18n-aria="settingsAria">⚙️</button>
     <div id="langHost"></div>
     <div id="themeHost"></div>
   </div>
@@ -400,7 +438,7 @@
 <script type="module">
   import { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS, TIER_TIPS } from "./levels.js";
   import { STRINGS } from "./strings.js";
-  import { sfx, updateSoundBtn } from "./sound.js";
+  import { sfx, isSoundOn, setSoundOn } from "./sound.js";
   import { showSystemGraph, showLineGraph, clearSystemGraph, showNumberLine, clearNumberLine, afterGraphDrawn, showPlayGraph } from "./graph.js";
   import { setMathText, appendWithPowers, makePow, eqUnits, eqLineLen } from "./mathtext.js";
   import { TOPIC_FORMULAS, formulaText, hasFormulas } from "./formulas.js";
@@ -409,13 +447,15 @@
   import { initFloatingSymbols, burstGrandConfetti } from "./effects.js";
 
   // ---------- i18n ----------
-  document.getElementById("langHost").addEventListener("change", () => {
+  // Redoes everything a language switch doesn't reach through data-i18n.
+  // Called by the top-bar <select> (below) and by the Settings screen.
+  function refreshLanguage() {
     const hintWasShown = hintUsedThisStep;
     updateDailyCard();
     updateReviewCard();
     updateHomeCards();
     updateTrickyCard();
-    updateSoundBtn();
+    if (!$settingsOverlay.hidden) fillSettings(true);   // only open when the change came from Settings, so the pill slides
     if (!$screenHome.hidden) homeSay(false);
     if (!$screenLevels.hidden) renderLevelSelect(location.hash.split("/")[1]);
     if ($achievementsModal.classList.contains("show")) renderAchievementsList();
@@ -442,7 +482,8 @@
       setMathText($hintText, hint);
       hintUsedThisStep = true; // restore, so it won't double-charge the −2pt penalty later
     }
-  });
+  }
+  document.getElementById("langHost").addEventListener("change", refreshLanguage);
   LLL_I18N.init(STRINGS, { switcherHost: document.getElementById("langHost") });
   document.getElementById("themeHost").appendChild(LLL_THEME.button());
 
@@ -691,8 +732,7 @@
   }
 
   // ---------- sound ----------
- // Effects and the mute button live in sound.js; set the button label now the strings are loaded.
-  updateSoundBtn();
+  // Effects and the on/off setting live in sound.js; the switch is on the Settings screen.
 
   // ---------- chalk buddy (companion character) ----------
   // Sprites, idles, buddyLine() and makeBuddy() live in chalky.js.
@@ -2216,6 +2256,7 @@
     hideCompleteOverlay();
     if (!$tipOverlay.hidden) closeTierTip(false);   // left before reading it, so it shows again next time
     closeFormulaSheet(false);
+    closeSettings(false);
     if ($tutorialOverlay.classList.contains("show") && !$tutorialOverlay.classList.contains("hiding")) closeTutorial(false);
     const [screen, arg] = location.hash.replace(/^#/, "").split("/");
     if (screen === "play" && LEVELS_BY_ID[arg]) {
@@ -2793,6 +2834,128 @@
   document.getElementById("formulaBackdrop").addEventListener("click", () => closeFormulaSheet());
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !$formulaOverlay.hidden) closeFormulaSheet();
+  });
+
+  // ---------- settings ----------
+  // ⚙️ in the top bar. Sound, language and theme each keep their own saved key (as before), so changes apply
+  // straight away. Each setting is a small button group; the chosen button is pressed (aria-pressed).
+  // Reset clears every "lll_algebra_" key except sound: progress, plus the intro / tutorial / tip / "Tap me!"
+  // seen flags, so a reset player gets them again. Language and theme (lll_lang / lll_theme) are kept. Then it reloads.
+  const $settingsBtn = document.getElementById("settingsBtn");
+  const $settingsOverlay = document.getElementById("settingsOverlay");
+  const $settingsMain = document.getElementById("settingsMain");
+  const $settingsConfirm = document.getElementById("settingsConfirm");
+  const $settingsResetBtn = document.getElementById("settingsResetBtn");
+  const $settingsCancelBtn = document.getElementById("settingsCancelBtn");
+  const RESET_PREFIX = "lll_algebra_";
+  const RESET_KEEP = ["lll_algebra_sound"];
+
+  // Fills a button group. options = [[value, label]]; picked = the current value.
+  // An accent pill sits behind the buttons and slides to the pressed one (movePill). The group is rebuilt
+  // after a pick, but the pill is kept, so it slides from where it was; focus moves to the newly pressed button.
+  function fillSeg(el, options, picked, onPick, animate) {
+    let pill = el.querySelector(".seg-pill");
+    if (!pill) {
+      pill = document.createElement("span");
+      pill.className = "seg-pill";
+      pill.setAttribute("aria-hidden", "true");
+      el.appendChild(pill);
+    }
+    el.querySelectorAll(".seg-btn").forEach(b => b.remove());
+    options.forEach(([value, label]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "seg-btn";
+      b.textContent = label;
+      b.setAttribute("aria-pressed", String(value === picked));
+      b.addEventListener("click", () => {
+        if (value === picked) return;
+        onPick(value);
+        const pressed = el.querySelector('[aria-pressed="true"]');
+        if (pressed) pressed.focus({ preventScroll: true });
+      });
+      el.appendChild(b);
+    });
+    movePill(el, animate);
+  }
+
+  // Puts the pill behind the pressed button. animate: slide there; otherwise jump (opening, resizing).
+  // Needs the overlay on screen, since a hidden group has no size to measure.
+  function movePill(el, animate) {
+    const pill = el.querySelector(".seg-pill");
+    const btn = el.querySelector('[aria-pressed="true"]');
+    if (!pill || !btn) return;
+    pill.classList.toggle("no-anim", !animate);
+    pill.style.transform = `translate(${btn.offsetLeft}px, ${btn.offsetTop}px)`;
+    pill.style.width = `${btn.offsetWidth}px`;
+    pill.style.height = `${btn.offsetHeight}px`;
+    if (!animate) {
+      void pill.offsetWidth;   // apply the jump before transitions come back on
+      pill.classList.remove("no-anim");
+    }
+  }
+
+  function fillSettings(animate = false) {
+    const t = (k, fb) => LLL_I18N.t(k) || fb;
+    fillSeg(document.getElementById("settingsSound"),
+      [[true, t("settingsOn", "On")], [false, t("settingsOff", "Off")]],
+      isSoundOn(), on => { setSoundOn(on); fillSettings(true); }, animate);
+    // Language names stay in their own language (日本語 / English), as in the top-bar list
+    fillSeg(document.getElementById("settingsLang"),
+      LLL_I18N.langs.map(l => [l.code, l.label]),
+      currentLang(), code => { LLL_I18N.set(code); refreshLanguage(); }, animate);
+    fillSeg(document.getElementById("settingsTheme"),
+      [["system", t("themeSystem", "System")], ["light", t("themeLight", "Light")], ["dark", t("themeDark", "Dark")]],
+      LLL_THEME.mode(), mode => { LLL_THEME.set(mode); fillSettings(true); }, animate);
+  }
+
+  function openSettings() {
+    $settingsMain.hidden = false;
+    $settingsConfirm.hidden = true;
+    $settingsOverlay.hidden = false;   // shown first, so the pills can measure their buttons
+    fillSettings();
+    document.getElementById("settingsCloseBtn").focus({ preventScroll: true });
+  }
+
+  // restoreFocus: back to ⚙️ (not when Settings closes because the screen changed)
+  function closeSettings(restoreFocus = true) {
+    if ($settingsOverlay.hidden) return;
+    $settingsOverlay.hidden = true;
+    if (restoreFocus) $settingsBtn.focus({ preventScroll: true });
+  }
+
+  function resetProgress() {
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith(RESET_PREFIX) && !RESET_KEEP.includes(k))
+        .forEach(k => localStorage.removeItem(k));
+    } catch (e) { /* storage unavailable, so there's nothing saved to clear */ }
+    history.replaceState(null, "", "#home");   // without a hashchange, so nothing runs before the reload
+    location.reload();
+  }
+
+  $settingsBtn.addEventListener("click", openSettings);
+  document.getElementById("settingsCloseBtn").addEventListener("click", () => closeSettings());
+  document.getElementById("settingsDoneBtn").addEventListener("click", () => closeSettings());
+  document.getElementById("settingsBackdrop").addEventListener("click", () => closeSettings());
+  // Reset asks first; Cancel is focused, so a stray Enter doesn't wipe anything
+  $settingsResetBtn.addEventListener("click", () => {
+    $settingsMain.hidden = true;
+    $settingsConfirm.hidden = false;
+    $settingsCancelBtn.focus({ preventScroll: true });
+  });
+  $settingsCancelBtn.addEventListener("click", () => {
+    $settingsConfirm.hidden = true;
+    $settingsMain.hidden = false;
+    $settingsResetBtn.focus({ preventScroll: true });
+  });
+  document.getElementById("settingsConfirmBtn").addEventListener("click", resetProgress);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$settingsOverlay.hidden) closeSettings();
+  });
+  // Buttons move when the window resizes (or a group wraps on a narrow phone), so the pills follow
+  window.addEventListener("resize", () => {
+    if (!$settingsOverlay.hidden) document.querySelectorAll("#settingsOverlay .seg").forEach(el => movePill(el, false));
   });
 
   initFloatingSymbols();

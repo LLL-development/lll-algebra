@@ -7,12 +7,16 @@
    - Degrades safely if localStorage is unavailable.
    Call LLL_THEME.init() early (before paint) to avoid a flash,
    and LLL_THEME.button() to get a toggle button for the navbar.
+   lll-algebra additions: LLL_THEME.mode() ("system" / "light" / "dark")
+   and LLL_THEME.set(mode) for the Settings screen. "system" removes the
+   saved choice, so the page follows the OS setting again.
    ============================================================ */
 (function (global) {
   "use strict";
   var KEY = "lll_theme";
   function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function safeRemove(k) { try { localStorage.removeItem(k); } catch (e) {} }
   function systemPrefersDark() {
     return !!(global.matchMedia && global.matchMedia("(prefers-color-scheme: dark)").matches);
   }
@@ -36,6 +40,22 @@
         if (mq.addEventListener) mq.addEventListener("change", onChange);
         else if (mq.addListener) mq.addListener(onChange);
       }
+    },
+    // What's chosen, not what's showing: "system" when nothing is saved
+    mode: function () {
+      var stored = safeGet(KEY);
+      return stored === "dark" || stored === "light" ? stored : "system";
+    },
+    // "light" / "dark" are saved; anything else ("system") removes the saved choice and follows the OS
+    set: function (mode) {
+      if (mode === "dark" || mode === "light") {
+        safeSet(KEY, mode);
+        apply(mode);
+      } else {
+        safeRemove(KEY);
+        apply(systemPrefersDark() ? "dark" : "light");
+      }
+      return API.current();
     },
     toggle: function () {
       var next = API.current() === "dark" ? "light" : "dark";

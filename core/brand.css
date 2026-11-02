@@ -1269,6 +1269,90 @@ body:has(.formula-overlay:not([hidden])) { overflow: hidden; }
   .formula-backdrop, .formula-card { animation: none !important; }
 }
 
+/* ---------- Settings ----------
+   ⚙️ in the top bar. Same overlay, backdrop and pop-in as the formula sheet. Each setting is a row:
+   label on the left, a button group on the right (the pressed one in the accent); on narrow phones the
+   group drops under its label. Reset is outlined in --wrong and asks first in the same card. */
+.settings-overlay:not([hidden]) {
+  position: fixed; inset: 0; z-index: 560;
+  display: grid; place-items: center; padding: 20px;
+}
+body:has(.settings-overlay:not([hidden])) { overflow: hidden; }
+.settings-backdrop {
+  position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55);
+  animation: completeFade .2s ease;
+}
+.settings-card {
+  position: relative; width: min(400px, 100%);
+  max-height: calc(100dvh - 40px); overflow-y: auto;
+  background: var(--surface);
+  padding: 20px 20px 18px;
+  display: flex; flex-direction: column; gap: 14px;
+  animation: completePop .32s cubic-bezier(.34,1.56,.64,1);
+}
+.settings-head { display: flex; align-items: center; gap: 8px; }
+.settings-title {
+  flex: 1; min-width: 0; margin: 0;
+  font-family: var(--display); font-size: 18px; font-weight: 700; color: var(--ink);
+}
+.settings-main, .settings-confirm { display: flex; flex-direction: column; gap: 14px; }
+.settings-main[hidden], .settings-confirm[hidden] { display: none; }
+
+.settings-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.settings-label { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--ink); }
+
+/* Button group: one bordered strip, the chosen button filled in the accent */
+.seg {
+  position: relative;   /* the pill is placed against this */
+  display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 3px;
+  border: 1px solid var(--border); border-radius: 12px;
+}
+/* The accent pill behind the pressed button: slides and resizes to it (movePill in index.html),
+   with a small overshoot so it feels like a switch */
+.seg-pill {
+  position: absolute; top: 0; left: 0; width: 0; height: 0;
+  background: var(--accent); border-radius: 9px; pointer-events: none;
+  transition: transform .3s cubic-bezier(.34,1.35,.64,1), width .3s ease, height .3s ease;
+}
+.seg-pill.no-anim { transition: none; }
+.seg-btn {
+  position: relative; z-index: 1;   /* above the pill */
+  font-family: var(--sans); font-size: 13px; font-weight: 700;
+  min-height: 34px; padding: 6px 12px;
+  color: var(--muted); background: transparent;
+  border: none; border-radius: 9px; cursor: pointer;
+  transition: color .25s ease, background-color .2s ease;
+}
+.seg-btn:hover { color: var(--ink); background: var(--accent-tint); }
+.seg-btn[aria-pressed="true"],
+.seg-btn[aria-pressed="true"]:hover { color: var(--on-accent); background: transparent; cursor: default; }
+.seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.settings-reset { display: flex; flex-direction: column; gap: 6px; }
+.settings-note { margin: 0; font-family: var(--sans); font-size: 12px; line-height: 1.5; color: var(--muted); }
+.complete-btn.danger { color: var(--wrong); background: transparent; border: 1px solid var(--wrong); }
+.complete-btn.danger:hover { background: var(--accent-tint); }
+.settings-done-btn { width: 100%; }
+
+.settings-confirm-title { margin: 0; font-family: var(--sans); font-size: 16px; font-weight: 700; color: var(--ink); }
+.settings-confirm-actions { display: flex; gap: 10px; }
+.settings-confirm-actions .complete-btn { flex: 1; }
+
+/* Narrow phones: each button group goes under its label, and the theme's three buttons share the width */
+@media (max-width: 420px) {
+  .settings-row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .seg { display: flex; }
+  .seg-btn { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-backdrop, .settings-card { animation: none !important; }
+  .seg-pill, .seg-btn { transition: none !important; }
+}
+
 /* ---------- Chalky on the level-complete card ----------
    Chalky on the left, his line in a bubble on the right (tail pointing back at him). */
 .complete-buddy-row { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; margin: 2px 0; }
