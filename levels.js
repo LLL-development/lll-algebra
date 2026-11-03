@@ -13,8 +13,8 @@
 //                   `value` is the correct expansion as a string (e.g. "2x + 6");
 //                   `wrong` is an array of 3 authored wrong expansions used as distractors;
 //                   `target` is "left" or "right" (the side being rewritten).
-//   "factor"      — factorise a quadratic expression (quadratics topic). Authored like
-//                   "expand": `value` is the correct factorisation (e.g. "(x + 2)(x + 3)").
+//   "factor"      — factorise an expression (quadratics and expand & factorise topics). Authored like
+//                   "expand": `value` is the correct factorisation (e.g. "(x + 2)(x + 3)" or "3(2x + 3)").
 //   "roots"       — read both answers off a factorised "= 0" equation (zero-product rule).
 //                   `value` is the answers as a string, smallest first (e.g. "x = -3, -2").
 //   "combine"     — add or subtract the two equations of a system to eliminate a letter
@@ -125,7 +125,18 @@
 // coordinates, so it can't become a two-point level). The play screen draws the line; the gradient step's result
 // keeps "y = mx + c" as the first line, and the intercept step ends on the full equation, like Hard.
 //
-// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject", "expression", "indices", "roots" or "line". `target` is "both-sides"
+// Expand & factorise (topic key `factorise`): like Expressions, there's no "=". Easy expands double brackets in an
+// "expand" step to all four products (e.g. "x² - 2x + 3x - 6"), then collects the x terms with a "simplify" step
+// (`collect: "x"`). Medium and Hard are "factor" steps with `target: "expression"`; a common-factor step names
+// `prompt: "commonFactorPrompt"`, and Hard's second step `prompt: "factorBracketPrompt"`. Every authored step has
+// `wrongKinds`: "missedTerms" (not all four products), "squareSlip" ((x + 3)² taken as x² + 9), "factorDivide"
+// (a term not divided by the factor), "notFullyFactorised" (a smaller common factor), "factorPair" (the two numbers
+// multiply right but add wrong), "lostFactor" (the common factor dropped), plus "signSlip", "unlikeTerms" and
+// "rootSlip" (16 halved instead of square-rooted in x² - 16), shared with other topics. "generic" is fine on expand
+// and collect steps, but not on common-factor steps, where its fallback line ("Do they add and multiply right?")
+// doesn't fit. Options stay within 16 characters so they fit a narrow phone's button.
+//
+// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject", "expression", "factorise", "indices", "roots" or "line". `target` is "both-sides"
 // for every move that changes a side's value; only "expand" and "simplify" rewrite one side,
 // because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
@@ -6960,6 +6971,813 @@ const LEVELS = [
   },
 
   // =====================================================================
+  // EXPANDING AND FACTORISING (topic "factorise", shown as "Expand & factorise")
+  // =====================================================================
+
+  // ---- Easy: expand double brackets (all four products), then collect the x terms ----
+  // Levels 1-6: (x + a)(x + b) with mixed signs. 7-8: perfect squares. 9-10: (x + a)(x − a), where the x terms cancel.
+  // Level 1's first wrong option is the "missed terms" one, since the tutorial demo shows wrong[0].
+  {
+    id: "factorise_easy_01",
+    topic: "factorise",
+    equation: "(x + 3)(x - 2)",
+    answer: "x² + x - 6",
+    difficulty: "easy",
+    type: "expand",
+    basePoints: 10,
+    steps: [
+      { action: "expand", value: "x² - 2x + 3x - 6", target: "expression", result: "x² - 2x + 3x - 6",
+        wrong: ["x² - 6", "x² + 2x + 3x - 6", "x² - 2x + 3x + 6"], wrongKinds: ["missedTerms", "signSlip", "signSlip"] },
+      { action: "simplify", collect: "x", value: "x² + x - 6", target: "expression", result: "x² + x - 6",
+        wrong: ["x² + 5x - 6", "x² - x - 6", "2x² - 6"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Multiply each term in the first bracket by each term in the second: x × x, x × (-2), 3 × x and 3 × (-2).",
+        "Collect the x terms: -2x + 3x."
+      ],
+      ja: [
+        "1つ目のかっこの各項を、2つ目のかっこの各項にかける：x × x、x × (-2)、3 × x、3 × (-2)。",
+        "xの項をまとめる：-2x + 3x。"
+      ]
+    },
+    explanation: {
+      en: "Every term in the first bracket multiplies every term in the second: x × x = x², x × (-2) = -2x, 3 × x = 3x and 3 × (-2) = -6. Then -2x + 3x = x, so x² + x - 6.",
+      ja: "1つ目のかっこのすべての項を、2つ目のかっこのすべての項にかけます：x × x = x²、x × (-2) = -2x、3 × x = 3x、3 × (-2) = -6。-2x + 3x = x なので、x² + x - 6。"
+    }
+  },
+  {
+    id: "factorise_easy_02",
+    topic: "factorise",
+    equation: "(x + 2)(x + 4)",
+    answer: "x² + 6x + 8",
+    difficulty: "easy",
+    type: "expand",
+    basePoints: 10,
+    steps: [
+      { action: "expand", value: "x² + 4x + 2x + 8", target: "expression", result: "x² + 4x + 2x + 8",
+        wrong: ["x² + 8", "x² + 4x + 2x + 6", "x² + 4x + 2x"], wrongKinds: ["missedTerms", "generic", "missedTerms"] },
+      { action: "simplify", collect: "x", value: "x² + 6x + 8", target: "expression", result: "x² + 6x + 8",
+        wrong: ["x² + 8x + 8", "x² + 2x + 8", "7x² + 8"], wrongKinds: ["generic", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Multiply each pair: x × x, x × 4, 2 × x and 2 × 4.",
+        "Collect the x terms: 4x + 2x."
+      ],
+      ja: [
+        "それぞれの組をかける：x × x、x × 4、2 × x、2 × 4。",
+        "xの項をまとめる：4x + 2x。"
+      ]
+    },
+    explanation: {
+      en: "Each term in the first bracket multiplies each term in the second: x² + 4x + 2x + 8. The two middle terms are like terms, so 4x + 2x = 6x: x² + 6x + 8.",
+      ja: "1つ目のかっこの各項を、2つ目のかっこの各項にかけると x² + 4x + 2x + 8。真ん中の2つは同類項なので 4x + 2x = 6x、答えは x² + 6x + 8。"
+    }
+  },
+  {
+    id: "factorise_easy_03",
+    topic: "factorise",
+    equation: "(x - 1)(x - 5)",
+    answer: "x² - 6x + 5",
+    difficulty: "easy",
+    type: "expand",
+    basePoints: 10,
+    steps: [
+      { action: "expand", value: "x² - 5x - x + 5", target: "expression", result: "x² - 5x - x + 5",
+        wrong: ["x² + 5", "x² - 5x - x - 5", "x² - 5x + x + 5"], wrongKinds: ["missedTerms", "signSlip", "signSlip"] },
+      { action: "simplify", collect: "x", value: "x² - 6x + 5", target: "expression", result: "x² - 6x + 5",
+        wrong: ["x² - 5x + 5", "x² - 4x + 5", "x² + 6x + 5"], wrongKinds: ["loneLetter", "signSlip", "signSlip"] }
+    ],
+    hints: {
+      en: [
+        "Multiply each pair: x × x, x × (-5), (-1) × x and (-1) × (-5). Minus times minus is plus.",
+        "Collect the x terms: -5x - x. A lone x is 1x."
+      ],
+      ja: [
+        "それぞれの組をかける：x × x、x × (-5)、(-1) × x、(-1) × (-5)。マイナス×マイナスはプラス。",
+        "xの項をまとめる：-5x - x。xだけのときは1x。"
+      ]
+    },
+    explanation: {
+      en: "(-1) × (-5) = +5, because minus times minus is plus. Then -5x - x = -6x (a lone x counts as 1x), so x² - 6x + 5.",
+      ja: "(-1) × (-5) = +5（マイナス×マイナスはプラス）。-5x - x = -6x（xは1xと数える）なので、x² - 6x + 5。"
+    }
+  },
+  {
+    id: "factorise_easy_04",
+    topic: "factorise",
+    equation: "(x - 2)(x + 4)",
+    answer: "x² + 2x - 8",
+    difficulty: "easy",
+    type: "expand",
+    basePoints: 10,
+    steps: [
+      { action: "expand", value: "x² + 4x - 2x - 8", target: "expression", result: "x² + 4x - 2x - 8",
+        wrong: ["x² - 8", "x² + 4x - 2x + 8", "x² + 4x + 2x - 8"], wrongKinds: ["missedTerms", "signSlip", "signSlip"] },
+      { action: "simplify", collect: "x", value: "x² + 2x - 8", target: "expression", result: "x² + 2x - 8",
+        wrong: ["x² + 6x - 8", "x² - 2x - 8", "3x² - 8"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Multiply each pair: x × x, x × 4, (-2) × x and (-2) × 4.",
+        "Collect the x terms: 4x - 2x."
+      ],
+      ja: [
+        "それぞれの組をかける：x × x、x × 4、(-2) × x、(-2) × 4。",
+        "xの項をまとめる：4x - 2x。"
+      ]
+    },
+    explanation: {
+      en: "The -2 keeps its minus when it multiplies: (-2) × x = -2x and (-2) × 4 = -8. Then 4x - 2x = 2x, so x² + 2x - 8.",
+      ja: "-2はマイナスごとかけます：(-2) × x = -2x、(-2) × 4 = -8。4x - 2x = 2x なので、x² + 2x - 8。"
+    }
+  },
+  {
+    id: "factorise_easy_05",
+    topic: "factorise",
+    equation: "(x + 1)(x + 7)",
+    answer: "x² + 8x + 7",
+    difficulty: "easy",
+    type: "expand",
+    basePoints: 10,
+    steps: [
+      { action: "expand", value: "x² + 7x + x + 7", target: "expression", result: "x² + 7x + x + 7",
+        wrong: ["x² + 7", "x² + 7x + x + 8", "x² + 7x + 7"], wrongKinds: ["missedTerms", "generic", "missedTerms"] },
+      { action: "simplify", collect: "x", value: "x² + 8x + 7", target: "expression", result: "x² + 8x + 7",
+        wrong: ["x² + 7x + 7", "x² + 6x + 7", "9x² + 7"], wrongKinds: ["loneLetter", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "Multiply each pair: x × x, x × 7, 1 × x and 1 × 7.",
+        "Collect the x terms: 7x + x. A lone x is 1x."
+      ],
+      ja: [
+        "それぞれの組をかける：x × x、x × 7、1 × x、1 × 7。",
+        "xの項をまとめる：7x + x。xだけのときは1x。"
+      ]
+    },
+    explanation: {
+      en: "1 × x is just x, and 1 × 7 = 7. Then 7x + x = 8x, since a lone x counts as 1x: x² + 8x + 7.",
+      ja: "1 × x はただのx、1 × 7 = 7。xは1xと数えるので 7x + x = 8x、答えは x² + 8x + 7。"
+    }
+  },
+  {
+    id: "factorise_easy_06",
+    topic: "factorise",
+    equation: "(x - 3)(x + 2)",
+    answer: "x² - x - 6",
+    difficulty: "easy",
+    type: "expand",
+    basePoints: 10,
+    steps: [
+      { action: "expand", value: "x² + 2x - 3x - 6", target: "expression", result: "x² + 2x - 3x - 6",
+        wrong: ["x² - 6", "x² + 2x - 3x + 6", "x² - 2x - 3x - 6"], wrongKinds: ["missedTerms", "signSlip", "signSlip"] },
+      { action: "simplify", collect: "x", value: "x² - x - 6", target: "expression", result: "x² - x - 6",
+        wrong: ["x² + x - 6", "x² - 5x - 6", "x² - 6"], wrongKinds: ["signSlip", "signSlip", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Multiply each pair: x × x, x × 2, (-3) × x and (-3) × 2.",
+        "Collect the x terms: 2x - 3x. That's -1x, written -x."
+      ],
+      ja: [
+        "それぞれの組をかける：x × x、x × 2、(-3) × x、(-3) × 2。",
+        "xの項をまとめる：2x - 3x。-1x は -x と書く。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying gives x² + 2x - 3x - 6. Then 2x - 3x = -1x, which is written -x, so x² - x - 6.",
+      ja: "かけると x² + 2x - 3x - 6。2x - 3x = -1x で、-x と書くので、x² - x - 6。"
+    }
+  },
+  {
+    id: "factorise_easy_07",
+    topic: "factorise",
+    equation: "(x + 3)²",
+    answer: "x² + 6x + 9",
+    difficulty: "easy",
+    type: "expand",
+    basePoints: 10,
+    steps: [
+      { action: "expand", value: "x² + 3x + 3x + 9", target: "expression", result: "x² + 3x + 3x + 9",
+        wrong: ["x² + 9", "x² + 3x + 9", "x² + 3x + 3x + 6"], wrongKinds: ["squareSlip", "missedTerms", "generic"] },
+      { action: "simplify", collect: "x", value: "x² + 6x + 9", target: "expression", result: "x² + 6x + 9",
+        wrong: ["x² + 9x + 9", "7x² + 9", "x² + 3x + 9"], wrongKinds: ["generic", "unlikeTerms", "generic"] }
+    ],
+    hints: {
+      en: [
+        "(x + 3)² means (x + 3)(x + 3). Multiply each pair: x × x, x × 3, 3 × x and 3 × 3.",
+        "Collect the x terms: 3x + 3x."
+      ],
+      ja: [
+        "(x + 3)² は (x + 3)(x + 3) のこと。それぞれの組をかける：x × x、x × 3、3 × x、3 × 3。",
+        "xの項をまとめる：3x + 3x。"
+      ]
+    },
+    explanation: {
+      en: "(x + 3)² is (x + 3)(x + 3), not x² + 9. Multiplying all four pairs gives x² + 3x + 3x + 9, and the two middle terms make 6x: x² + 6x + 9.",
+      ja: "(x + 3)² は (x + 3)(x + 3) で、x² + 9 ではありません。4つの組をかけると x² + 3x + 3x + 9、真ん中の2つで6xになり、x² + 6x + 9。"
+    }
+  },
+  {
+    id: "factorise_easy_08",
+    topic: "factorise",
+    equation: "(x - 2)²",
+    answer: "x² - 4x + 4",
+    difficulty: "easy",
+    type: "expand",
+    basePoints: 10,
+    steps: [
+      { action: "expand", value: "x² - 2x - 2x + 4", target: "expression", result: "x² - 2x - 2x + 4",
+        wrong: ["x² + 4", "x² - 4", "x² - 2x - 2x - 4"], wrongKinds: ["squareSlip", "squareSlip", "signSlip"] },
+      { action: "simplify", collect: "x", value: "x² - 4x + 4", target: "expression", result: "x² - 4x + 4",
+        wrong: ["x² + 4x + 4", "x² + 4", "-3x² + 4"], wrongKinds: ["signSlip", "signSlip", "unlikeTerms"] }
+    ],
+    hints: {
+      en: [
+        "(x - 2)² means (x - 2)(x - 2). Multiply each pair. (-2) × (-2) = +4.",
+        "Collect the x terms: -2x - 2x."
+      ],
+      ja: [
+        "(x - 2)² は (x - 2)(x - 2) のこと。それぞれの組をかける。(-2) × (-2) = +4。",
+        "xの項をまとめる：-2x - 2x。"
+      ]
+    },
+    explanation: {
+      en: "(x - 2)² is (x - 2)(x - 2): x² - 2x - 2x + 4. The last term is +4 because minus times minus is plus, and -2x - 2x = -4x, so x² - 4x + 4.",
+      ja: "(x - 2)² は (x - 2)(x - 2) なので x² - 2x - 2x + 4。マイナス×マイナスで最後は +4、-2x - 2x = -4x なので、x² - 4x + 4。"
+    }
+  },
+  {
+    id: "factorise_easy_09",
+    topic: "factorise",
+    equation: "(x + 3)(x - 3)",
+    answer: "x² - 9",
+    difficulty: "easy",
+    type: "expand",
+    basePoints: 10,
+    steps: [
+      { action: "expand", value: "x² - 3x + 3x - 9", target: "expression", result: "x² - 3x + 3x - 9",
+        wrong: ["x² - 3x - 3x - 9", "x² - 3x + 3x + 9", "x² - 3x + 3x - 6"], wrongKinds: ["signSlip", "signSlip", "generic"] },
+      { action: "simplify", collect: "x", value: "x² - 9", target: "expression", result: "x² - 9",
+        wrong: ["x² - 6x - 9", "x² + 6x - 9", "x² - 3x - 9"], wrongKinds: ["signSlip", "signSlip", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Multiply each pair: x × x, x × (-3), 3 × x and 3 × (-3).",
+        "Collect the x terms: -3x + 3x. They cancel out!"
+      ],
+      ja: [
+        "それぞれの組をかける：x × x、x × (-3)、3 × x、3 × (-3)。",
+        "xの項をまとめる：-3x + 3x。打ち消し合うよ！"
+      ]
+    },
+    explanation: {
+      en: "-3x and +3x cancel, leaving x² - 9. (x + a)(x − a) always gives x² − a², the difference of two squares. You'll factorise it back in Medium.",
+      ja: "-3x と +3x が打ち消し合って x² - 9。(x + a)(x − a) はいつも x² − a²（2乗の差）になります。「ふつう」では逆に因数分解するよ。"
+    }
+  },
+  {
+    id: "factorise_easy_10",
+    topic: "factorise",
+    equation: "(x - 2)(x + 2)",
+    answer: "x² - 4",
+    difficulty: "easy",
+    type: "expand",
+    basePoints: 10,
+    steps: [
+      { action: "expand", value: "x² + 2x - 2x - 4", target: "expression", result: "x² + 2x - 2x - 4",
+        wrong: ["x² + 2x - 2x + 4", "x² + 2x + 2x - 4", "x² + 4"], wrongKinds: ["signSlip", "signSlip", "signSlip"] },
+      { action: "simplify", collect: "x", value: "x² - 4", target: "expression", result: "x² - 4",
+        wrong: ["x² + 4x - 4", "x² - 4x - 4", "x² + 2x - 4"], wrongKinds: ["signSlip", "signSlip", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Multiply each pair: x × x, x × 2, (-2) × x and (-2) × 2.",
+        "Collect the x terms: 2x - 2x."
+      ],
+      ja: [
+        "それぞれの組をかける：x × x、x × 2、(-2) × x、(-2) × 2。",
+        "xの項をまとめる：2x - 2x。"
+      ]
+    },
+    explanation: {
+      en: "x² + 2x - 2x - 4: the x terms cancel again, leaving x² - 4. That's x² - 2², the difference of two squares.",
+      ja: "x² + 2x - 2x - 4：xの項がまた打ち消し合って x² - 4。これは x² - 2²、2乗の差です。"
+    }
+  },
+
+  // ---- Medium: factorise in one step ----
+  // Levels 1-6: take out the highest common factor (numbers, then a letter, then both).
+  // Levels 7-10: the difference of two squares, x² − a² = (x + a)(x − a), the reverse of Easy 9-10.
+  // Common-factor options never use "generic": every wrong option has a real kind.
+  {
+    id: "factorise_medium_01",
+    topic: "factorise",
+    equation: "6x + 9",
+    answer: "3(2x + 3)",
+    difficulty: "medium",
+    type: "common-factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "3(2x + 3)", target: "expression", result: "3(2x + 3)",
+        wrong: ["3(2x + 9)", "3(6x + 3)", "2x + 3"], wrongKinds: ["factorDivide", "factorDivide", "lostFactor"] }
+    ],
+    hints: {
+      en: ["Find the biggest number that goes into both 6 and 9, then divide each term by it."],
+      ja: ["6と9の両方を割り切れる一番大きい数を探して、それぞれの項をその数で割る。"]
+    },
+    explanation: {
+      en: "3 is the biggest number that goes into both 6 and 9. 6x ÷ 3 = 2x and 9 ÷ 3 = 3, so 6x + 9 = 3(2x + 3). Expand it back to check: 3 × 2x + 3 × 3 = 6x + 9.",
+      ja: "3は6と9の両方を割り切れる一番大きい数です。6x ÷ 3 = 2x、9 ÷ 3 = 3 なので 6x + 9 = 3(2x + 3)。展開して確かめ：3 × 2x + 3 × 3 = 6x + 9。"
+    }
+  },
+  {
+    id: "factorise_medium_02",
+    topic: "factorise",
+    equation: "4x + 12",
+    answer: "4(x + 3)",
+    difficulty: "medium",
+    type: "common-factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "4(x + 3)", target: "expression", result: "4(x + 3)",
+        wrong: ["2(2x + 6)", "4(x + 12)", "x + 3"], wrongKinds: ["notFullyFactorised", "factorDivide", "lostFactor"] }
+    ],
+    hints: {
+      en: ["4 goes into both 4x and 12. Divide each term by 4."],
+      ja: ["4は4xと12の両方を割り切れる。それぞれの項を4で割る。"]
+    },
+    explanation: {
+      en: "4 is the biggest number that goes into both 4 and 12, so 4x + 12 = 4(x + 3). 2(2x + 6) is equal too, but it isn't finished: 2x + 6 still has a common factor of 2.",
+      ja: "4は4と12の両方を割り切れる一番大きい数なので、4x + 12 = 4(x + 3)。2(2x + 6) も等しいですが、2x + 6 にはまだ共通因数2があるので、因数分解は終わっていません。"
+    }
+  },
+  {
+    id: "factorise_medium_03",
+    topic: "factorise",
+    equation: "10x - 15",
+    answer: "5(2x - 3)",
+    difficulty: "medium",
+    type: "common-factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "5(2x - 3)", target: "expression", result: "5(2x - 3)",
+        wrong: ["5(2x + 3)", "5(2x - 15)", "5(5x - 10)"], wrongKinds: ["signSlip", "factorDivide", "factorDivide"] }
+    ],
+    hints: {
+      en: ["5 goes into both 10 and 15. Divide each term by 5, keeping the minus."],
+      ja: ["5は10と15の両方を割り切れる。マイナスはそのまま、それぞれの項を5で割る。"]
+    },
+    explanation: {
+      en: "10x ÷ 5 = 2x and -15 ÷ 5 = -3, so 10x - 15 = 5(2x - 3). The minus stays inside the bracket.",
+      ja: "10x ÷ 5 = 2x、-15 ÷ 5 = -3 なので 10x - 15 = 5(2x - 3)。マイナスはかっこの中に残ります。"
+    }
+  },
+  {
+    id: "factorise_medium_04",
+    topic: "factorise",
+    equation: "x² + 5x",
+    answer: "x(x + 5)",
+    difficulty: "medium",
+    type: "common-factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "x(x + 5)", target: "expression", result: "x(x + 5)",
+        wrong: ["x(x + 5x)", "x(x² + 5)", "x(x - 5)"], wrongKinds: ["factorDivide", "factorDivide", "signSlip"] }
+    ],
+    hints: {
+      en: ["Both terms have an x. Take x out: x² ÷ x = x and 5x ÷ x = 5."],
+      ja: ["どちらの項にもxがある。xでくくる：x² ÷ x = x、5x ÷ x = 5。"]
+    },
+    explanation: {
+      en: "x² is x × x and 5x is 5 × x, so x is a common factor. Taking it out leaves x and 5: x(x + 5).",
+      ja: "x² は x × x、5x は 5 × x なので、xが共通因数です。xでくくると x と 5 が残り、x(x + 5)。"
+    }
+  },
+  {
+    id: "factorise_medium_05",
+    topic: "factorise",
+    equation: "4x² + 6x",
+    answer: "2x(2x + 3)",
+    difficulty: "medium",
+    type: "common-factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "2x(2x + 3)", target: "expression", result: "2x(2x + 3)",
+        wrong: ["2(2x² + 3x)", "x(4x + 6)", "2x(2x + 6)"], wrongKinds: ["notFullyFactorised", "notFullyFactorised", "factorDivide"] }
+    ],
+    hints: {
+      en: ["The common factor has a number and a letter: 2 goes into 4 and 6, and both terms have x. Take out 2x."],
+      ja: ["共通因数は数と文字の両方：2は4と6を割り切り、どちらの項にもxがある。2xでくくる。"]
+    },
+    explanation: {
+      en: "2 goes into 4 and 6, and both terms have x, so the highest common factor is 2x. 4x² ÷ 2x = 2x and 6x ÷ 2x = 3, giving 2x(2x + 3). Taking out just 2 or just x leaves a common factor inside the bracket.",
+      ja: "2は4と6を割り切り、どちらの項にもxがあるので、最大の共通因数は2xです。4x² ÷ 2x = 2x、6x ÷ 2x = 3 で 2x(2x + 3)。2だけやxだけでくくると、かっこの中に共通因数が残ります。"
+    }
+  },
+  {
+    id: "factorise_medium_06",
+    topic: "factorise",
+    equation: "6x² - 9x",
+    answer: "3x(2x - 3)",
+    difficulty: "medium",
+    type: "common-factor",
+    basePoints: 20,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "3x(2x - 3)", target: "expression", result: "3x(2x - 3)",
+        wrong: ["3(2x² - 3x)", "3x(2x + 3)", "3x(2x - 9)"], wrongKinds: ["notFullyFactorised", "signSlip", "factorDivide"] }
+    ],
+    hints: {
+      en: ["3 goes into 6 and 9, and both terms have x. Take out 3x, keeping the minus."],
+      ja: ["3は6と9を割り切り、どちらの項にもxがある。マイナスはそのまま、3xでくくる。"]
+    },
+    explanation: {
+      en: "The highest common factor is 3x. 6x² ÷ 3x = 2x and -9x ÷ 3x = -3, so 6x² - 9x = 3x(2x - 3).",
+      ja: "最大の共通因数は3xです。6x² ÷ 3x = 2x、-9x ÷ 3x = -3 なので 6x² - 9x = 3x(2x - 3)。"
+    }
+  },
+  {
+    id: "factorise_medium_07",
+    topic: "factorise",
+    equation: "x² - 16",
+    answer: "(x + 4)(x - 4)",
+    difficulty: "medium",
+    type: "difference-of-squares",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x + 4)(x - 4)", target: "expression", result: "(x + 4)(x - 4)",
+        wrong: ["(x + 8)(x - 8)", "(x - 4)(x - 4)", "(x + 4)(x + 4)"], wrongKinds: ["rootSlip", "signSlip", "signSlip"] }
+    ],
+    hints: {
+      en: ["x² - 16 is x² - 4². A difference of two squares factorises as (x + 4)(x - 4)."],
+      ja: ["x² - 16 は x² - 4²。2乗の差は (x + 4)(x - 4) と因数分解できる。"]
+    },
+    explanation: {
+      en: "16 = 4², so x² - 16 is a difference of two squares: x² − a² = (x + a)(x − a). That gives (x + 4)(x - 4). Expanding it back, -4x and +4x cancel, leaving x² - 16.",
+      ja: "16 = 4² なので、x² - 16 は2乗の差です：x² − a² = (x + a)(x − a)。答えは (x + 4)(x - 4)。展開すると -4x と +4x が打ち消し合い、x² - 16 に戻ります。"
+    }
+  },
+  {
+    id: "factorise_medium_08",
+    topic: "factorise",
+    equation: "x² - 25",
+    answer: "(x + 5)(x - 5)",
+    difficulty: "medium",
+    type: "difference-of-squares",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x + 5)(x - 5)", target: "expression", result: "(x + 5)(x - 5)",
+        wrong: ["(x - 5)²", "(x + 5)(x + 5)", "(x + 25)(x - 1)"], wrongKinds: ["squareSlip", "signSlip", "factorPair"] }
+    ],
+    hints: {
+      en: ["25 = 5². Use x² − a² = (x + a)(x − a): one bracket +, one bracket −."],
+      ja: ["25 = 5²。x² − a² = (x + a)(x − a) を使う：かっこの片方は＋、もう片方は−。"]
+    },
+    explanation: {
+      en: "25 = 5², so x² - 25 = (x + 5)(x - 5). One plus and one minus, so the x terms cancel when you expand it back. (x - 5)² would give x² - 10x + 25 instead.",
+      ja: "25 = 5² なので x² - 25 = (x + 5)(x - 5)。＋と−が1つずつなので、展開するとxの項が打ち消し合います。(x - 5)² だと x² - 10x + 25 になってしまいます。"
+    }
+  },
+  {
+    id: "factorise_medium_09",
+    topic: "factorise",
+    equation: "x² - 49",
+    answer: "(x + 7)(x - 7)",
+    difficulty: "medium",
+    type: "difference-of-squares",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x + 7)(x - 7)", target: "expression", result: "(x + 7)(x - 7)",
+        wrong: ["(x - 7)(x - 7)", "(x + 7)²", "(x + 49)(x - 1)"], wrongKinds: ["signSlip", "squareSlip", "factorPair"] }
+    ],
+    hints: {
+      en: ["49 = 7². Use x² − a² = (x + a)(x − a)."],
+      ja: ["49 = 7²。x² − a² = (x + a)(x − a) を使う。"]
+    },
+    explanation: {
+      en: "49 = 7², so x² - 49 = (x + 7)(x - 7). You could also look for two numbers that multiply to -49 and add to 0: 7 and -7.",
+      ja: "49 = 7² なので x² - 49 = (x + 7)(x - 7)。かけて -49、足して0になる2つの数（7と-7）を探しても同じです。"
+    }
+  },
+  {
+    id: "factorise_medium_10",
+    topic: "factorise",
+    equation: "x² - 36",
+    answer: "(x + 6)(x - 6)",
+    difficulty: "medium",
+    type: "difference-of-squares",
+    basePoints: 20,
+    steps: [
+      { action: "factor", value: "(x + 6)(x - 6)", target: "expression", result: "(x + 6)(x - 6)",
+        wrong: ["(x + 18)(x - 18)", "(x - 6)(x - 6)", "(x + 9)(x - 4)"], wrongKinds: ["rootSlip", "signSlip", "factorPair"] }
+    ],
+    hints: {
+      en: ["36 = 6². Square root it, don't halve it."],
+      ja: ["36 = 6²。半分ではなく、平方根をとる。"]
+    },
+    explanation: {
+      en: "√36 = 6, so x² - 36 = (x + 6)(x - 6). Halving 36 to get 18 is a common slip: 18 × 18 is 324, not 36.",
+      ja: "√36 = 6 なので x² - 36 = (x + 6)(x - 6)。36を半分にして18にしないように：18 × 18 は324で、36ではありません。"
+    }
+  },
+
+  // ---- Hard: fully factorise in two steps (take out the highest common factor, then the bracket) ----
+  // Levels 1-7: the bracket is x² + bx + c. 8-10: the bracket is a difference of two squares.
+  // The second step's value keeps the common factor in front, e.g. "2(x + 2)(x + 3)".
+  {
+    id: "factorise_hard_01",
+    topic: "factorise",
+    equation: "2x² + 10x + 12",
+    answer: "2(x + 2)(x + 3)",
+    difficulty: "hard",
+    type: "full-factor",
+    basePoints: 30,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "2(x² + 5x + 6)", target: "expression", result: "2(x² + 5x + 6)",
+        wrong: ["2(x² + 10x + 12)", "2(x² + 5x + 12)", "2(x² - 5x + 6)"], wrongKinds: ["factorDivide", "factorDivide", "signSlip"] },
+      { action: "factor", prompt: "factorBracketPrompt", value: "2(x + 2)(x + 3)", target: "expression", result: "2(x + 2)(x + 3)",
+        wrong: ["(x + 2)(x + 3)", "(2x + 4)(x + 3)", "2(x + 1)(x + 6)"], wrongKinds: ["lostFactor", "notFullyFactorised", "factorPair"] }
+    ],
+    hints: {
+      en: [
+        "2 goes into 2, 10 and 12. Divide every term by 2.",
+        "Two numbers that add to 5 and multiply to 6. Keep the 2 in front."
+      ],
+      ja: [
+        "2は2、10、12のすべてを割り切る。すべての項を2で割る。",
+        "足して5、かけて6になる2つの数。前の2は残したまま。"
+      ]
+    },
+    explanation: {
+      en: "2 is the highest common factor, so 2x² + 10x + 12 = 2(x² + 5x + 6). Then 2 and 3 add to 5 and multiply to 6, so the bracket is (x + 2)(x + 3). The 2 stays in front: 2(x + 2)(x + 3).",
+      ja: "最大の共通因数は2なので、2x² + 10x + 12 = 2(x² + 5x + 6)。2と3は足して5、かけて6なので、かっこの中は (x + 2)(x + 3)。前の2はそのまま：2(x + 2)(x + 3)。"
+    }
+  },
+  {
+    id: "factorise_hard_02",
+    topic: "factorise",
+    equation: "3x² + 9x + 6",
+    answer: "3(x + 1)(x + 2)",
+    difficulty: "hard",
+    type: "full-factor",
+    basePoints: 30,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "3(x² + 3x + 2)", target: "expression", result: "3(x² + 3x + 2)",
+        wrong: ["3(x² + 9x + 6)", "3(x² + 3x + 6)", "3(x² - 3x + 2)"], wrongKinds: ["factorDivide", "factorDivide", "signSlip"] },
+      { action: "factor", prompt: "factorBracketPrompt", value: "3(x + 1)(x + 2)", target: "expression", result: "3(x + 1)(x + 2)",
+        wrong: ["(x + 1)(x + 2)", "3(x - 1)(x - 2)", "(3x + 3)(x + 2)"], wrongKinds: ["lostFactor", "signSlip", "notFullyFactorised"] }
+    ],
+    hints: {
+      en: [
+        "3 goes into 3, 9 and 6. Divide every term by 3.",
+        "Two numbers that add to 3 and multiply to 2. Keep the 3 in front."
+      ],
+      ja: [
+        "3は3、9、6のすべてを割り切る。すべての項を3で割る。",
+        "足して3、かけて2になる2つの数。前の3は残したまま。"
+      ]
+    },
+    explanation: {
+      en: "Take out 3: 3(x² + 3x + 2). Then 1 and 2 add to 3 and multiply to 2, so 3(x + 1)(x + 2). (3x + 3)(x + 2) is equal, but 3x + 3 still has a common factor of 3.",
+      ja: "3でくくると 3(x² + 3x + 2)。1と2は足して3、かけて2なので 3(x + 1)(x + 2)。(3x + 3)(x + 2) も等しいですが、3x + 3 にはまだ共通因数3があります。"
+    }
+  },
+  {
+    id: "factorise_hard_03",
+    topic: "factorise",
+    equation: "2x² - 2x - 12",
+    answer: "2(x + 2)(x - 3)",
+    difficulty: "hard",
+    type: "full-factor",
+    basePoints: 30,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "2(x² - x - 6)", target: "expression", result: "2(x² - x - 6)",
+        wrong: ["2(x² - 2x - 12)", "2(x² - x - 12)", "2(x² + x - 6)"], wrongKinds: ["factorDivide", "factorDivide", "signSlip"] },
+      { action: "factor", prompt: "factorBracketPrompt", value: "2(x + 2)(x - 3)", target: "expression", result: "2(x + 2)(x - 3)",
+        wrong: ["2(x - 2)(x + 3)", "(x + 2)(x - 3)", "2(x + 1)(x - 6)"], wrongKinds: ["signSlip", "lostFactor", "factorPair"] }
+    ],
+    hints: {
+      en: [
+        "Divide every term by 2, keeping the minus signs.",
+        "Two numbers that add to -1 and multiply to -6. Keep the 2 in front."
+      ],
+      ja: [
+        "マイナスはそのまま、すべての項を2で割る。",
+        "足して-1、かけて-6になる2つの数。前の2は残したまま。"
+      ]
+    },
+    explanation: {
+      en: "Take out 2: 2(x² - x - 6). Then 2 and -3 add to -1 and multiply to -6, so 2(x + 2)(x - 3).",
+      ja: "2でくくると 2(x² - x - 6)。2と-3は足して-1、かけて-6なので 2(x + 2)(x - 3)。"
+    }
+  },
+  {
+    id: "factorise_hard_04",
+    topic: "factorise",
+    equation: "4x² - 4x - 8",
+    answer: "4(x + 1)(x - 2)",
+    difficulty: "hard",
+    type: "full-factor",
+    basePoints: 30,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "4(x² - x - 2)", target: "expression", result: "4(x² - x - 2)",
+        wrong: ["2(2x² - 2x - 4)", "4(x² - x - 8)", "4(x² - 4x - 2)"], wrongKinds: ["notFullyFactorised", "factorDivide", "factorDivide"] },
+      { action: "factor", prompt: "factorBracketPrompt", value: "4(x + 1)(x - 2)", target: "expression", result: "4(x + 1)(x - 2)",
+        wrong: ["4(x - 1)(x + 2)", "(x + 1)(x - 2)", "(4x + 4)(x - 2)"], wrongKinds: ["signSlip", "lostFactor", "notFullyFactorised"] }
+    ],
+    hints: {
+      en: [
+        "The highest common factor is 4, not 2. Divide every term by 4.",
+        "Two numbers that add to -1 and multiply to -2. Keep the 4 in front."
+      ],
+      ja: [
+        "最大の共通因数は2ではなく4。すべての項を4で割る。",
+        "足して-1、かけて-2になる2つの数。前の4は残したまま。"
+      ]
+    },
+    explanation: {
+      en: "4 goes into 4, 4 and 8, so 4x² - 4x - 8 = 4(x² - x - 2). Then 1 and -2 add to -1 and multiply to -2, so 4(x + 1)(x - 2).",
+      ja: "4は4、4、8を割り切るので 4x² - 4x - 8 = 4(x² - x - 2)。1と-2は足して-1、かけて-2なので 4(x + 1)(x - 2)。"
+    }
+  },
+  {
+    id: "factorise_hard_05",
+    topic: "factorise",
+    equation: "3x² - 15x + 18",
+    answer: "3(x - 2)(x - 3)",
+    difficulty: "hard",
+    type: "full-factor",
+    basePoints: 30,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "3(x² - 5x + 6)", target: "expression", result: "3(x² - 5x + 6)",
+        wrong: ["3(x² - 15x + 18)", "3(x² - 5x + 18)", "3(x² + 5x + 6)"], wrongKinds: ["factorDivide", "factorDivide", "signSlip"] },
+      { action: "factor", prompt: "factorBracketPrompt", value: "3(x - 2)(x - 3)", target: "expression", result: "3(x - 2)(x - 3)",
+        wrong: ["3(x + 2)(x + 3)", "3(x - 1)(x - 6)", "(x - 2)(x - 3)"], wrongKinds: ["signSlip", "factorPair", "lostFactor"] }
+    ],
+    hints: {
+      en: [
+        "3 goes into 3, 15 and 18. Divide every term by 3.",
+        "Two numbers that add to -5 and multiply to +6: both negative."
+      ],
+      ja: [
+        "3は3、15、18のすべてを割り切る。すべての項を3で割る。",
+        "足して-5、かけて+6になる2つの数：どちらも負。"
+      ]
+    },
+    explanation: {
+      en: "Take out 3: 3(x² - 5x + 6). -2 and -3 add to -5 and multiply to +6, so 3(x - 2)(x - 3).",
+      ja: "3でくくると 3(x² - 5x + 6)。-2と-3は足して-5、かけて+6なので 3(x - 2)(x - 3)。"
+    }
+  },
+  {
+    id: "factorise_hard_06",
+    topic: "factorise",
+    equation: "2x² + 2x - 24",
+    answer: "2(x + 4)(x - 3)",
+    difficulty: "hard",
+    type: "full-factor",
+    basePoints: 30,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "2(x² + x - 12)", target: "expression", result: "2(x² + x - 12)",
+        wrong: ["2(x² + x - 24)", "2(x² + 2x - 12)", "2(x² - x - 12)"], wrongKinds: ["factorDivide", "factorDivide", "signSlip"] },
+      { action: "factor", prompt: "factorBracketPrompt", value: "2(x + 4)(x - 3)", target: "expression", result: "2(x + 4)(x - 3)",
+        wrong: ["2(x - 4)(x + 3)", "2(x + 6)(x - 2)", "(x + 4)(x - 3)"], wrongKinds: ["signSlip", "factorPair", "lostFactor"] }
+    ],
+    hints: {
+      en: [
+        "Divide every term by 2. 2x ÷ 2 is just x.",
+        "Two numbers that add to 1 and multiply to -12. Keep the 2 in front."
+      ],
+      ja: [
+        "すべての項を2で割る。2x ÷ 2 はただのx。",
+        "足して1、かけて-12になる2つの数。前の2は残したまま。"
+      ]
+    },
+    explanation: {
+      en: "Take out 2: 2(x² + x - 12). Then 4 and -3 add to 1 and multiply to -12, so 2(x + 4)(x - 3).",
+      ja: "2でくくると 2(x² + x - 12)。4と-3は足して1、かけて-12なので 2(x + 4)(x - 3)。"
+    }
+  },
+  {
+    id: "factorise_hard_07",
+    topic: "factorise",
+    equation: "2x² + 14x + 24",
+    answer: "2(x + 3)(x + 4)",
+    difficulty: "hard",
+    type: "full-factor",
+    basePoints: 30,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "2(x² + 7x + 12)", target: "expression", result: "2(x² + 7x + 12)",
+        wrong: ["2(x² + 14x + 24)", "2(x² + 7x + 24)", "2(x² - 7x + 12)"], wrongKinds: ["factorDivide", "factorDivide", "signSlip"] },
+      { action: "factor", prompt: "factorBracketPrompt", value: "2(x + 3)(x + 4)", target: "expression", result: "2(x + 3)(x + 4)",
+        wrong: ["2(x + 2)(x + 6)", "(2x + 6)(x + 4)", "(x + 3)(x + 4)"], wrongKinds: ["factorPair", "notFullyFactorised", "lostFactor"] }
+    ],
+    hints: {
+      en: [
+        "2 goes into 2, 14 and 24. Divide every term by 2.",
+        "Two numbers that add to 7 and multiply to 12."
+      ],
+      ja: [
+        "2は2、14、24のすべてを割り切る。すべての項を2で割る。",
+        "足して7、かけて12になる2つの数。"
+      ]
+    },
+    explanation: {
+      en: "Take out 2: 2(x² + 7x + 12). 3 and 4 add to 7 and multiply to 12, so 2(x + 3)(x + 4). 2 and 6 also multiply to 12, but they add to 8.",
+      ja: "2でくくると 2(x² + 7x + 12)。3と4は足して7、かけて12なので 2(x + 3)(x + 4)。2と6もかけて12ですが、足すと8です。"
+    }
+  },
+  {
+    id: "factorise_hard_08",
+    topic: "factorise",
+    equation: "2x² - 18",
+    answer: "2(x + 3)(x - 3)",
+    difficulty: "hard",
+    type: "full-factor-squares",
+    basePoints: 30,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "2(x² - 9)", target: "expression", result: "2(x² - 9)",
+        wrong: ["2(x² - 18)", "2(x² + 9)", "x² - 9"], wrongKinds: ["factorDivide", "signSlip", "lostFactor"] },
+      { action: "factor", prompt: "factorBracketPrompt", value: "2(x + 3)(x - 3)", target: "expression", result: "2(x + 3)(x - 3)",
+        wrong: ["2(x + 9)(x - 9)", "2(x - 3)²", "(x + 3)(x - 3)"], wrongKinds: ["rootSlip", "squareSlip", "lostFactor"] }
+    ],
+    hints: {
+      en: [
+        "Take out 2 first: divide both terms by 2.",
+        "x² - 9 is a difference of two squares: 9 = 3²."
+      ],
+      ja: [
+        "まず2でくくる：両方の項を2で割る。",
+        "x² - 9 は2乗の差：9 = 3²。"
+      ]
+    },
+    explanation: {
+      en: "Take out 2: 2(x² - 9). Then x² - 9 = x² - 3², a difference of two squares, so 2(x + 3)(x - 3).",
+      ja: "2でくくると 2(x² - 9)。x² - 9 = x² - 3² は2乗の差なので、2(x + 3)(x - 3)。"
+    }
+  },
+  {
+    id: "factorise_hard_09",
+    topic: "factorise",
+    equation: "3x² - 12",
+    answer: "3(x + 2)(x - 2)",
+    difficulty: "hard",
+    type: "full-factor-squares",
+    basePoints: 30,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "3(x² - 4)", target: "expression", result: "3(x² - 4)",
+        wrong: ["3(x² - 12)", "3(x² + 4)", "x² - 4"], wrongKinds: ["factorDivide", "signSlip", "lostFactor"] },
+      { action: "factor", prompt: "factorBracketPrompt", value: "3(x + 2)(x - 2)", target: "expression", result: "3(x + 2)(x - 2)",
+        wrong: ["3(x + 4)(x - 4)", "3(x + 2)²", "(x + 2)(x - 2)"], wrongKinds: ["rootSlip", "squareSlip", "lostFactor"] }
+    ],
+    hints: {
+      en: [
+        "Take out 3 first: divide both terms by 3.",
+        "x² - 4 is a difference of two squares: 4 = 2²."
+      ],
+      ja: [
+        "まず3でくくる：両方の項を3で割る。",
+        "x² - 4 は2乗の差：4 = 2²。"
+      ]
+    },
+    explanation: {
+      en: "Take out 3: 3(x² - 4). Then x² - 4 = x² - 2², so 3(x + 2)(x - 2). Square root the 4, don't use it as it is.",
+      ja: "3でくくると 3(x² - 4)。x² - 4 = x² - 2² なので 3(x + 2)(x - 2)。4はそのまま使わず、平方根をとります。"
+    }
+  },
+  {
+    id: "factorise_hard_10",
+    topic: "factorise",
+    equation: "2x² - 50",
+    answer: "2(x + 5)(x - 5)",
+    difficulty: "hard",
+    type: "full-factor-squares",
+    basePoints: 30,
+    steps: [
+      { action: "factor", prompt: "commonFactorPrompt", value: "2(x² - 25)", target: "expression", result: "2(x² - 25)",
+        wrong: ["2(x² - 50)", "2(x² + 25)", "x² - 25"], wrongKinds: ["factorDivide", "signSlip", "lostFactor"] },
+      { action: "factor", prompt: "factorBracketPrompt", value: "2(x + 5)(x - 5)", target: "expression", result: "2(x + 5)(x - 5)",
+        wrong: ["2(x + 25)(x - 1)", "2(x - 5)²", "(x + 5)(x - 5)"], wrongKinds: ["factorPair", "squareSlip", "lostFactor"] }
+    ],
+    hints: {
+      en: [
+        "Take out 2 first: divide both terms by 2.",
+        "x² - 25 is a difference of two squares: 25 = 5²."
+      ],
+      ja: [
+        "まず2でくくる：両方の項を2で割る。",
+        "x² - 25 は2乗の差：25 = 5²。"
+      ]
+    },
+    explanation: {
+      en: "Take out 2: 2(x² - 25). Then 25 = 5², so x² - 25 = (x + 5)(x - 5), and the whole answer is 2(x + 5)(x - 5).",
+      ja: "2でくくると 2(x² - 25)。25 = 5² なので x² - 25 = (x + 5)(x - 5)、答えは 2(x + 5)(x - 5)。"
+    }
+  },
+
+  // =====================================================================
   // LAWS OF INDICES (topic "indices", shown as "Indices")
   // =====================================================================
  
@@ -9950,6 +10768,28 @@ const TIER_TIPS = {
       to: "5x - 2x + 6"
     }
   },
+  factorise_medium: {
+    text: {
+      en: "Factorising undoes expanding. Take out the biggest number (and letter) that goes into every term. Spot x² minus a square number? x² − a² = (x + a)(x − a).",
+      ja: "因数分解は展開の逆。すべての項を割り切る一番大きい数（と文字）でくくろう。x² から2乗の数を引く形なら：x² − a² = (x + a)(x − a)。"
+    },
+    demo: {
+      from: "4x² + 6x",
+      move: { en: "Take out the highest common factor, 2x", ja: "最大の共通因数2xでくくる" },
+      to: "2x(2x + 3)"
+    }
+  },
+  factorise_hard: {
+    text: {
+      en: "Always take out the common factor first, then factorise what's left in the bracket. Keep the number in front all the way to the answer!",
+      ja: "まず共通因数でくくってから、かっこの中を因数分解しよう。前の数は答えまでずっと残しておこう！"
+    },
+    demo: {
+      from: "2x² + 10x + 12",
+      move: { en: "Take out 2 first", ja: "まず2でくくる" },
+      to: "2(x² + 5x + 6)"
+    }
+  },
   indices_medium: {
     text: {
       en: "Numbers in front and powers follow different rules: multiply the numbers, add the powers. With two letters, work out each letter's powers on their own.",
@@ -10046,6 +10886,7 @@ const TOPIC_NAMES = {
   fraction:   { en: "Fractions",    ja: "分数" },
   subject:    { en: "Formulas",     ja: "等式の変形" },
   expression: { en: "Expressions",  ja: "式の計算" },
+  factorise:  { en: "Expand & factorise", ja: "展開と因数分解" },
   indices:    { en: "Indices",      ja: "指数法則" },
   roots:      { en: "Completing the square", ja: "平方完成" },
   line:       { en: "Straight lines", ja: "直線のグラフ" }
