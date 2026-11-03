@@ -88,6 +88,28 @@ const TOPIC_FORMULAS = {
       example: "x + 4x = 5x",
     },
   ],
+  factorise: [
+    {
+      name: { en: "Double brackets", ja: "かっこ2つの展開" },
+      formula: "(a + b)(c + d) = ac + ad + bc + bd",
+      example: "(x + 3)(x − 2) = x² + x − 6",
+    },
+    {
+      name: { en: "Perfect square", ja: "平方の展開" },
+      formula: "(x + a)² = x² + 2ax + a²",
+      example: "(x + 3)² = x² + 6x + 9",
+    },
+    {
+      name: { en: "Common factor", ja: "共通因数でくくる" },
+      formula: "ab + ac = a(b + c)",
+      example: "6x + 9 = 3(2x + 3)",
+    },
+    {
+      name: { en: "Difference of two squares", ja: "2乗の差" },
+      formula: "x² − a² = (x + a)(x − a)",
+      example: "x² − 16 = (x + 4)(x − 4)",
+    },
+  ],
   inequality: [
     {
       rule: true,
