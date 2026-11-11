@@ -116,6 +116,16 @@ const TOPIC_FORMULAS = {
       formula: { en: "× or ÷ by a negative → flip the sign", ja: "負の数で × か ÷ → 不等号の向きが逆" },
       example: "−2x < 6 → x > −3",
     },
+    {
+      name: { en: "x between two signs", ja: "xが2つの不等号にはさまれたとき" },
+      formula: { en: "Do the same to all three parts", ja: "3つの部分すべてに同じ操作をする" },
+      example: "−3 < 2x + 1 ≤ 7 → −2 < x ≤ 3",
+    },
+    {
+      name: { en: "Tidying up", ja: "書き直し" },
+      formula: { en: "Smallest number first: read it right to left", ja: "小さい数を左に：右から左へ読む" },
+      example: "2 ≥ x > −2 → −2 < x ≤ 2",
+    },
   ],
   line: [
     {
