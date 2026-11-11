@@ -932,7 +932,9 @@
     minusNegative: "mistakeMinusNegative",
     // Expand & factorise (also authored, tagged with wrongKinds; signSlip, unlikeTerms and rootSlip are shared)
     missedTerms: "mistakeMissedTerms", squareSlip: "mistakeSquareSlip", factorDivide: "mistakeFactorDivide",
-    notFullyFactorised: "mistakeNotFullyFactorised", factorPair: "mistakeFactorPair", lostFactor: "mistakeLostFactor"
+    notFullyFactorised: "mistakeNotFullyFactorised", factorPair: "mistakeFactorPair", lostFactor: "mistakeLostFactor",
+    // Inequalities Hard: tidying a flipped double inequality (authored, tagged with wrongKinds)
+    tidyHalf: "mistakeTidyHalf", tidyEnds: "mistakeTidyEnds"
   };
   const AUTHORED_TIP_KEYS = {
     expand: "mistakeTipExpand", factor: "mistakeTipFactor", roots: "mistakeTipRoots",
@@ -1089,10 +1091,10 @@
     }
   }
 
+  // Every sign on the card turns round: one for x > 4, both for a double inequality (2 ≥ x > -2)
   function playFlipCue() {
     flipPending = false;
-    const sign = $eq.querySelector(".ineq-sign.flip-pending");
-    if (sign) sign.classList.replace("flip-pending", "flip-cue");
+    $eq.querySelectorAll(".ineq-sign.flip-pending").forEach(sign => sign.classList.replace("flip-pending", "flip-cue"));
   }
 
   // Completing the square Hard: on the "a = 1, b = 5, c = -24" line, each number takes its letter's colour
@@ -1316,7 +1318,10 @@
     if (practice) {
       $trickyBanner.textContent = `🎯 ${LLL_I18N.t("trickyTitleShort") || "Tricky spots"} · ${trickyLabel(practice.kind)} · ${review.index + 1} / ${review.levels.length}`;
     }
-    $hintText.textContent = "";
+    // A flip partway through a level (double inequalities, Hard 11–15) keeps its "Both signs flipped" message
+    // up while the next step is chosen; everywhere else a new step starts with the hint line cleared
+    const justFlipped = stepIndex > 0 && level.steps[stepIndex - 1].flip;
+    if (!justFlipped) $hintText.textContent = "";
     buildStepDots(level.steps.length);
     updateStepDots(stepIndex, level.steps.length, false);
     if (stepIndex === 0) $equationCard.classList.remove("solved");
@@ -1350,7 +1355,7 @@
     choices.forEach(choice => {
       const btn = document.createElement("button");
       btn.className = "choice-btn";
-      const label = actionLabel(choice.action, choice.value);
+      const label = actionLabel(choice.action, choice.value, step.target === "all-parts");
       if (isLongChoice(label)) btn.classList.add("long");   // 12px on narrow phones (e.g. the quadratic formula)
       appendWithPowers(btn, label);
       // What Chalky says for this move in a replay: a stacked fraction's textContent would run its top and
@@ -1390,10 +1395,14 @@
       };
       setEquationText(currentEquationText, correctStep.flip ? playFlipCue : fillLevel ? fillThenRender : null);
       if (correctStep.flip) {
-        const from = (prevText.match(INEQ_SIGN) || [""])[0];
-        const to = (correctStep.result.match(INEQ_SIGN) || [""])[0];
-        $hintText.textContent = (LLL_I18N.t("flipMsg") || "Sign flipped: {from} → {to}")
-          .split("{from}").join(from).split("{to}").join(to);
+        // A double inequality flips both signs, so the message lists each pair: "≤ → ≥, < → >"
+        const from = prevText.match(/[<>≤≥]/g) || [""];
+        const to = correctStep.result.match(/[<>≤≥]/g) || [""];
+        $hintText.textContent = from.length > 1
+          ? (LLL_I18N.t("flipMsgBoth") || "Both signs flipped: {pairs}")
+              .split("{pairs}").join(from.map((f, i) => `${f} → ${to[i]}`).join(", "))
+          : (LLL_I18N.t("flipMsg") || "Sign flipped: {from} → {to}")
+              .split("{from}").join(from[0]).split("{to}").join(to[0]);
       }
       burstChalkDust();
 
@@ -1754,7 +1763,9 @@
       || (r.level.topic === "line" && showLineGraph(r.level));
     // Inequality levels (Today's Challenge too): the answer on a number line
     const lineShown = r.level.topic === "inequality" && showNumberLine(r.level);
-    const graphLineKey = !graphShown ? "chalkyNumberLine" : r.level.topic === "line" ? "chalkyLineDrawn" : "chalkyLinesMeet";
+    // A double inequality's line stops at both ends, so it gets its own line (no "arrow" talk)
+    const graphLineKey = !graphShown ? (r.level.type === "double" ? "chalkyNumberLineRange" : "chalkyNumberLine")
+      : r.level.topic === "line" ? "chalkyLineDrawn" : "chalkyLinesMeet";
 
     // Buttons: primary = Next level (or Level select / Home when there's nothing next)
     const next = r.daily ? null : nextLevelAfter(r.level);
@@ -2564,7 +2575,7 @@
           b.className = "choice-btn";
           b.tabIndex = -1;                     // demo only, not interactive
           b.setAttribute("aria-hidden", "true");
-          const label = actionLabel(c.action, c.value);
+          const label = actionLabel(c.action, c.value, step.target === "all-parts");
           if (isLongChoice(label)) b.classList.add("long");
           appendWithPowers(b, label);
           $tutChoices.appendChild(b);
@@ -2583,9 +2594,8 @@
         tutLater(() => {
           setPixelEq($tutEquation, step.result);
           $tutEquation.classList.remove("updating");
-          if (step.flip) {   // same turn-around + accent colour as in the game
-            const sign = $tutEquation.querySelector(".ineq-sign");
-            if (sign) sign.classList.add("flip-cue");
+          if (step.flip) {   // same turn-around + accent colour as in the game (every sign, for a double inequality)
+            $tutEquation.querySelectorAll(".ineq-sign").forEach(sign => sign.classList.add("flip-cue"));
           }
           const dot = $tutStepDots.children[i];
           dot.classList.add("filled");

@@ -2,7 +2,7 @@
 // Level-complete card:
 //   Systems: both lines of a system, read from its equation text, drawn crossing at the answer.
 //   Straight lines: the level's line (level.line), with its two points or its y-intercept marked.
-//   Inequalities: the answer (e.g. "x < -4") on a number line.
+//   Inequalities: the answer (e.g. "x < -4", or a range like "-2 < x ≤ 3") on a number line.
 // Play screen (Straight lines): two-point levels show the points, then the rise and run once they're worked out;
 // graph levels show the line with two guide dots, then the rise and run, then the y-intercept.
 // index.html calls showSystemGraph() / showLineGraph() / clearSystemGraph() / showNumberLine() / clearNumberLine() /
@@ -487,10 +487,16 @@ const NL_W = 280, NL_PAD = 14, NL_Y = 22;
 const NL_DONE_MS = 1500;   // when the arrowhead has appeared and Chalky speaks
 let nlAnims = [];
 
-// "x ≤ -4" → { sign: "≤", v: -4 }. null for anything else (the card then skips the number line).
+// "x ≤ -4" → { sign: "≤", v: -4 }. A double inequality, written smallest first ("-2 < x ≤ 3"),
+// → { lo: -2, loSign: "<", hi: 3, hiSign: "≤" }. null for anything else (the card then skips the number line).
 function parseInequalityAnswer(text) {
-  const m = String(text || "").replace(/\s+/g, "").replace(/−/g, "-").match(/^x([<>≤≥])(-?\d+)$/);
-  return m ? { sign: m[1], v: Number(m[2]) } : null;
+  const t = String(text || "").replace(/\s+/g, "").replace(/−/g, "-");
+  const m = t.match(/^x([<>≤≥])(-?\d+)$/);
+  if (m) return { sign: m[1], v: Number(m[2]) };
+  const d = t.match(/^(-?\d+)([<≤])x([<≤])(-?\d+)$/);
+  return d && Number(d[1]) < Number(d[4])
+    ? { lo: Number(d[1]), loSign: d[2], hi: Number(d[4]), hiSign: d[3] }
+    : null;
 }
 
 function clearNumberLine() {
@@ -506,6 +512,7 @@ function showNumberLine(level) {
   clearNumberLine();
   const ans = parseInequalityAnswer(level.answer);
   if (!ans) return false;
+  if (ans.lo !== undefined) return showRangeLine(ans);   // a double inequality: two dots, no arrow
   const { sign, v } = ans;
   const right = sign === ">" || sign === "≥";
   const filled = sign === "≤" || sign === "≥";
@@ -549,6 +556,51 @@ function showNumberLine(level) {
         { duration: 700, delay: 550, easing: "cubic-bezier(.45,.05,.35,1)", fill: "both" }),
       arrow.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 1200, fill: "both" })
     );
+  }
+  return true;
+}
+
+// A double inequality ("-2 < x ≤ 3"): ticks from 2 below the lower end to 2 above the upper end, a dot at each
+// end (filled when ≤ includes that number), and a thick segment between them. No arrowhead, since the range
+// stops at both ends. Both dots pop in, then the segment draws left to right, on the same timing as the ray.
+function showRangeLine({ lo, loSign, hi, hiSign }) {
+  const fmt = n => (n < 0 ? "−" + Math.abs(n) : String(n));
+  const from = lo - 3, to = hi + 3;   // one unit of room past the outer ticks
+  const X = n => NL_PAD + (n - from) / (to - from) * (NL_W - 2 * NL_PAD);
+
+  const svg = $completeNumberLineSvg;
+  svg.replaceChildren();
+  svgEl("line", { x1: NL_PAD, y1: NL_Y, x2: NL_W - NL_PAD, y2: NL_Y, class: "nl-axis" }, svg);
+  for (let n = lo - 2; n <= hi + 2; n++) {
+    svgEl("line", { x1: X(n), y1: NL_Y - 5, x2: X(n), y2: NL_Y + 5, class: "nl-tick" }, svg);
+    // Both ends are always numbered; others every other tick (counted from the nearer end),
+    // leaving out any right next to the upper end so two numbers never crowd together
+    const end = n === lo || n === hi;
+    const everyOther = n <= hi ? (n - lo) % 2 === 0 && Math.abs(n - hi) > 1 : (n - hi) % 2 === 0;
+    if (end || everyOther) {
+      svgEl("text", { x: X(n), y: NL_Y + 21, "text-anchor": "middle", class: end ? "graph-tick nl-tick-main" : "graph-tick" }, svg)
+        .textContent = fmt(n);
+    }
+  }
+
+  const seg = svgEl("line", { x1: X(lo), y1: NL_Y, x2: X(hi), y2: NL_Y, class: "nl-ray" }, svg);
+  // Drawn last so they sit on top of the segment (an open dot hides its end)
+  const dots = [[lo, loSign], [hi, hiSign]].map(([n, sign]) =>
+    svgEl("circle", { cx: X(n), cy: NL_Y, r: 7, class: "nl-dot" + (sign === "≤" ? " filled" : "") }, svg));
+
+  const text = `${fmt(lo)} ${loSign} x ${hiSign} ${fmt(hi)}`;
+  $completeNumberLineLabel.textContent = text;   // IBM Plex Mono has ≤ / ≥ and −
+  svg.setAttribute("aria-label", text);
+  $completeNumberLine.hidden = false;
+
+  if (!REDUCED_MOTION) {
+    const len = X(hi) - X(lo);
+    seg.style.strokeDasharray = len;
+    dots.forEach((dot, i) => nlAnims.push(
+      dot.animate([{ transform: "scale(0)" }, { transform: "scale(1.35)", offset: 0.65 }, { transform: "scale(1)" }],
+        { duration: 380, delay: 250 + i * 150, easing: "ease-out", fill: "both" })));
+    nlAnims.push(seg.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+      { duration: 700, delay: 550, easing: "cubic-bezier(.45,.05,.35,1)", fill: "both" }));
   }
   return true;
 }

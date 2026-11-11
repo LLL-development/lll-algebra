@@ -16,7 +16,9 @@ const CHOICE_PROMPT_KEYS = {
   // Straight lines: read or work out m and c, put two points into the gradient formula and work it out,
   // or get y on its own first (Medium's last step names its own prompt, "Divide to find m:")
   gradient: "gradientPrompt", intercept: "interceptPrompt", gradSub: "gradSubPrompt", gradCalc: "gradCalcPrompt",
-  isolate: "isolatePrompt"
+  isolate: "isolatePrompt",
+  // Inequalities Hard: rewrite a flipped double inequality smallest first ("2 ≥ x > -2" → "-2 < x ≤ 2")
+  tidy: "tidyPrompt"
 };
 
 // Options longer than this (e.g. the quadratic formula "x = (−11 ± √361)/2") get the `long` class,
@@ -30,9 +32,12 @@ function isLongChoice(label) {
     .replace(/\^/g, "").length > LONG_CHOICE;
 }
 
-function actionLabel(action, value) {
+// allParts: a double inequality's move (step.target "all-parts"), labelled "− 1 all parts" instead of "both sides"
+function actionLabel(action, value, allParts = false) {
   const verbs = { add: "+", subtract: "−", multiply: "×", divide: "÷", add_x: "+", subtract_x: "−" };
-  const suffix = LLL_I18N.t("bothSidesLabel") || "both sides";
+  const suffix = allParts
+    ? (LLL_I18N.t("allPartsLabel") || "all parts")
+    : (LLL_I18N.t("bothSidesLabel") || "both sides");
   // A letter term on a + − × ÷ move (Formulas): "÷ m both sides", "− 2b both sides"
   if (typeof value === "string" && verbs[action]) return `${verbs[action]} ${value} ${suffix}`;
   // Authored choices (expand/factor/roots/…) are strings, shown as-is with a proper minus sign

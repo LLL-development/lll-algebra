@@ -49,6 +49,8 @@
 //   "gradCalc"    — work out the top and bottom of that fraction (line topic, Medium), e.g. "{9}/{3}".
 //   "isolate"     — get y on its own before reading m and c (line topic, Hard). Authored: `value` is
 //                   the line in y = mx + c form (e.g. "y = 2x - 1"). Not "rearrange": that's Quadratics Hard's type.
+//   "tidy"        — rewrite a flipped double inequality smallest first (inequality topic, Hard), e.g.
+//                   "2 ≥ x > -2" → "-2 < x ≤ 2". Authored: `value` is the tidied answer.
 //
 // Systems: `equation` is two lines joined by "\n" (e.g. "x + y = 9\n2x - y = 3"), and
 // `answer` is { x, y }. A step whose result the player must substitute into keeps that
@@ -71,6 +73,11 @@
 //     Only multiply/divide may carry a negative value.
 //   - Inequality steps that multiply/divide by a negative set `flip: true`
 //     (the inequality sign reverses on that step).
+//   - Double inequalities (inequality topic, Medium/Hard 11–15, `type: "double"`): x sits between two
+//     signs (e.g. "-3 < 2x + 1 ≤ 7"). Each + − × ÷ move applies to all three parts, so it has
+//     `target: "all-parts"` and `prompt: "allPartsPrompt"`; a flip reverses both signs. Hard ends with a
+//     "tidy" step whose `wrongKinds` are "tidyHalf" (only the numbers swapped, or only the signs turned)
+//     or "tidyEnds" (the included end moved to the other number). `answer` is always smallest first.
 //
 // `subject` (subject topic only) is the letter to make the subject, e.g. "x". It drives the
 // "Make x the subject:" prompt. Earlier steps keep the formula's layout (y - 1 = 2x); only the
@@ -1366,6 +1373,142 @@ const LEVELS = [
       ja: "xが-3で割られているので、両辺に-3をかけます。負の数なので > が < になります。"
     }
   },
+  // ---- Medium 11–15: double inequalities (no flip) ----
+  {
+    id: "ineq_medium_11",
+    topic: "inequality",
+    equation: "-3 < 2x + 1 ≤ 7",
+    answer: "-2 < x ≤ 3",
+    difficulty: "medium",
+    type: "double",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: 1, target: "all-parts", prompt: "allPartsPrompt", result: "-4 < 2x ≤ 6" },
+      { action: "divide",   value: 2, target: "all-parts", prompt: "allPartsPrompt", result: "-2 < x ≤ 3" }
+    ],
+    hints: {
+      en: [
+        "Remove the constant from the middle — subtract 1 from all three parts.",
+        "Now divide all three parts by 2. It's positive, so the signs stay the same."
+      ],
+      ja: [
+        "真ん中の定数項を消す — 3つの部分すべてから1を引く。",
+        "次に3つの部分すべてを2で割る。正の数なので、不等号の向きはそのまま。"
+      ]
+    },
+    explanation: {
+      en: "Whatever you do to the middle, do to both ends too. Subtracting 1, then dividing by 2, leaves x between -2 and 3.",
+      ja: "真ん中にした操作は、両端にも同じようにします。1を引いて2で割ると、xは-2と3のあいだになります。"
+    }
+  },
+  {
+    id: "ineq_medium_12",
+    topic: "inequality",
+    equation: "5 ≤ 3x - 1 < 14",
+    answer: "2 ≤ x < 5",
+    difficulty: "medium",
+    type: "double",
+    basePoints: 20,
+    steps: [
+      { action: "add",    value: 1, target: "all-parts", prompt: "allPartsPrompt", result: "6 ≤ 3x < 15" },
+      { action: "divide", value: 3, target: "all-parts", prompt: "allPartsPrompt", result: "2 ≤ x < 5" }
+    ],
+    hints: {
+      en: [
+        "Remove the constant from the middle — add 1 to all three parts.",
+        "Now divide all three parts by 3. It's positive, so the signs stay the same."
+      ],
+      ja: [
+        "真ん中の定数項を消す — 3つの部分すべてに1を足す。",
+        "次に3つの部分すべてを3で割る。正の数なので、不等号の向きはそのまま。"
+      ]
+    },
+    explanation: {
+      en: "Adding 1 to all three parts gives 6 ≤ 3x < 15, and dividing by 3 gives 2 ≤ x < 5. 2 is included, 5 isn't.",
+      ja: "3つの部分すべてに1を足すと 6 ≤ 3x < 15、3で割ると 2 ≤ x < 5。2はふくみ、5はふくみません。"
+    }
+  },
+  {
+    id: "ineq_medium_13",
+    topic: "inequality",
+    equation: "-2 < x/2 + 1 ≤ 4",
+    answer: "-6 < x ≤ 6",
+    difficulty: "medium",
+    type: "double",
+    basePoints: 20,
+    steps: [
+      { action: "subtract", value: 1, target: "all-parts", prompt: "allPartsPrompt", result: "-3 < x/2 ≤ 3" },
+      { action: "multiply", value: 2, target: "all-parts", prompt: "allPartsPrompt", result: "-6 < x ≤ 6" }
+    ],
+    hints: {
+      en: [
+        "Remove the constant from the middle — subtract 1 from all three parts.",
+        "x is divided by 2, so multiply all three parts by 2."
+      ],
+      ja: [
+        "真ん中の定数項を消す — 3つの部分すべてから1を引く。",
+        "xが2で割られているので、3つの部分すべてに2をかける。"
+      ]
+    },
+    explanation: {
+      en: "Subtracting 1 gives -3 < x/2 ≤ 3. Multiplying all three parts by 2 (positive, so no flip) gives -6 < x ≤ 6.",
+      ja: "1を引くと -3 < x/2 ≤ 3。3つの部分すべてに2をかけると（正の数なので向きはそのまま）-6 < x ≤ 6。"
+    }
+  },
+  {
+    id: "ineq_medium_14",
+    topic: "inequality",
+    equation: "1 < 4x - 3 < 9",
+    answer: "1 < x < 3",
+    difficulty: "medium",
+    type: "double",
+    basePoints: 20,
+    steps: [
+      { action: "add",    value: 3, target: "all-parts", prompt: "allPartsPrompt", result: "4 < 4x < 12" },
+      { action: "divide", value: 4, target: "all-parts", prompt: "allPartsPrompt", result: "1 < x < 3" }
+    ],
+    hints: {
+      en: [
+        "Remove the constant from the middle — add 3 to all three parts.",
+        "Now divide all three parts by 4. It's positive, so the signs stay the same."
+      ],
+      ja: [
+        "真ん中の定数項を消す — 3つの部分すべてに3を足す。",
+        "次に3つの部分すべてを4で割る。正の数なので、不等号の向きはそのまま。"
+      ]
+    },
+    explanation: {
+      en: "Adding 3 gives 4 < 4x < 12, and dividing by 4 gives 1 < x < 3. Neither end is included.",
+      ja: "3を足すと 4 < 4x < 12、4で割ると 1 < x < 3。どちらの端もふくみません。"
+    }
+  },
+  {
+    id: "ineq_medium_15",
+    topic: "inequality",
+    equation: "-7 ≤ 2x - 1 ≤ 5",
+    answer: "-3 ≤ x ≤ 3",
+    difficulty: "medium",
+    type: "double",
+    basePoints: 20,
+    steps: [
+      { action: "add",    value: 1, target: "all-parts", prompt: "allPartsPrompt", result: "-6 ≤ 2x ≤ 6" },
+      { action: "divide", value: 2, target: "all-parts", prompt: "allPartsPrompt", result: "-3 ≤ x ≤ 3" }
+    ],
+    hints: {
+      en: [
+        "Remove the constant from the middle — add 1 to all three parts.",
+        "Now divide all three parts by 2. It's positive, so the signs stay the same."
+      ],
+      ja: [
+        "真ん中の定数項を消す — 3つの部分すべてに1を足す。",
+        "次に3つの部分すべてを2で割る。正の数なので、不等号の向きはそのまま。"
+      ]
+    },
+    explanation: {
+      en: "Adding 1 gives -6 ≤ 2x ≤ 6, and dividing by 2 gives -3 ≤ x ≤ 3. Both ends are included.",
+      ja: "1を足すと -6 ≤ 2x ≤ 6、2で割ると -3 ≤ x ≤ 3。両端ともふくみます。"
+    }
+  },
 
   // ---- Hard: two-step flips + x on both sides ----
   {
@@ -1660,6 +1803,163 @@ const LEVELS = [
     explanation: {
       en: "Subtracting 4x leaves -3x on the left, so dividing by -3 flips < to >.",
       ja: "4xを引くと左辺が-3xになるので、-3で割ると < が > になります。"
+    }
+  },
+  
+  // ---- Hard 11–15: double inequalities with a flip, then tidy (smallest first) ----
+  {
+    id: "ineq_hard_11",
+    topic: "inequality",
+    equation: "1 ≤ 5 - 2x < 9",
+    answer: "-2 < x ≤ 2",
+    difficulty: "hard",
+    type: "double",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: 5,  target: "all-parts", prompt: "allPartsPrompt", result: "-4 ≤ -2x < 4" },
+      { action: "divide",   value: -2, target: "all-parts", prompt: "allPartsPrompt", result: "2 ≥ x > -2", flip: true },
+      { action: "tidy", value: "-2 < x ≤ 2", target: "all-parts", result: "-2 < x ≤ 2",
+        wrong: ["-2 ≥ x > 2", "2 ≤ x < -2", "-2 ≤ x < 2"], wrongKinds: ["tidyHalf", "tidyHalf", "tidyEnds"] }
+    ],
+    hints: {
+      en: [
+        "Remove the 5 from the middle — subtract 5 from all three parts.",
+        "Divide all three parts by -2 — dividing by a negative flips both signs!",
+        "Read it from right to left, so the smallest number comes first. Each sign stays with its number."
+      ],
+      ja: [
+        "真ん中の5を消す — 3つの部分すべてから5を引く。",
+        "3つの部分すべてを-2で割る — 負の数で割ると、両方の不等号が逆になる！",
+        "右から左へ読んで、小さい数を先に書く。不等号はそれぞれの数とセットのまま。"
+      ]
+    },
+    explanation: {
+      en: "Dividing by -2 flips both signs: 2 ≥ x > -2. Read from the right, that's -2 < x ≤ 2.",
+      ja: "-2で割ると両方の不等号が逆になり 2 ≥ x > -2。右から読むと -2 < x ≤ 2 です。"
+    }
+  },
+  {
+    id: "ineq_hard_12",
+    topic: "inequality",
+    equation: "-4 < 2 - 3x ≤ 11",
+    answer: "-3 ≤ x < 2",
+    difficulty: "hard",
+    type: "double",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: 2,  target: "all-parts", prompt: "allPartsPrompt", result: "-6 < -3x ≤ 9" },
+      { action: "divide",   value: -3, target: "all-parts", prompt: "allPartsPrompt", result: "2 > x ≥ -3", flip: true },
+      { action: "tidy", value: "-3 ≤ x < 2", target: "all-parts", result: "-3 ≤ x < 2",
+        wrong: ["-3 > x ≥ 2", "2 < x ≤ -3", "-3 < x ≤ 2"], wrongKinds: ["tidyHalf", "tidyHalf", "tidyEnds"] }
+    ],
+    hints: {
+      en: [
+        "Remove the 2 from the middle — subtract 2 from all three parts.",
+        "Divide all three parts by -3 — dividing by a negative flips both signs!",
+        "Read it from right to left, so the smallest number comes first. Each sign stays with its number."
+      ],
+      ja: [
+        "真ん中の2を消す — 3つの部分すべてから2を引く。",
+        "3つの部分すべてを-3で割る — 負の数で割ると、両方の不等号が逆になる！",
+        "右から左へ読んで、小さい数を先に書く。不等号はそれぞれの数とセットのまま。"
+      ]
+    },
+    explanation: {
+      en: "Dividing by -3 flips both signs: 2 > x ≥ -3. Read from the right, that's -3 ≤ x < 2.",
+      ja: "-3で割ると両方の不等号が逆になり 2 > x ≥ -3。右から読むと -3 ≤ x < 2 です。"
+    }
+  },
+  {
+    id: "ineq_hard_13",
+    topic: "inequality",
+    equation: "3 < 7 - 2x ≤ 9",
+    answer: "-1 ≤ x < 2",
+    difficulty: "hard",
+    type: "double",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: 7,  target: "all-parts", prompt: "allPartsPrompt", result: "-4 < -2x ≤ 2" },
+      { action: "divide",   value: -2, target: "all-parts", prompt: "allPartsPrompt", result: "2 > x ≥ -1", flip: true },
+      { action: "tidy", value: "-1 ≤ x < 2", target: "all-parts", result: "-1 ≤ x < 2",
+        wrong: ["-1 > x ≥ 2", "2 < x ≤ -1", "-1 < x ≤ 2"], wrongKinds: ["tidyHalf", "tidyHalf", "tidyEnds"] }
+    ],
+    hints: {
+      en: [
+        "Remove the 7 from the middle — subtract 7 from all three parts.",
+        "Divide all three parts by -2 — dividing by a negative flips both signs!",
+        "Read it from right to left, so the smallest number comes first. Each sign stays with its number."
+      ],
+      ja: [
+        "真ん中の7を消す — 3つの部分すべてから7を引く。",
+        "3つの部分すべてを-2で割る — 負の数で割ると、両方の不等号が逆になる！",
+        "右から左へ読んで、小さい数を先に書く。不等号はそれぞれの数とセットのまま。"
+      ]
+    },
+    explanation: {
+      en: "Dividing by -2 flips both signs: 2 > x ≥ -1. Read from the right, that's -1 ≤ x < 2.",
+      ja: "-2で割ると両方の不等号が逆になり 2 > x ≥ -1。右から読むと -1 ≤ x < 2 です。"
+    }
+  },
+  {
+    id: "ineq_hard_14",
+    topic: "inequality",
+    equation: "-5 ≤ 1 - 2x < 7",
+    answer: "-3 < x ≤ 3",
+    difficulty: "hard",
+    type: "double",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: 1,  target: "all-parts", prompt: "allPartsPrompt", result: "-6 ≤ -2x < 6" },
+      { action: "divide",   value: -2, target: "all-parts", prompt: "allPartsPrompt", result: "3 ≥ x > -3", flip: true },
+      { action: "tidy", value: "-3 < x ≤ 3", target: "all-parts", result: "-3 < x ≤ 3",
+        wrong: ["-3 ≥ x > 3", "3 ≤ x < -3", "-3 ≤ x < 3"], wrongKinds: ["tidyHalf", "tidyHalf", "tidyEnds"] }
+    ],
+    hints: {
+      en: [
+        "Remove the 1 from the middle — subtract 1 from all three parts.",
+        "Divide all three parts by -2 — dividing by a negative flips both signs!",
+        "Read it from right to left, so the smallest number comes first. Each sign stays with its number."
+      ],
+      ja: [
+        "真ん中の1を消す — 3つの部分すべてから1を引く。",
+        "3つの部分すべてを-2で割る — 負の数で割ると、両方の不等号が逆になる！",
+        "右から左へ読んで、小さい数を先に書く。不等号はそれぞれの数とセットのまま。"
+      ]
+    },
+    explanation: {
+      en: "Dividing by -2 flips both signs: 3 ≥ x > -3. Read from the right, that's -3 < x ≤ 3.",
+      ja: "-2で割ると両方の不等号が逆になり 3 ≥ x > -3。右から読むと -3 < x ≤ 3 です。"
+    }
+  },
+  {
+    id: "ineq_hard_15",
+    topic: "inequality",
+    equation: "0 < -x/2 + 1 ≤ 3",
+    answer: "-4 ≤ x < 2",
+    difficulty: "hard",
+    type: "double",
+    basePoints: 30,
+    steps: [
+      { action: "subtract", value: 1,  target: "all-parts", prompt: "allPartsPrompt", result: "-1 < -x/2 ≤ 2" },
+      { action: "multiply", value: -2, target: "all-parts", prompt: "allPartsPrompt", result: "2 > x ≥ -4", flip: true },
+      { action: "tidy", value: "-4 ≤ x < 2", target: "all-parts", result: "-4 ≤ x < 2",
+        wrong: ["-4 > x ≥ 2", "2 < x ≤ -4", "-4 < x ≤ 2"], wrongKinds: ["tidyHalf", "tidyHalf", "tidyEnds"] }
+    ],
+    hints: {
+      en: [
+        "Remove the 1 from the middle — subtract 1 from all three parts.",
+        "x is divided by -2, so multiply all three parts by -2 — multiplying by a negative flips both signs!",
+        "Read it from right to left, so the smallest number comes first. Each sign stays with its number."
+      ],
+      ja: [
+        "真ん中の1を消す — 3つの部分すべてから1を引く。",
+        "xが-2で割られているので、3つの部分すべてに-2をかける — 負の数をかけると、両方の不等号が逆になる！",
+        "右から左へ読んで、小さい数を先に書く。不等号はそれぞれの数とセットのまま。"
+      ]
+    },
+    explanation: {
+      en: "Multiplying by -2 flips both signs: 2 > x ≥ -4. Read from the right, that's -4 ≤ x < 2.",
+      ja: "-2をかけると両方の不等号が逆になり 2 > x ≥ -4。右から読むと -4 ≤ x < 2 です。"
     }
   },
   // =====================================================================
@@ -10645,6 +10945,28 @@ const TIER_TIPS = {
       from: "-2x ≥ -10",
       move: { en: "Divide both sides by -2, and flip the sign", ja: "両辺を-2で割って、不等号を逆にする" },
       to: "x ≤ 5"
+    }
+  },
+  inequality_medium_double: {
+    text: {
+      en: "Now x is stuck between two signs. Do the same move to all three parts at once, until x is on its own in the middle.",
+      ja: "今度はxが2つの不等号にはさまれているよ。3つの部分すべてに同じ操作をして、真ん中にxだけを残そう。"
+    },
+    demo: {
+      from: "-3 < 2x + 1 ≤ 7",
+      move: { en: "Subtract 1 from all three parts", ja: "3つの部分すべてから1を引く" },
+      to: "-4 < 2x ≤ 6"
+    }
+  },
+  inequality_hard_double: {
+    text: {
+      en: "Dividing by a negative flips both signs! Then tidy it up so the smallest number comes first.",
+      ja: "負の数で割ると、2つの不等号が両方とも逆になるよ！そのあと、小さい数が先に来るように書き直そう。"
+    },
+    demo: {
+      from: "-4 ≤ -2x < 4",
+      move: { en: "Divide all three parts by -2, and flip both signs", ja: "3つの部分すべてを-2で割って、両方の不等号を逆にする" },
+      to: "2 ≥ x > -2"
     }
   },
   brackets_medium: {
