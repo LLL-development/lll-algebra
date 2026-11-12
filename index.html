@@ -365,6 +365,15 @@
           <span class="topic-card-count"></span>
         </span>
       </button>
+      <button class="topic-card" data-topic="sequence">
+        <span class="topic-card-sample">3, 7, 11, ...</span>
+        <span class="topic-card-title" data-i18n="topicSequence">Sequences</span>
+        <span class="topic-card-desc" data-i18n="topicSequenceDesc">Find the rule, then any term</span>
+        <span class="topic-card-progress" data-progress="sequence">
+          <span class="topic-card-bar"><span class="topic-card-bar-fill"></span></span>
+          <span class="topic-card-count"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -934,12 +943,17 @@
     missedTerms: "mistakeMissedTerms", squareSlip: "mistakeSquareSlip", factorDivide: "mistakeFactorDivide",
     notFullyFactorised: "mistakeNotFullyFactorised", factorPair: "mistakeFactorPair", lostFactor: "mistakeLostFactor",
     // Inequalities Hard: tidying a flipped double inequality (authored, tagged with wrongKinds)
-    tidyHalf: "mistakeTidyHalf", tidyEnds: "mistakeTidyEnds"
+    tidyHalf: "mistakeTidyHalf", tidyEnds: "mistakeTidyEnds",
+    // Sequences (authored, tagged with wrongKinds; undoSign is shared with Completing the square)
+    diffFirst: "mistakeDiffFirst", diffSign: "mistakeDiffSign", zeroTerm: "mistakeZeroTerm", swapDn: "mistakeSwapDn",
+    nthSign: "mistakeNthSign", offByOne: "mistakeOffByOne", notWhole: "mistakeNotWhole"
   };
   const AUTHORED_TIP_KEYS = {
     expand: "mistakeTipExpand", factor: "mistakeTipFactor", roots: "mistakeTipRoots",
     combine: "mistakeTipCombine", substitute: "mistakeTipSubstitute", scale: "mistakeTipScale",
-    simplify: "mistakeTipSimplify"
+    simplify: "mistakeTipSimplify",
+    // Sequences: a "generic" slip on these steps gets a tip for the step's move
+    diff: "mistakeTipDiff", nth: "mistakeTipNth", term: "mistakeTipTerm", which: "mistakeTipWhich"
   };
   const MISTAKE_MS = 3500;   // longer than the old 1800 ms, so there's time to read the reason
 
@@ -2080,8 +2094,8 @@
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
   const TIER_LABEL_KEYS = { easy: "tierEasy", medium: "tierMedium", hard: "tierHard" };
-  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject", expression: "topicExpression", factorise: "topicFactorise", indices: "topicIndices", roots: "topicRoots", line: "topicLine" };
-  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1", expression: "4x + 3 + 2x", factorise: "(x + 3)(x - 2)", indices: "x^3 × x^4", roots: "(x + 3)² = 16", line: "y = 2x + 3" };
+  const TOPIC_LABEL_KEYS = { equation: "topicEquation", inequality: "topicInequality", brackets: "topicBrackets", quadratic: "topicQuadratic", system: "topicSystem", fraction: "topicFraction", subject: "topicSubject", expression: "topicExpression", factorise: "topicFactorise", indices: "topicIndices", roots: "topicRoots", line: "topicLine", sequence: "topicSequence" };
+  const TOPIC_SAMPLES = { equation: "x + 5 = 12", inequality: "-3x > 12", brackets: "2(x + 3) = 14", quadratic: "x² + 5x + 6 = 0", system: "x + y = 9\n2x - y = 3", fraction: "x/2 + x/3 = 5", subject: "y = 2x + 1", expression: "4x + 3 + 2x", factorise: "(x + 3)(x - 2)", indices: "x^3 × x^4", roots: "(x + 3)² = 16", line: "y = 2x + 3", sequence: "3, 7, 11, ..." };
 
   // Levels unlock in order within a tier; the first level of every tier is always open.
   function isUnlocked(level) {
@@ -2455,7 +2469,7 @@
   // Shown once per topic on first visit, reopenable from the ❔ on the level-select screen.
   // Chalky explains the key idea, then a demo level plays step by step using the real game pieces.
   const TUTORIAL_SEEN_KEY = "lll_algebra_tutorials_seen";
-  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2, expression: 2, factorise: 3, indices: 2, roots: 2, line: 2 };
+  const TUT_TIP_COUNT = { equation: 2, inequality: 2, brackets: 2, quadratic: 3, system: 2, fraction: 2, subject: 2, expression: 2, factorise: 3, indices: 2, roots: 2, line: 2, sequence: 2 };
   const TUT_STEP_MS = 2600;   // time per demo step
 
   // Demo level per topic: normally the first Easy level, except where that level skips the

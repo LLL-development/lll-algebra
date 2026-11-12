@@ -6,9 +6,9 @@
 // one character (the brackets are dropped when drawn).
 const POW = /\^(\([^()]*\)|[-−]?(?:\d+|[a-z]))/g;
 
-// Subscripts are written x_1 / y_2 (Straight lines: m = (y_2 - y_1)/(x_2 - x_1)) and drawn as a half-size
-// lowered <span class="sub">, since neither font has ₁ ₂.
-const SUB = /_(\d+)/g;
+// Subscripts are written x_1 / y_2 (Straight lines: m = (y_2 - y_1)/(x_2 - x_1)) or u_n (Sequences) and
+// drawn as a half-size lowered <span class="sub">, since neither font has ₁ ₂ ₙ.
+const SUB = /_(\d+|n)/g;
 
 // Stacked fractions are written {top}/{bottom} (Straight lines' gradient, e.g. {4 - (-5)}/{1 - (-2)})
 // and drawn as a top-over-bottom block (.frac, CSS in brand.css). Plain a/b stays inline, as in Fractions.
@@ -144,9 +144,9 @@ function appendPowers(el, text, minus = "−") {
 }
 
 // What the typewriter types one at a time: single characters, with each power ("^3", "^-1"),
-// subscript ("_1"), root ("√16", "√(A/π)") and stacked fraction ("{9}/{3}") kept whole so it never appears half-typed.
+// subscript ("_1", "_n"), root ("√16", "√(A/π)") and stacked fraction ("{9}/{3}") kept whole so it never appears half-typed.
 function eqUnits(text) {
-  return text.match(/\{[^{}]*\}\/\{[^{}]*\}|√(?:\([^()]*\)|\d+|[A-Za-z])|\^(?:\([^()]*\)|[-−]?(?:\d+|[a-z]))|_\d+|[\s\S]/gu) || [];
+  return text.match(/\{[^{}]*\}\/\{[^{}]*\}|√(?:\([^()]*\)|\d+|[A-Za-z])|\^(?:\([^()]*\)|[-−]?(?:\d+|[a-z]))|_(?:\d+|n)|[\s\S]/gu) || [];
 }
 
 // A line's width in characters, for --eq-len: a power's or subscript's digits are half size; a root is the

@@ -18,7 +18,9 @@ const CHOICE_PROMPT_KEYS = {
   gradient: "gradientPrompt", intercept: "interceptPrompt", gradSub: "gradSubPrompt", gradCalc: "gradCalcPrompt",
   isolate: "isolatePrompt",
   // Inequalities Hard: rewrite a flipped double inequality smallest first ("2 ≥ x > -2" → "-2 < x ≤ 2")
-  tidy: "tidyPrompt"
+  tidy: "tidyPrompt",
+  // Sequences: the common difference, the nth term, a given term (Medium), which term a number is (Hard)
+  diff: "diffPrompt", nth: "nthPrompt", term: "termPrompt", which: "whichPrompt"
 };
 
 // Options longer than this (e.g. the quadratic formula "x = (−11 ± √361)/2") get the `long` class,

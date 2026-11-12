@@ -144,6 +144,18 @@ const TOPIC_FORMULAS = {
       example: "m = 2, (1, 5) → c = 5 − 2 = 3",
     },
   ],
+  sequence: [
+    {
+      name: { en: "The nth term", ja: "n番目の項" },
+      formula: "u_n = dn + (u_1 − d)",
+      example: "3, 7, 11, 15 → d = 4, u_n = 4n − 1",
+    },
+    {
+      name: { en: "Is it in the sequence?", ja: "数列の項かどうか" },
+      formula: { en: "Solve u_n = the number: whole n → yes", ja: "u_n = その数を解く：n が整数なら項" },
+      example: "4n + 1 = 81 → n = 20",
+    },
+  ],
 };
 
 // Picks the active language from a string or { en, ja } value.

@@ -51,6 +51,10 @@
 //                   the line in y = mx + c form (e.g. "y = 2x - 1"). Not "rearrange": that's Quadratics Hard's type.
 //   "tidy"        — rewrite a flipped double inequality smallest first (inequality topic, Hard), e.g.
 //                   "2 ≥ x > -2" → "-2 < x ≤ 2". Authored: `value` is the tidied answer.
+//   "diff"        — find the common difference (sequence topic). Authored: `value` is e.g. "d = 4".
+//   "nth"         — write the nth term as dn + c (sequence topic). Authored: `value` is e.g. "4n - 1".
+//   "term"        — put n into the nth term (sequence topic, Medium). Authored: `value` is e.g. "u_10 = 39".
+//   "which"       — solve nth term = a number for n (sequence topic, Hard). Authored: `value` is e.g. "n = 20".
 //
 // Systems: `equation` is two lines joined by "\n" (e.g. "x + y = 9\n2x - y = 3"), and
 // `answer` is { x, y }. A step whose result the player must substitute into keeps that
@@ -143,7 +147,16 @@
 // and collect steps, but not on common-factor steps, where its fallback line ("Do they add and multiply right?")
 // doesn't fit. Options stay within 16 characters so they fit a narrow phone's button.
 //
-// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject", "expression", "factorise", "indices", "roots" or "line". `target` is "both-sides"
+// Sequences (topic key `sequence`): the card shows the first four terms ("3, 7, 11, 15, ..."), plus what's being
+// asked as a second line with no words, since the pixel font has no Japanese: "u_10 = ?" (Medium) or "u_n = 81"
+// (Hard: which term is 81?). Terms are u_n / u_10 (drawn as subscripts by mathtext.js), and the nth term is always
+// written dn + c ("-3n + 23", not "23 - 3n"), matching the formula sheet. Every step is authored with `target:
+// "sequence"` and `wrongKinds`: "diffFirst" (the first term taken as d), "diffSign" (d's sign flipped: a minus
+// added to a rising sequence's d or dropped from a falling one's), "zeroTerm" (the first term used as c: 4n + 3 for 3, 7, 11), "swapDn" (d and c swapped), "nthSign" (c's
+// sign flipped), "offByOne" (n - 1 or n + 1 put in), "notWhole" (a decimal n rounded), "undoSign" (shared: c moved
+// the wrong way) or "generic". Hard 8–10 have a decimal n: that number isn't in the sequence (the explanation says so).
+//
+// `topic` is "equation", "inequality", "brackets", "quadratic", "system", "fraction", "subject", "expression", "factorise", "indices", "roots", "line" or "sequence". `target` is "both-sides"
 // for every move that changes a side's value; only "expand" and "simplify" rewrite one side,
 // because expanding doesn't change the value (2(x + 3) and 2x + 6 are equal)
 //
@@ -1805,7 +1818,7 @@ const LEVELS = [
       ja: "4xを引くと左辺が-3xになるので、-3で割ると < が > になります。"
     }
   },
-  
+
   // ---- Hard 11–15: double inequalities with a flip, then tidy (smallest first) ----
   {
     id: "ineq_hard_11",
@@ -10902,6 +10915,965 @@ const LEVELS = [
       en: "Divide both sides by 3, which means every term: y = 2 - 3x, or y = -3x + 2 with the x term first. So m = -3 and c = 2: the line goes down 3 for every 1 across.",
       ja: "両辺を3で割ります（すべての項を割る）：y = 2 - 3x、xの項を前にすると y = -3x + 2。よって m = -3、c = 2。右に1進むと下に3進む直線です。"
     }
+  },
+  // =====================================================================
+  // SEQUENCES
+  // =====================================================================
+ 
+  // ---- Easy: find d, then the nth term ----
+  {
+    id: "seq_easy_01",
+    topic: "sequence",
+    equation: "3, 7, 11, 15, ...",
+    answer: "u_n = 4n - 1",
+    difficulty: "easy",
+    type: "nth-term",
+    basePoints: 10,
+    steps: [
+      { action: "diff", value: "d = 4", target: "sequence", result: "3, 7, 11, 15, ...\nd = 4",
+        wrong: ["d = -4", "d = 3", "d = 5"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "4n - 1", target: "sequence", result: "u_n = 4n - 1",
+        wrong: ["4n + 3", "3n + 4", "4n + 1"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 7 − 3 = 4.",
+        "The nth term is dn + (first term − d): 4n + (3 − 4) = 4n − 1."
+      ],
+      ja: [
+        "次の項から前の項を引く：7 − 3 = 4。",
+        "n番目の項は dn + (初項 − d)：4n + (3 − 4) = 4n − 1。"
+      ]
+    },
+    explanation: {
+      en: "Each term goes up by 4, so d = 4. Then dn + (first term − d) gives 4n − 1. Check: n = 1 gives 3, the first term.",
+      ja: "項は毎回4ずつ増えるので d = 4。dn + (初項 − d) で 4n − 1。確かめ：n = 1 のとき 3 で、初項と同じです。"
+    }
+  },
+  {
+    id: "seq_easy_02",
+    topic: "sequence",
+    equation: "5, 7, 9, 11, ...",
+    answer: "u_n = 2n + 3",
+    difficulty: "easy",
+    type: "nth-term",
+    basePoints: 10,
+    steps: [
+      { action: "diff", value: "d = 2", target: "sequence", result: "5, 7, 9, 11, ...\nd = 2",
+        wrong: ["d = -2", "d = 5", "d = 3"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "2n + 3", target: "sequence", result: "u_n = 2n + 3",
+        wrong: ["2n + 5", "5n + 2", "2n - 3"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 7 − 5 = 2.",
+        "The nth term is dn + (first term − d): 2n + (5 − 2) = 2n + 3."
+      ],
+      ja: [
+        "次の項から前の項を引く：7 − 5 = 2。",
+        "n番目の項は dn + (初項 − d)：2n + (5 − 2) = 2n + 3。"
+      ]
+    },
+    explanation: {
+      en: "Each term goes up by 2, so d = 2. Then dn + (first term − d) gives 2n + 3. Check: n = 1 gives 5, the first term.",
+      ja: "項は毎回2ずつ増えるので d = 2。dn + (初項 − d) で 2n + 3。確かめ：n = 1 のとき 5 で、初項と同じです。"
+    }
+  },
+  {
+    id: "seq_easy_03",
+    topic: "sequence",
+    equation: "2, 5, 8, 11, ...",
+    answer: "u_n = 3n - 1",
+    difficulty: "easy",
+    type: "nth-term",
+    basePoints: 10,
+    steps: [
+      { action: "diff", value: "d = 3", target: "sequence", result: "2, 5, 8, 11, ...\nd = 3",
+        wrong: ["d = -3", "d = 2", "d = 4"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "3n - 1", target: "sequence", result: "u_n = 3n - 1",
+        wrong: ["3n + 2", "2n + 3", "3n + 1"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 5 − 2 = 3.",
+        "The nth term is dn + (first term − d): 3n + (2 − 3) = 3n − 1."
+      ],
+      ja: [
+        "次の項から前の項を引く：5 − 2 = 3。",
+        "n番目の項は dn + (初項 − d)：3n + (2 − 3) = 3n − 1。"
+      ]
+    },
+    explanation: {
+      en: "Each term goes up by 3, so d = 3. Then dn + (first term − d) gives 3n − 1. Check: n = 1 gives 2, the first term.",
+      ja: "項は毎回3ずつ増えるので d = 3。dn + (初項 − d) で 3n − 1。確かめ：n = 1 のとき 2 で、初項と同じです。"
+    }
+  },
+  {
+    id: "seq_easy_04",
+    topic: "sequence",
+    equation: "7, 12, 17, 22, ...",
+    answer: "u_n = 5n + 2",
+    difficulty: "easy",
+    type: "nth-term",
+    basePoints: 10,
+    steps: [
+      { action: "diff", value: "d = 5", target: "sequence", result: "7, 12, 17, 22, ...\nd = 5",
+        wrong: ["d = -5", "d = 7", "d = 6"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "5n + 2", target: "sequence", result: "u_n = 5n + 2",
+        wrong: ["5n + 7", "7n + 5", "5n - 2"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 12 − 7 = 5.",
+        "The nth term is dn + (first term − d): 5n + (7 − 5) = 5n + 2."
+      ],
+      ja: [
+        "次の項から前の項を引く：12 − 7 = 5。",
+        "n番目の項は dn + (初項 − d)：5n + (7 − 5) = 5n + 2。"
+      ]
+    },
+    explanation: {
+      en: "Each term goes up by 5, so d = 5. Then dn + (first term − d) gives 5n + 2. Check: n = 1 gives 7, the first term.",
+      ja: "項は毎回5ずつ増えるので d = 5。dn + (初項 − d) で 5n + 2。確かめ：n = 1 のとき 7 で、初項と同じです。"
+    }
+  },
+  {
+    id: "seq_easy_05",
+    topic: "sequence",
+    equation: "4, 8, 12, 16, ...",
+    answer: "u_n = 4n",
+    difficulty: "easy",
+    type: "nth-term",
+    basePoints: 10,
+    steps: [
+      { action: "diff", value: "d = 4", target: "sequence", result: "4, 8, 12, 16, ...\nd = 4",
+        wrong: ["d = -4", "d = 5", "d = 3"], wrongKinds: ["diffSign", "generic", "generic"] },
+      { action: "nth", value: "4n", target: "sequence", result: "u_n = 4n",
+        wrong: ["4n + 4", "4n + 1", "5n"], wrongKinds: ["zeroTerm", "generic", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 8 − 4 = 4.",
+        "The nth term is dn + (first term − d): 4n + (4 − 4) = 4n."
+      ],
+      ja: [
+        "次の項から前の項を引く：8 − 4 = 4。",
+        "n番目の項は dn + (初項 − d)：4n + (4 − 4) = 4n。"
+      ]
+    },
+    explanation: {
+      en: "Each term goes up by 4, so d = 4. Then dn + (first term − d) gives 4n. Check: n = 1 gives 4, the first term.",
+      ja: "項は毎回4ずつ増えるので d = 4。dn + (初項 − d) で 4n。確かめ：n = 1 のとき 4 で、初項と同じです。"
+    }
+  },
+  {
+    id: "seq_easy_06",
+    topic: "sequence",
+    equation: "1, 7, 13, 19, ...",
+    answer: "u_n = 6n - 5",
+    difficulty: "easy",
+    type: "nth-term",
+    basePoints: 10,
+    steps: [
+      { action: "diff", value: "d = 6", target: "sequence", result: "1, 7, 13, 19, ...\nd = 6",
+        wrong: ["d = -6", "d = 1", "d = 7"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "6n - 5", target: "sequence", result: "u_n = 6n - 5",
+        wrong: ["6n + 1", "n + 6", "6n + 5"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 7 − 1 = 6.",
+        "The nth term is dn + (first term − d): 6n + (1 − 6) = 6n − 5."
+      ],
+      ja: [
+        "次の項から前の項を引く：7 − 1 = 6。",
+        "n番目の項は dn + (初項 − d)：6n + (1 − 6) = 6n − 5。"
+      ]
+    },
+    explanation: {
+      en: "Each term goes up by 6, so d = 6. Then dn + (first term − d) gives 6n − 5. Check: n = 1 gives 1, the first term.",
+      ja: "項は毎回6ずつ増えるので d = 6。dn + (初項 − d) で 6n − 5。確かめ：n = 1 のとき 1 で、初項と同じです。"
+    }
+  },
+  {
+    id: "seq_easy_07",
+    topic: "sequence",
+    equation: "10, 13, 16, 19, ...",
+    answer: "u_n = 3n + 7",
+    difficulty: "easy",
+    type: "nth-term",
+    basePoints: 10,
+    steps: [
+      { action: "diff", value: "d = 3", target: "sequence", result: "10, 13, 16, 19, ...\nd = 3",
+        wrong: ["d = -3", "d = 10", "d = 4"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "3n + 7", target: "sequence", result: "u_n = 3n + 7",
+        wrong: ["3n + 10", "10n + 3", "3n - 7"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 13 − 10 = 3.",
+        "The nth term is dn + (first term − d): 3n + (10 − 3) = 3n + 7."
+      ],
+      ja: [
+        "次の項から前の項を引く：13 − 10 = 3。",
+        "n番目の項は dn + (初項 − d)：3n + (10 − 3) = 3n + 7。"
+      ]
+    },
+    explanation: {
+      en: "Each term goes up by 3, so d = 3. Then dn + (first term − d) gives 3n + 7. Check: n = 1 gives 10, the first term.",
+      ja: "項は毎回3ずつ増えるので d = 3。dn + (初項 − d) で 3n + 7。確かめ：n = 1 のとき 10 で、初項と同じです。"
+    }
+  },
+  {
+    id: "seq_easy_08",
+    topic: "sequence",
+    equation: "2, 9, 16, 23, ...",
+    answer: "u_n = 7n - 5",
+    difficulty: "easy",
+    type: "nth-term",
+    basePoints: 10,
+    steps: [
+      { action: "diff", value: "d = 7", target: "sequence", result: "2, 9, 16, 23, ...\nd = 7",
+        wrong: ["d = -7", "d = 2", "d = 8"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "7n - 5", target: "sequence", result: "u_n = 7n - 5",
+        wrong: ["7n + 2", "2n + 7", "7n + 5"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 9 − 2 = 7.",
+        "The nth term is dn + (first term − d): 7n + (2 − 7) = 7n − 5."
+      ],
+      ja: [
+        "次の項から前の項を引く：9 − 2 = 7。",
+        "n番目の項は dn + (初項 − d)：7n + (2 − 7) = 7n − 5。"
+      ]
+    },
+    explanation: {
+      en: "Each term goes up by 7, so d = 7. Then dn + (first term − d) gives 7n − 5. Check: n = 1 gives 2, the first term.",
+      ja: "項は毎回7ずつ増えるので d = 7。dn + (初項 − d) で 7n − 5。確かめ：n = 1 のとき 2 で、初項と同じです。"
+    }
+  },
+  {
+    id: "seq_easy_09",
+    topic: "sequence",
+    equation: "9, 11, 13, 15, ...",
+    answer: "u_n = 2n + 7",
+    difficulty: "easy",
+    type: "nth-term",
+    basePoints: 10,
+    steps: [
+      { action: "diff", value: "d = 2", target: "sequence", result: "9, 11, 13, 15, ...\nd = 2",
+        wrong: ["d = -2", "d = 9", "d = 3"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "2n + 7", target: "sequence", result: "u_n = 2n + 7",
+        wrong: ["2n + 9", "9n + 2", "2n - 7"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 11 − 9 = 2.",
+        "The nth term is dn + (first term − d): 2n + (9 − 2) = 2n + 7."
+      ],
+      ja: [
+        "次の項から前の項を引く：11 − 9 = 2。",
+        "n番目の項は dn + (初項 − d)：2n + (9 − 2) = 2n + 7。"
+      ]
+    },
+    explanation: {
+      en: "Each term goes up by 2, so d = 2. Then dn + (first term − d) gives 2n + 7. Check: n = 1 gives 9, the first term.",
+      ja: "項は毎回2ずつ増えるので d = 2。dn + (初項 − d) で 2n + 7。確かめ：n = 1 のとき 9 で、初項と同じです。"
+    }
+  },
+  {
+    id: "seq_easy_10",
+    topic: "sequence",
+    equation: "6, 11, 16, 21, ...",
+    answer: "u_n = 5n + 1",
+    difficulty: "easy",
+    type: "nth-term",
+    basePoints: 10,
+    steps: [
+      { action: "diff", value: "d = 5", target: "sequence", result: "6, 11, 16, 21, ...\nd = 5",
+        wrong: ["d = -5", "d = 6", "d = 4"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "5n + 1", target: "sequence", result: "u_n = 5n + 1",
+        wrong: ["5n + 6", "6n + 5", "5n - 1"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 11 − 6 = 5.",
+        "The nth term is dn + (first term − d): 5n + (6 − 5) = 5n + 1."
+      ],
+      ja: [
+        "次の項から前の項を引く：11 − 6 = 5。",
+        "n番目の項は dn + (初項 − d)：5n + (6 − 5) = 5n + 1。"
+      ]
+    },
+    explanation: {
+      en: "Each term goes up by 5, so d = 5. Then dn + (first term − d) gives 5n + 1. Check: n = 1 gives 6, the first term.",
+      ja: "項は毎回5ずつ増えるので d = 5。dn + (初項 − d) で 5n + 1。確かめ：n = 1 のとき 6 で、初項と同じです。"
+    }
+  },
+ 
+  // ---- Medium: find d, the nth term, then a given term ----
+  {
+    id: "seq_medium_01",
+    topic: "sequence",
+    equation: "20, 17, 14, 11, ...\nu_10 = ?",
+    answer: "u_10 = -7",
+    difficulty: "medium",
+    type: "find-term",
+    basePoints: 20,
+    steps: [
+      { action: "diff", value: "d = -3", target: "sequence", result: "20, 17, 14, 11, ...\nd = -3\nu_10 = ?",
+        wrong: ["d = 3", "d = 20", "d = -2"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "-3n + 23", target: "sequence", result: "u_n = -3n + 23\nu_10 = ?",
+        wrong: ["-3n + 20", "20n - 3", "-3n - 23"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "term", value: "u_10 = -7", target: "sequence", result: "u_10 = -7",
+        wrong: ["u_10 = -4", "u_10 = -10", "u_10 = -30"], wrongKinds: ["offByOne", "offByOne", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 17 − 20 = −3.",
+        "The nth term is dn + (first term − d): −3n + (20 − (−3)) = −3n + 23.",
+        "Put n = 10 into the nth term: −3 × 10 + 23 = −7."
+      ],
+      ja: [
+        "次の項から前の項を引く：17 − 20 = −3。",
+        "n番目の項は dn + (初項 − d)：−3n + (20 − (−3)) = −3n + 23。",
+        "n番目の項に n = 10 を代入：−3 × 10 + 23 = −7。"
+      ]
+    },
+    explanation: {
+      en: "d = −3, so the nth term is −3n + 23. Putting n = 10 in gives −3 × 10 + 23 = −7.",
+      ja: "d = −3 なので、n番目の項は −3n + 23。n = 10 を代入すると −3 × 10 + 23 = −7。"
+    }
+  },
+  {
+    id: "seq_medium_02",
+    topic: "sequence",
+    equation: "5, 9, 13, 17, ...\nu_12 = ?",
+    answer: "u_12 = 49",
+    difficulty: "medium",
+    type: "find-term",
+    basePoints: 20,
+    steps: [
+      { action: "diff", value: "d = 4", target: "sequence", result: "5, 9, 13, 17, ...\nd = 4\nu_12 = ?",
+        wrong: ["d = -4", "d = 5", "d = 3"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "4n + 1", target: "sequence", result: "u_n = 4n + 1\nu_12 = ?",
+        wrong: ["4n + 5", "5n + 4", "4n - 1"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "term", value: "u_12 = 49", target: "sequence", result: "u_12 = 49",
+        wrong: ["u_12 = 45", "u_12 = 53", "u_12 = 48"], wrongKinds: ["offByOne", "offByOne", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 9 − 5 = 4.",
+        "The nth term is dn + (first term − d): 4n + (5 − 4) = 4n + 1.",
+        "Put n = 12 into the nth term: 4 × 12 + 1 = 49."
+      ],
+      ja: [
+        "次の項から前の項を引く：9 − 5 = 4。",
+        "n番目の項は dn + (初項 − d)：4n + (5 − 4) = 4n + 1。",
+        "n番目の項に n = 12 を代入：4 × 12 + 1 = 49。"
+      ]
+    },
+    explanation: {
+      en: "d = 4, so the nth term is 4n + 1. Putting n = 12 in gives 4 × 12 + 1 = 49.",
+      ja: "d = 4 なので、n番目の項は 4n + 1。n = 12 を代入すると 4 × 12 + 1 = 49。"
+    }
+  },
+  {
+    id: "seq_medium_03",
+    topic: "sequence",
+    equation: "30, 26, 22, 18, ...\nu_8 = ?",
+    answer: "u_8 = 2",
+    difficulty: "medium",
+    type: "find-term",
+    basePoints: 20,
+    steps: [
+      { action: "diff", value: "d = -4", target: "sequence", result: "30, 26, 22, 18, ...\nd = -4\nu_8 = ?",
+        wrong: ["d = 4", "d = 30", "d = -3"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "-4n + 34", target: "sequence", result: "u_n = -4n + 34\nu_8 = ?",
+        wrong: ["-4n + 30", "30n - 4", "-4n - 34"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "term", value: "u_8 = 2", target: "sequence", result: "u_8 = 2",
+        wrong: ["u_8 = 6", "u_8 = -2", "u_8 = -32"], wrongKinds: ["offByOne", "offByOne", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 26 − 30 = −4.",
+        "The nth term is dn + (first term − d): −4n + (30 − (−4)) = −4n + 34.",
+        "Put n = 8 into the nth term: −4 × 8 + 34 = 2."
+      ],
+      ja: [
+        "次の項から前の項を引く：26 − 30 = −4。",
+        "n番目の項は dn + (初項 − d)：−4n + (30 − (−4)) = −4n + 34。",
+        "n番目の項に n = 8 を代入：−4 × 8 + 34 = 2。"
+      ]
+    },
+    explanation: {
+      en: "d = −4, so the nth term is −4n + 34. Putting n = 8 in gives −4 × 8 + 34 = 2.",
+      ja: "d = −4 なので、n番目の項は −4n + 34。n = 8 を代入すると −4 × 8 + 34 = 2。"
+    }
+  },
+  {
+    id: "seq_medium_04",
+    topic: "sequence",
+    equation: "2, 7, 12, 17, ...\nu_15 = ?",
+    answer: "u_15 = 72",
+    difficulty: "medium",
+    type: "find-term",
+    basePoints: 20,
+    steps: [
+      { action: "diff", value: "d = 5", target: "sequence", result: "2, 7, 12, 17, ...\nd = 5\nu_15 = ?",
+        wrong: ["d = -5", "d = 2", "d = 6"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "5n - 3", target: "sequence", result: "u_n = 5n - 3\nu_15 = ?",
+        wrong: ["5n + 2", "2n + 5", "5n + 3"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "term", value: "u_15 = 72", target: "sequence", result: "u_15 = 72",
+        wrong: ["u_15 = 67", "u_15 = 77", "u_15 = 75"], wrongKinds: ["offByOne", "offByOne", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 7 − 2 = 5.",
+        "The nth term is dn + (first term − d): 5n + (2 − 5) = 5n − 3.",
+        "Put n = 15 into the nth term: 5 × 15 − 3 = 72."
+      ],
+      ja: [
+        "次の項から前の項を引く：7 − 2 = 5。",
+        "n番目の項は dn + (初項 − d)：5n + (2 − 5) = 5n − 3。",
+        "n番目の項に n = 15 を代入：5 × 15 − 3 = 72。"
+      ]
+    },
+    explanation: {
+      en: "d = 5, so the nth term is 5n − 3. Putting n = 15 in gives 5 × 15 − 3 = 72.",
+      ja: "d = 5 なので、n番目の項は 5n − 3。n = 15 を代入すると 5 × 15 − 3 = 72。"
+    }
+  },
+  {
+    id: "seq_medium_05",
+    topic: "sequence",
+    equation: "15, 13, 11, 9, ...\nu_10 = ?",
+    answer: "u_10 = -3",
+    difficulty: "medium",
+    type: "find-term",
+    basePoints: 20,
+    steps: [
+      { action: "diff", value: "d = -2", target: "sequence", result: "15, 13, 11, 9, ...\nd = -2\nu_10 = ?",
+        wrong: ["d = 2", "d = 15", "d = -1"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "-2n + 17", target: "sequence", result: "u_n = -2n + 17\nu_10 = ?",
+        wrong: ["-2n + 15", "15n - 2", "-2n - 17"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "term", value: "u_10 = -3", target: "sequence", result: "u_10 = -3",
+        wrong: ["u_10 = -1", "u_10 = -5", "u_10 = -20"], wrongKinds: ["offByOne", "offByOne", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 13 − 15 = −2.",
+        "The nth term is dn + (first term − d): −2n + (15 − (−2)) = −2n + 17.",
+        "Put n = 10 into the nth term: −2 × 10 + 17 = −3."
+      ],
+      ja: [
+        "次の項から前の項を引く：13 − 15 = −2。",
+        "n番目の項は dn + (初項 − d)：−2n + (15 − (−2)) = −2n + 17。",
+        "n番目の項に n = 10 を代入：−2 × 10 + 17 = −3。"
+      ]
+    },
+    explanation: {
+      en: "d = −2, so the nth term is −2n + 17. Putting n = 10 in gives −2 × 10 + 17 = −3.",
+      ja: "d = −2 なので、n番目の項は −2n + 17。n = 10 を代入すると −2 × 10 + 17 = −3。"
+    }
+  },
+  {
+    id: "seq_medium_06",
+    topic: "sequence",
+    equation: "8, 11, 14, 17, ...\nu_20 = ?",
+    answer: "u_20 = 65",
+    difficulty: "medium",
+    type: "find-term",
+    basePoints: 20,
+    steps: [
+      { action: "diff", value: "d = 3", target: "sequence", result: "8, 11, 14, 17, ...\nd = 3\nu_20 = ?",
+        wrong: ["d = -3", "d = 8", "d = 4"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "3n + 5", target: "sequence", result: "u_n = 3n + 5\nu_20 = ?",
+        wrong: ["3n + 8", "8n + 3", "3n - 5"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "term", value: "u_20 = 65", target: "sequence", result: "u_20 = 65",
+        wrong: ["u_20 = 62", "u_20 = 68", "u_20 = 60"], wrongKinds: ["offByOne", "offByOne", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 11 − 8 = 3.",
+        "The nth term is dn + (first term − d): 3n + (8 − 3) = 3n + 5.",
+        "Put n = 20 into the nth term: 3 × 20 + 5 = 65."
+      ],
+      ja: [
+        "次の項から前の項を引く：11 − 8 = 3。",
+        "n番目の項は dn + (初項 − d)：3n + (8 − 3) = 3n + 5。",
+        "n番目の項に n = 20 を代入：3 × 20 + 5 = 65。"
+      ]
+    },
+    explanation: {
+      en: "d = 3, so the nth term is 3n + 5. Putting n = 20 in gives 3 × 20 + 5 = 65.",
+      ja: "d = 3 なので、n番目の項は 3n + 5。n = 20 を代入すると 3 × 20 + 5 = 65。"
+    }
+  },
+  {
+    id: "seq_medium_07",
+    topic: "sequence",
+    equation: "40, 34, 28, 22, ...\nu_9 = ?",
+    answer: "u_9 = -8",
+    difficulty: "medium",
+    type: "find-term",
+    basePoints: 20,
+    steps: [
+      { action: "diff", value: "d = -6", target: "sequence", result: "40, 34, 28, 22, ...\nd = -6\nu_9 = ?",
+        wrong: ["d = 6", "d = 40", "d = -5"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "-6n + 46", target: "sequence", result: "u_n = -6n + 46\nu_9 = ?",
+        wrong: ["-6n + 40", "40n - 6", "-6n - 46"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "term", value: "u_9 = -8", target: "sequence", result: "u_9 = -8",
+        wrong: ["u_9 = -2", "u_9 = -14", "u_9 = -54"], wrongKinds: ["offByOne", "offByOne", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 34 − 40 = −6.",
+        "The nth term is dn + (first term − d): −6n + (40 − (−6)) = −6n + 46.",
+        "Put n = 9 into the nth term: −6 × 9 + 46 = −8."
+      ],
+      ja: [
+        "次の項から前の項を引く：34 − 40 = −6。",
+        "n番目の項は dn + (初項 − d)：−6n + (40 − (−6)) = −6n + 46。",
+        "n番目の項に n = 9 を代入：−6 × 9 + 46 = −8。"
+      ]
+    },
+    explanation: {
+      en: "d = −6, so the nth term is −6n + 46. Putting n = 9 in gives −6 × 9 + 46 = −8.",
+      ja: "d = −6 なので、n番目の項は −6n + 46。n = 9 を代入すると −6 × 9 + 46 = −8。"
+    }
+  },
+  {
+    id: "seq_medium_08",
+    topic: "sequence",
+    equation: "1, 8, 15, 22, ...\nu_11 = ?",
+    answer: "u_11 = 71",
+    difficulty: "medium",
+    type: "find-term",
+    basePoints: 20,
+    steps: [
+      { action: "diff", value: "d = 7", target: "sequence", result: "1, 8, 15, 22, ...\nd = 7\nu_11 = ?",
+        wrong: ["d = -7", "d = 1", "d = 8"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "7n - 6", target: "sequence", result: "u_n = 7n - 6\nu_11 = ?",
+        wrong: ["7n + 1", "n + 7", "7n + 6"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "term", value: "u_11 = 71", target: "sequence", result: "u_11 = 71",
+        wrong: ["u_11 = 64", "u_11 = 78", "u_11 = 77"], wrongKinds: ["offByOne", "offByOne", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 8 − 1 = 7.",
+        "The nth term is dn + (first term − d): 7n + (1 − 7) = 7n − 6.",
+        "Put n = 11 into the nth term: 7 × 11 − 6 = 71."
+      ],
+      ja: [
+        "次の項から前の項を引く：8 − 1 = 7。",
+        "n番目の項は dn + (初項 − d)：7n + (1 − 7) = 7n − 6。",
+        "n番目の項に n = 11 を代入：7 × 11 − 6 = 71。"
+      ]
+    },
+    explanation: {
+      en: "d = 7, so the nth term is 7n − 6. Putting n = 11 in gives 7 × 11 − 6 = 71.",
+      ja: "d = 7 なので、n番目の項は 7n − 6。n = 11 を代入すると 7 × 11 − 6 = 71。"
+    }
+  },
+  {
+    id: "seq_medium_09",
+    topic: "sequence",
+    equation: "12, 7, 2, -3, ...\nu_6 = ?",
+    answer: "u_6 = -13",
+    difficulty: "medium",
+    type: "find-term",
+    basePoints: 20,
+    steps: [
+      { action: "diff", value: "d = -5", target: "sequence", result: "12, 7, 2, -3, ...\nd = -5\nu_6 = ?",
+        wrong: ["d = 5", "d = 12", "d = -4"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "-5n + 17", target: "sequence", result: "u_n = -5n + 17\nu_6 = ?",
+        wrong: ["-5n + 12", "12n - 5", "-5n - 17"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "term", value: "u_6 = -13", target: "sequence", result: "u_6 = -13",
+        wrong: ["u_6 = -8", "u_6 = -18", "u_6 = -30"], wrongKinds: ["offByOne", "offByOne", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 7 − 12 = −5.",
+        "The nth term is dn + (first term − d): −5n + (12 − (−5)) = −5n + 17.",
+        "Put n = 6 into the nth term: −5 × 6 + 17 = −13."
+      ],
+      ja: [
+        "次の項から前の項を引く：7 − 12 = −5。",
+        "n番目の項は dn + (初項 − d)：−5n + (12 − (−5)) = −5n + 17。",
+        "n番目の項に n = 6 を代入：−5 × 6 + 17 = −13。"
+      ]
+    },
+    explanation: {
+      en: "d = −5, so the nth term is −5n + 17. Putting n = 6 in gives −5 × 6 + 17 = −13.",
+      ja: "d = −5 なので、n番目の項は −5n + 17。n = 6 を代入すると −5 × 6 + 17 = −13。"
+    }
+  },
+  {
+    id: "seq_medium_10",
+    topic: "sequence",
+    equation: "25, 22, 19, 16, ...\nu_12 = ?",
+    answer: "u_12 = -8",
+    difficulty: "medium",
+    type: "find-term",
+    basePoints: 20,
+    steps: [
+      { action: "diff", value: "d = -3", target: "sequence", result: "25, 22, 19, 16, ...\nd = -3\nu_12 = ?",
+        wrong: ["d = 3", "d = 25", "d = -2"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "-3n + 28", target: "sequence", result: "u_n = -3n + 28\nu_12 = ?",
+        wrong: ["-3n + 25", "25n - 3", "-3n - 28"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "term", value: "u_12 = -8", target: "sequence", result: "u_12 = -8",
+        wrong: ["u_12 = -5", "u_12 = -11", "u_12 = -36"], wrongKinds: ["offByOne", "offByOne", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 22 − 25 = −3.",
+        "The nth term is dn + (first term − d): −3n + (25 − (−3)) = −3n + 28.",
+        "Put n = 12 into the nth term: −3 × 12 + 28 = −8."
+      ],
+      ja: [
+        "次の項から前の項を引く：22 − 25 = −3。",
+        "n番目の項は dn + (初項 − d)：−3n + (25 − (−3)) = −3n + 28。",
+        "n番目の項に n = 12 を代入：−3 × 12 + 28 = −8。"
+      ]
+    },
+    explanation: {
+      en: "d = −3, so the nth term is −3n + 28. Putting n = 12 in gives −3 × 12 + 28 = −8.",
+      ja: "d = −3 なので、n番目の項は −3n + 28。n = 12 を代入すると −3 × 12 + 28 = −8。"
+    }
+  },
+ 
+  // ---- Hard: find d, the nth term, then which term a number is (n not whole: not in the sequence) ----
+  {
+    id: "seq_hard_01",
+    topic: "sequence",
+    equation: "5, 9, 13, 17, ...\nu_n = 81",
+    answer: "n = 20",
+    difficulty: "hard",
+    type: "which-term",
+    basePoints: 30,
+    steps: [
+      { action: "diff", value: "d = 4", target: "sequence", result: "5, 9, 13, 17, ...\nd = 4\nu_n = 81",
+        wrong: ["d = -4", "d = 5", "d = 3"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "4n + 1", target: "sequence", result: "u_n = 4n + 1\n4n + 1 = 81",
+        wrong: ["4n + 5", "5n + 4", "4n - 1"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "which", value: "n = 20", target: "sequence", result: "n = 20",
+        wrong: ["n = 20.5", "n = 80", "n = 21"], wrongKinds: ["undoSign", "generic", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 9 − 5 = 4.",
+        "The nth term is dn + (first term − d): 4n + (5 − 4) = 4n + 1.",
+        "Solve 4n + 1 = 81: subtract 1, then divide by 4."
+      ],
+      ja: [
+        "次の項から前の項を引く：9 − 5 = 4。",
+        "n番目の項は dn + (初項 − d)：4n + (5 − 4) = 4n + 1。",
+        "4n + 1 = 81 を解く：1を引いてから、4で割る。"
+      ]
+    },
+    explanation: {
+      en: "4n + 1 = 81 gives n = 20. That's a whole number, so 81 is in the sequence: it's term 20.",
+      ja: "4n + 1 = 81 を解くと n = 20。整数なので、81は数列の20番目の項です。"
+    }
+  },
+  {
+    id: "seq_hard_02",
+    topic: "sequence",
+    equation: "3, 9, 15, 21, ...\nu_n = 93",
+    answer: "n = 16",
+    difficulty: "hard",
+    type: "which-term",
+    basePoints: 30,
+    steps: [
+      { action: "diff", value: "d = 6", target: "sequence", result: "3, 9, 15, 21, ...\nd = 6\nu_n = 93",
+        wrong: ["d = -6", "d = 3", "d = 7"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "6n - 3", target: "sequence", result: "u_n = 6n - 3\n6n - 3 = 93",
+        wrong: ["6n + 3", "3n + 6", "6n - 2"], wrongKinds: ["zeroTerm", "swapDn", "generic"] },
+      { action: "which", value: "n = 16", target: "sequence", result: "n = 16",
+        wrong: ["n = 15", "n = 96", "n = 17"], wrongKinds: ["undoSign", "generic", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 9 − 3 = 6.",
+        "The nth term is dn + (first term − d): 6n + (3 − 6) = 6n − 3.",
+        "Solve 6n − 3 = 93: add 3, then divide by 6."
+      ],
+      ja: [
+        "次の項から前の項を引く：9 − 3 = 6。",
+        "n番目の項は dn + (初項 − d)：6n + (3 − 6) = 6n − 3。",
+        "6n − 3 = 93 を解く：3を足してから、6で割る。"
+      ]
+    },
+    explanation: {
+      en: "6n − 3 = 93 gives n = 16. That's a whole number, so 93 is in the sequence: it's term 16.",
+      ja: "6n − 3 = 93 を解くと n = 16。整数なので、93は数列の16番目の項です。"
+    }
+  },
+  {
+    id: "seq_hard_03",
+    topic: "sequence",
+    equation: "50, 47, 44, 41, ...\nu_n = 5",
+    answer: "n = 16",
+    difficulty: "hard",
+    type: "which-term",
+    basePoints: 30,
+    steps: [
+      { action: "diff", value: "d = -3", target: "sequence", result: "50, 47, 44, 41, ...\nd = -3\nu_n = 5",
+        wrong: ["d = 3", "d = 50", "d = -2"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "-3n + 53", target: "sequence", result: "u_n = -3n + 53\n-3n + 53 = 5",
+        wrong: ["-3n + 50", "50n - 3", "-3n - 53"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "which", value: "n = 16", target: "sequence", result: "n = 16",
+        wrong: ["n = -48", "n = 17", "n = 15"], wrongKinds: ["generic", "generic", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 47 − 50 = −3.",
+        "The nth term is dn + (first term − d): −3n + (50 − (−3)) = −3n + 53.",
+        "Solve −3n + 53 = 5: subtract 53, then divide by −3."
+      ],
+      ja: [
+        "次の項から前の項を引く：47 − 50 = −3。",
+        "n番目の項は dn + (初項 − d)：−3n + (50 − (−3)) = −3n + 53。",
+        "−3n + 53 = 5 を解く：53を引いてから、−3で割る。"
+      ]
+    },
+    explanation: {
+      en: "−3n + 53 = 5 gives n = 16. That's a whole number, so 5 is in the sequence: it's term 16.",
+      ja: "−3n + 53 = 5 を解くと n = 16。整数なので、5は数列の16番目の項です。"
+    }
+  },
+  {
+    id: "seq_hard_04",
+    topic: "sequence",
+    equation: "7, 12, 17, 22, ...\nu_n = 102",
+    answer: "n = 20",
+    difficulty: "hard",
+    type: "which-term",
+    basePoints: 30,
+    steps: [
+      { action: "diff", value: "d = 5", target: "sequence", result: "7, 12, 17, 22, ...\nd = 5\nu_n = 102",
+        wrong: ["d = -5", "d = 7", "d = 6"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "5n + 2", target: "sequence", result: "u_n = 5n + 2\n5n + 2 = 102",
+        wrong: ["5n + 7", "7n + 5", "5n - 2"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "which", value: "n = 20", target: "sequence", result: "n = 20",
+        wrong: ["n = 20.8", "n = 100", "n = 21"], wrongKinds: ["undoSign", "generic", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 12 − 7 = 5.",
+        "The nth term is dn + (first term − d): 5n + (7 − 5) = 5n + 2.",
+        "Solve 5n + 2 = 102: subtract 2, then divide by 5."
+      ],
+      ja: [
+        "次の項から前の項を引く：12 − 7 = 5。",
+        "n番目の項は dn + (初項 − d)：5n + (7 − 5) = 5n + 2。",
+        "5n + 2 = 102 を解く：2を引いてから、5で割る。"
+      ]
+    },
+    explanation: {
+      en: "5n + 2 = 102 gives n = 20. That's a whole number, so 102 is in the sequence: it's term 20.",
+      ja: "5n + 2 = 102 を解くと n = 20。整数なので、102は数列の20番目の項です。"
+    }
+  },
+  {
+    id: "seq_hard_05",
+    topic: "sequence",
+    equation: "2, 5, 8, 11, ...\nu_n = 50",
+    answer: "n = 17",
+    difficulty: "hard",
+    type: "which-term",
+    basePoints: 30,
+    steps: [
+      { action: "diff", value: "d = 3", target: "sequence", result: "2, 5, 8, 11, ...\nd = 3\nu_n = 50",
+        wrong: ["d = -3", "d = 2", "d = 4"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "3n - 1", target: "sequence", result: "u_n = 3n - 1\n3n - 1 = 50",
+        wrong: ["3n + 2", "2n + 3", "3n + 1"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "which", value: "n = 17", target: "sequence", result: "n = 17",
+        wrong: ["n = 51", "n = 18", "n = 16"], wrongKinds: ["generic", "generic", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 5 − 2 = 3.",
+        "The nth term is dn + (first term − d): 3n + (2 − 3) = 3n − 1.",
+        "Solve 3n − 1 = 50: add 1, then divide by 3."
+      ],
+      ja: [
+        "次の項から前の項を引く：5 − 2 = 3。",
+        "n番目の項は dn + (初項 − d)：3n + (2 − 3) = 3n − 1。",
+        "3n − 1 = 50 を解く：1を足してから、3で割る。"
+      ]
+    },
+    explanation: {
+      en: "3n − 1 = 50 gives n = 17. That's a whole number, so 50 is in the sequence: it's term 17.",
+      ja: "3n − 1 = 50 を解くと n = 17。整数なので、50は数列の17番目の項です。"
+    }
+  },
+  {
+    id: "seq_hard_06",
+    topic: "sequence",
+    equation: "60, 56, 52, 48, ...\nu_n = 12",
+    answer: "n = 13",
+    difficulty: "hard",
+    type: "which-term",
+    basePoints: 30,
+    steps: [
+      { action: "diff", value: "d = -4", target: "sequence", result: "60, 56, 52, 48, ...\nd = -4\nu_n = 12",
+        wrong: ["d = 4", "d = 60", "d = -3"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "-4n + 64", target: "sequence", result: "u_n = -4n + 64\n-4n + 64 = 12",
+        wrong: ["-4n + 60", "60n - 4", "-4n - 64"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "which", value: "n = 13", target: "sequence", result: "n = 13",
+        wrong: ["n = -19", "n = -52", "n = 14"], wrongKinds: ["undoSign", "generic", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 56 − 60 = −4.",
+        "The nth term is dn + (first term − d): −4n + (60 − (−4)) = −4n + 64.",
+        "Solve −4n + 64 = 12: subtract 64, then divide by −4."
+      ],
+      ja: [
+        "次の項から前の項を引く：56 − 60 = −4。",
+        "n番目の項は dn + (初項 − d)：−4n + (60 − (−4)) = −4n + 64。",
+        "−4n + 64 = 12 を解く：64を引いてから、−4で割る。"
+      ]
+    },
+    explanation: {
+      en: "−4n + 64 = 12 gives n = 13. That's a whole number, so 12 is in the sequence: it's term 13.",
+      ja: "−4n + 64 = 12 を解くと n = 13。整数なので、12は数列の13番目の項です。"
+    }
+  },
+  {
+    id: "seq_hard_07",
+    topic: "sequence",
+    equation: "9, 16, 23, 30, ...\nu_n = 100",
+    answer: "n = 14",
+    difficulty: "hard",
+    type: "which-term",
+    basePoints: 30,
+    steps: [
+      { action: "diff", value: "d = 7", target: "sequence", result: "9, 16, 23, 30, ...\nd = 7\nu_n = 100",
+        wrong: ["d = -7", "d = 9", "d = 8"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "7n + 2", target: "sequence", result: "u_n = 7n + 2\n7n + 2 = 100",
+        wrong: ["7n + 9", "9n + 7", "7n - 2"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "which", value: "n = 14", target: "sequence", result: "n = 14",
+        wrong: ["n = 98", "n = 15", "n = 13"], wrongKinds: ["generic", "generic", "generic"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 16 − 9 = 7.",
+        "The nth term is dn + (first term − d): 7n + (9 − 7) = 7n + 2.",
+        "Solve 7n + 2 = 100: subtract 2, then divide by 7."
+      ],
+      ja: [
+        "次の項から前の項を引く：16 − 9 = 7。",
+        "n番目の項は dn + (初項 − d)：7n + (9 − 7) = 7n + 2。",
+        "7n + 2 = 100 を解く：2を引いてから、7で割る。"
+      ]
+    },
+    explanation: {
+      en: "7n + 2 = 100 gives n = 14. That's a whole number, so 100 is in the sequence: it's term 14.",
+      ja: "7n + 2 = 100 を解くと n = 14。整数なので、100は数列の14番目の項です。"
+    }
+  },
+  {
+    id: "seq_hard_08",
+    topic: "sequence",
+    equation: "5, 9, 13, 17, ...\nu_n = 50",
+    answer: "n = 12.25",
+    difficulty: "hard",
+    type: "which-term",
+    basePoints: 30,
+    steps: [
+      { action: "diff", value: "d = 4", target: "sequence", result: "5, 9, 13, 17, ...\nd = 4\nu_n = 50",
+        wrong: ["d = -4", "d = 5", "d = 3"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "4n + 1", target: "sequence", result: "u_n = 4n + 1\n4n + 1 = 50",
+        wrong: ["4n + 5", "5n + 4", "4n - 1"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "which", value: "n = 12.25", target: "sequence", result: "n = 12.25",
+        wrong: ["n = 12", "n = 13", "n = 12.75"], wrongKinds: ["notWhole", "notWhole", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 9 − 5 = 4.",
+        "The nth term is dn + (first term − d): 4n + (5 − 4) = 4n + 1.",
+        "Solve 4n + 1 = 50: subtract 1, then divide by 4."
+      ],
+      ja: [
+        "次の項から前の項を引く：9 − 5 = 4。",
+        "n番目の項は dn + (初項 − d)：4n + (5 − 4) = 4n + 1。",
+        "4n + 1 = 50 を解く：1を引いてから、4で割る。"
+      ]
+    },
+    explanation: {
+      en: "4n + 1 = 50 gives n = 12.25. That's not a whole number, so 50 is not in the sequence.",
+      ja: "4n + 1 = 50 を解くと n = 12.25。整数ではないので、50はこの数列の項ではありません。"
+    }
+  },
+  {
+    id: "seq_hard_09",
+    topic: "sequence",
+    equation: "4, 9, 14, 19, ...\nu_n = 40",
+    answer: "n = 8.2",
+    difficulty: "hard",
+    type: "which-term",
+    basePoints: 30,
+    steps: [
+      { action: "diff", value: "d = 5", target: "sequence", result: "4, 9, 14, 19, ...\nd = 5\nu_n = 40",
+        wrong: ["d = -5", "d = 4", "d = 6"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "5n - 1", target: "sequence", result: "u_n = 5n - 1\n5n - 1 = 40",
+        wrong: ["5n + 4", "4n + 5", "5n + 1"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "which", value: "n = 8.2", target: "sequence", result: "n = 8.2",
+        wrong: ["n = 8", "n = 9", "n = 7.8"], wrongKinds: ["notWhole", "notWhole", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 9 − 4 = 5.",
+        "The nth term is dn + (first term − d): 5n + (4 − 5) = 5n − 1.",
+        "Solve 5n − 1 = 40: add 1, then divide by 5."
+      ],
+      ja: [
+        "次の項から前の項を引く：9 − 4 = 5。",
+        "n番目の項は dn + (初項 − d)：5n + (4 − 5) = 5n − 1。",
+        "5n − 1 = 40 を解く：1を足してから、5で割る。"
+      ]
+    },
+    explanation: {
+      en: "5n − 1 = 40 gives n = 8.2. That's not a whole number, so 40 is not in the sequence.",
+      ja: "5n − 1 = 40 を解くと n = 8.2。整数ではないので、40はこの数列の項ではありません。"
+    }
+  },
+  {
+    id: "seq_hard_10",
+    topic: "sequence",
+    equation: "30, 26, 22, 18, ...\nu_n = 0",
+    answer: "n = 8.5",
+    difficulty: "hard",
+    type: "which-term",
+    basePoints: 30,
+    steps: [
+      { action: "diff", value: "d = -4", target: "sequence", result: "30, 26, 22, 18, ...\nd = -4\nu_n = 0",
+        wrong: ["d = 4", "d = 30", "d = -3"], wrongKinds: ["diffSign", "diffFirst", "generic"] },
+      { action: "nth", value: "-4n + 34", target: "sequence", result: "u_n = -4n + 34\n-4n + 34 = 0",
+        wrong: ["-4n + 30", "30n - 4", "-4n - 34"], wrongKinds: ["zeroTerm", "swapDn", "nthSign"] },
+      { action: "which", value: "n = 8.5", target: "sequence", result: "n = 8.5",
+        wrong: ["n = 8", "n = 9", "n = -8.5"], wrongKinds: ["notWhole", "notWhole", "undoSign"] }
+    ],
+    hints: {
+      en: [
+        "Subtract one term from the next: 26 − 30 = −4.",
+        "The nth term is dn + (first term − d): −4n + (30 − (−4)) = −4n + 34.",
+        "Solve −4n + 34 = 0: subtract 34, then divide by −4."
+      ],
+      ja: [
+        "次の項から前の項を引く：26 − 30 = −4。",
+        "n番目の項は dn + (初項 − d)：−4n + (30 − (−4)) = −4n + 34。",
+        "−4n + 34 = 0 を解く：34を引いてから、−4で割る。"
+      ]
+    },
+    explanation: {
+      en: "−4n + 34 = 0 gives n = 8.5. That's not a whole number, so 0 is not in the sequence.",
+      ja: "−4n + 34 = 0 を解くと n = 8.5。整数ではないので、0はこの数列の項ではありません。"
+    }
   }
 ];
 
@@ -11190,6 +12162,28 @@ const TIER_TIPS = {
       move: { en: "m = 2, then 1 = 2 × (-1) + c", ja: "m = 2、次に 1 = 2 × (-1) + c" },
       to: "y = 2x + 3"
     }
+  },
+  sequence_medium: {
+    text: {
+      en: "Now find a term far along the sequence. No need to list them all: put n into your nth term.",
+      ja: "今度は、ずっと先の項を求めよう。全部書き出さなくても、n番目の項の式に n を代入すればいいよ。"
+    },
+    demo: {
+      from: "u_n = 4n - 1\nu_10 = ?",
+      move: { en: "Put n = 10 in: 4 × 10 - 1", ja: "n = 10 を代入：4 × 10 - 1" },
+      to: "u_10 = 39"
+    }
+  },
+  sequence_hard: {
+    text: {
+      en: "Is a number in the sequence? Set the nth term equal to it and solve for n. A whole number means yes; a decimal means it isn't in the sequence!",
+      ja: "その数は数列の項かな？n番目の項の式をその数と等しくおいて、n を求めよう。整数なら項になっていて、小数なら項ではないよ！"
+    },
+    demo: {
+      from: "4n + 1 = 81",
+      move: { en: "Subtract 1, then divide by 4", ja: "1を引いてから、4で割る" },
+      to: "n = 20"
+    }
   }
 };
 
@@ -11211,7 +12205,8 @@ const TOPIC_NAMES = {
   factorise:  { en: "Expand & factorise", ja: "展開と因数分解" },
   indices:    { en: "Indices",      ja: "指数法則" },
   roots:      { en: "Completing the square", ja: "平方完成" },
-  line:       { en: "Straight lines", ja: "直線のグラフ" }
+  line:       { en: "Straight lines", ja: "直線のグラフ" },
+  sequence:   { en: "Sequences",    ja: "数列" }
 };
 
 // One template per per-topic achievement type. {topic} = topic name, {n} = level or star count.
