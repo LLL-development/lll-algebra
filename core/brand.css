@@ -14,7 +14,7 @@
   --border: #e3ddd0;
   --accent: #b5461c;       /* chalk-rust — the "active/selected" color */
   --accent-tint: #f4e3d8;
-  --correct: #3f7a5c;      /* chalk-green — balanced/correct */
+  --correct: #3f7a5c;      /* chalk-green — correct */
   --correct-tint: #e2efe8;
   --wrong: #b5461c;
   --on-accent: #ffffff;

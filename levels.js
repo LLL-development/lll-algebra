@@ -1,8 +1,9 @@
 // LLL Algebra — level data
 // Mirrors lll-chem's LEVELS pattern: fully data-driven, so adding a new
-// equation is just a new entry here, not new app logic.
+// level is just a new entry here, not new app logic.
+// For the workflow (adding levels or a whole topic), see docs/adding-content.md.
 //
-// Action vocabulary (v1, keep to 4 + 2 x-term variants):
+// Action vocabulary:
 //   "add"         — add `value` to both sides
 //   "subtract"    — subtract `value` from both sides
 //   "multiply"    — multiply both sides by `value`
