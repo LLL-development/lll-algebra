@@ -69,7 +69,7 @@ This is `seq_easy_01`, with comments added:
 2. **New mistake kind?** If a wrong option doesn't fit any existing kind for that topic,
    add one (see [Mistake kinds](#mistake-kinds)). Otherwise reuse an existing kind, or use
    `"generic"` for plain arithmetic slips (not tracked by Tricky spots).
-3. **Test** (see [Testing](#testing)).
+3. **Check and test**: run `npm run check`, then test in the browser (see [Testing](#testing)).
 
 The level count on the topic card, the per-topic achievements ("Clear all 30 levels"),
 Mixed Review and the daily challenge all update automatically.
@@ -130,9 +130,11 @@ Reuse a kind from another topic when the mistake really is the same (e.g. `signS
 
 ## Rules that apply everywhere
 
-- **Button length: 16 characters max** (18 for quadratic-formula options). Longer labels
-  wrap or overflow on a narrow phone. `isLongChoice()` in `choices.js` measures labels the
-  same way the UI does.
+- **Button length: 16 characters** (18 for quadratic-formula options). Over 16, a label
+  drops to a smaller size on narrow phones; over 18, it doesn't fit a 344px phone at all.
+  `isLongChoice()` in `choices.js` measures labels the way the UI does (a `^` doesn't count,
+  and a `{top}/{bottom}` fraction counts as its wider half). `npm run check` warns about
+  the first and fails on the second.
 - **No Japanese on the card.** The pixel font has no Japanese characters, so card text
   (`equation`, `result`) must be maths only. Words go in prompts, hints and explanations.
 - **Avoid the letters `l`, `I` and `O`** in expressions. In the pixel font they look like
@@ -147,6 +149,33 @@ Reuse a kind from another topic when the mistake really is the same (e.g. `signS
 - **Each tier's level 1 is unlocked from the start**, by design.
 
 ## Testing
+
+### Check the level data
+
+Data mistakes are easy to miss by eye, so run the level check first:
+
+```
+npm run check
+```
+
+It loads `levels.js` and checks every level:
+
+- no duplicate `id`s
+- `hints.en` and `hints.ja` each have one hint per step
+- `wrong` has exactly 3 options, all different, none equal to the answer
+- `wrongKinds` (when present) has one kind per `wrong` option
+- `traps` has 3 different numbers, none equal to the answer
+- `moves` has 3 different moves, none the same as the correct move, each with a `kind`
+- button lengths (see [Rules that apply everywhere](#rules-that-apply-everywhere))
+
+**Errors** fail the check (exit code 1) and must be fixed. **Warnings** still pass: they
+flag labels over 16 characters that will be shown smaller on narrow phones. The script is
+`scripts/check-levels.mjs`; add a check there if you find a new kind of slip worth catching.
+
+The check can't tell whether a wrong option is secretly right, or whether the maths in a
+`result` is correct, so the browser test below still matters.
+
+### Test in the browser
 
 Run it locally (`npm run dev`) and check:
 
@@ -172,7 +201,3 @@ location.reload();
 
 To start again from a clean slate, use **Settings → Reset progress**, or run
 `localStorage.removeItem("lll_algebra_progress")`.
-
-Data mistakes are easy to miss by eye. For a large batch of levels, a quick Node script
-that loads `levels.js` and checks each answer, `wrong`/`wrongKinds` lengths and button
-lengths is worth writing.

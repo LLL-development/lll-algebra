@@ -1,8 +1,10 @@
 {
   "name": "lll-algebra",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "serve ."
+    "dev": "serve .",
+    "check": "node scripts/check-levels.mjs"
   },
   "devDependencies": {
     "serve": "^14.2.6"
