@@ -1,0 +1,19 @@
+name: Check levels
+
+# Runs the level data check (npm run check) on every pull request into main,
+# so authoring slips in levels.js are caught before merging.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # No npm install needed: the check only loads levels.js and choices.js
+      - run: npm run check
