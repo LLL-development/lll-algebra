@@ -78,7 +78,7 @@ mathtext.js     Formats maths text (superscripts, subscripts, minus signs)
 graph.js        Number-line and coordinate graph drawing
 effects.js      Confetti and other visual effects
 sound.js        Sound effects (Web Audio API) and the sound setting
-core/           Shared LLL utilities: theme, i18n, brand styling, logo
+core/           Shared LLL utilities: theme, i18n, brand styling, logo, fonts
 docs/           Developer notes
 ```
 
@@ -94,6 +94,7 @@ Merges to `main` deploy automatically to Cloudflare Pages via
 - Plain HTML, CSS and JavaScript (ES modules), no framework or build step
 - Shared `core/` utilities (theme, i18n, brand styling) consistent with other LLL tools
 - Progress stored in `localStorage`; nothing is sent to a server
+- Fonts are self-hosted in `core/vendor/fonts/` (no Google Fonts or CDN calls)
 
 ## License
 

@@ -1,0 +1,111 @@
+{
+  "updatePolicy": "Use fixed @fontsource releases from npm, keep only the families, weights and subsets the app uses, preserve each LICENSE, record tarball integrity and per-file SHA256, then check the game renders the same in a real browser.",
+  "replaces": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Press+Start+2P&display=swap",
+  "packages": [
+    {
+      "name": "@fontsource/space-grotesk",
+      "family": "Space Grotesk",
+      "version": "5.3.0",
+      "weights": [
+        600,
+        700
+      ],
+      "subsets": [
+        "latin",
+        "latin-ext"
+      ],
+      "license": "OFL-1.1",
+      "tarball": "https://registry.npmjs.org/@fontsource/space-grotesk/-/space-grotesk-5.3.0.tgz",
+      "integrity": "sha512-ksnGizDPXIDuvqcTYTSrmZ+evx9sDlS8rp7+42BQ7wU+spt3twEoXfbJz672C+5CLg6VeUQwRy5RXshWb67LcQ==",
+      "files": [
+        {
+          "path": "space-grotesk/LICENSE",
+          "sha256": "18a4de52385f6b988782639d5d0cc1326e5a8c2de9a7f01d7b20d9aedcc60943"
+        },
+        {
+          "path": "space-grotesk/space-grotesk-latin-ext-600-normal.woff2",
+          "sha256": "0bdc872e2806e0eb2ecca08221ea0b49d36efd9b9239a5744b81afbc0376e9cf"
+        },
+        {
+          "path": "space-grotesk/space-grotesk-latin-600-normal.woff2",
+          "sha256": "685bbbf69fa616df1ef81847c85fc76be097ddfb3468ff2257be54511ab3130f"
+        },
+        {
+          "path": "space-grotesk/space-grotesk-latin-ext-700-normal.woff2",
+          "sha256": "7ce350b706d79c955ebf91314295f39fa82999f980b7e9beee743c2f3580a15e"
+        },
+        {
+          "path": "space-grotesk/space-grotesk-latin-700-normal.woff2",
+          "sha256": "35f8aec56cfd5cbfdb03cc68733a54a0b05bb3617ffcd5fd332badc0b045ca55"
+        }
+      ]
+    },
+    {
+      "name": "@fontsource/ibm-plex-mono",
+      "family": "IBM Plex Mono",
+      "version": "5.3.0",
+      "weights": [
+        500,
+        600
+      ],
+      "subsets": [
+        "latin",
+        "latin-ext"
+      ],
+      "license": "OFL-1.1",
+      "tarball": "https://registry.npmjs.org/@fontsource/ibm-plex-mono/-/ibm-plex-mono-5.3.0.tgz",
+      "integrity": "sha512-eTgnZjZEGk1QtD3ZstF+Vclo2HLAni8YMy34/DxllwZvyz1lR/1RF/xTiAquOBO7MvqBx8D2Ig2WCPMVfdZu7Q==",
+      "files": [
+        {
+          "path": "ibm-plex-mono/LICENSE",
+          "sha256": "23b0a9d0c6d3f140a0b77e483c5cfa6bba574325ef5cb189ed9f2fec4884533f"
+        },
+        {
+          "path": "ibm-plex-mono/ibm-plex-mono-latin-ext-500-normal.woff2",
+          "sha256": "6bb06407c97584b0867a959e05e8874693bfeb8c317de190811c51598f2d99ea"
+        },
+        {
+          "path": "ibm-plex-mono/ibm-plex-mono-latin-500-normal.woff2",
+          "sha256": "01d285447409c8a588692162439a038b8cbd7871309ee20267b0d2d91c6e8e22"
+        },
+        {
+          "path": "ibm-plex-mono/ibm-plex-mono-latin-ext-600-normal.woff2",
+          "sha256": "32057cf50dd14bdb21a2c93766c4a2c43e4abe688ea3922df3203cac7751a98b"
+        },
+        {
+          "path": "ibm-plex-mono/ibm-plex-mono-latin-600-normal.woff2",
+          "sha256": "0d1f0b8d0722224e32e9f28261bdc86c79115be73444ae5eceb73976a1bcdf83"
+        }
+      ]
+    },
+    {
+      "name": "@fontsource/press-start-2p",
+      "family": "Press Start 2P",
+      "version": "5.3.0",
+      "weights": [
+        400
+      ],
+      "subsets": [
+        "latin",
+        "latin-ext"
+      ],
+      "license": "OFL-1.1",
+      "tarball": "https://registry.npmjs.org/@fontsource/press-start-2p/-/press-start-2p-5.3.0.tgz",
+      "integrity": "sha512-gxWFxdeDglPhEYSwEeooomcaFK8kSQYLQwVxfnOJeYRj2sPEHXjpVtFgEaYfqzOjuAJGrIcJOipu2KY5YkbyuQ==",
+      "files": [
+        {
+          "path": "press-start-2p/LICENSE",
+          "sha256": "98e451fe911e5ee4a1a45359535dc30ea7df28b8d9a9cd1f741778efab1387ee"
+        },
+        {
+          "path": "press-start-2p/press-start-2p-latin-ext-400-normal.woff2",
+          "sha256": "3c7df3a15e173b8fa04ec9191171e72c314ddbac1b395e2b2e2092bb4f47cc8c"
+        },
+        {
+          "path": "press-start-2p/press-start-2p-latin-400-normal.woff2",
+          "sha256": "afec86997fdaf54af1f59358fa2c1e2a0f1d04146edad18e5cd141d0384a7548"
+        }
+      ]
+    }
+  ]
+}
