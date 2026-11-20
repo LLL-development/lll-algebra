@@ -6,7 +6,7 @@ A free, gamified algebra game. Solve each problem one step at a time by picking 
 right move, with instant feedback from Chalky, your chalk-stick companion. No account
 required — progress is saved locally in your browser.
 
-**Live:** https://lll-algebra.pages.dev/
+**Live:** https://lll-algebra.pages.dev/ · **Trailer:** https://youtu.be/KKyUqd1WhtI
 
 Part of the LLL Series OSS — open-source tools built from scratch.
 
@@ -65,6 +65,13 @@ This serves the folder with [`serve`](https://www.npmjs.com/package/serve). Open
 it prints (usually http://localhost:3000). Opening `index.html` directly from the file
 system won't work, because the scripts are ES modules.
 
+To check the level data for mistakes (duplicate ids, missing hints, wrong options that
+match the answer, buttons too long for narrow phones), run:
+
+```bash
+npm run check
+```
+
 ## Project structure
 
 ```
@@ -80,6 +87,7 @@ effects.js      Confetti and other visual effects
 sound.js        Sound effects (Web Audio API) and the sound setting
 core/           Shared LLL utilities: theme, i18n, brand styling, logo, fonts
 docs/           Developer notes
+scripts/        Developer scripts (check-levels.mjs, run by `npm run check`)
 ```
 
 To add levels or a new topic, see [docs/adding-content.md](docs/adding-content.md).
@@ -87,7 +95,18 @@ To add levels or a new topic, see [docs/adding-content.md](docs/adding-content.m
 ## Deployment
 
 Merges to `main` deploy automatically to Cloudflare Pages via
-`.github/workflows/deploy.yml`.
+`.github/workflows/deploy.yml`. It can also be run by hand from the Actions tab
+(Deploy to Cloudflare Pages → Run workflow). It needs two repository secrets:
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+
+Other workflows:
+
+| Workflow | File | What it does |
+|---|---|---|
+| Check levels | `check-levels.yml` | Runs `npm run check` on every pull request into `main` (or by hand); a failure means a level data error to fix before merging |
+| PR Drift Check | `pr-drift-check.yml` | Sends each pull request to LLL's internal review gateway, which posts an automated review comment; comment `/drift` or `/qc` on the PR to send feedback. Non-blocking; needs the `PR_REVIEW_SECRET` secret |
+| CodeQL | none (GitHub default setup) | Code scanning for security issues, managed in Settings → Code security |
+| Dependabot Updates | none (GitHub-managed) | Opens pull requests for dependency updates, managed in Settings → Code security |
 
 ## Tech
 
@@ -95,6 +114,17 @@ Merges to `main` deploy automatically to Cloudflare Pages via
 - Shared `core/` utilities (theme, i18n, brand styling) consistent with other LLL tools
 - Progress stored in `localStorage`; nothing is sent to a server
 - Fonts are self-hosted in `core/vendor/fonts/` (no Google Fonts or CDN calls)
+- English and Japanese only for now. Other LLL tools also support 简体中文, 繁體中文,
+  한국어 and Bahasa Melayu. Adding a language means adding it to `LANGS` in
+  `core/i18n.js`, adding its UI text in `strings.js`, and translating every level's
+  `hints` and `explanation` in `levels.js`
+
+## Contributing
+
+- Branch from `main` as `feature/YYMMDD_description` (e.g. `feature/261120_readme_handover_docs`)
+- Open a pull request into `main` with a Summary / Why / Changes / Testing description
+- The Check levels workflow must pass before merging; run `npm run check` locally first
+- Merging to `main` deploys to the live site, so test locally before asking for review
 
 ## License
 
