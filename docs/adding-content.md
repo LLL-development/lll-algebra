@@ -168,6 +168,9 @@ It loads `levels.js` and checks every level:
 - `moves` has 3 different moves, none the same as the correct move, each with a `kind`
 - button lengths (see [Rules that apply everywhere](#rules-that-apply-everywhere))
 
+The same check runs automatically on every pull request into `main` (the Check levels
+workflow), so a data error will also show as a failed check on the PR.
+
 **Errors** fail the check (exit code 1) and must be fixed. **Warnings** still pass: they
 flag labels over 16 characters that will be shown smaller on narrow phones. The script is
 `scripts/check-levels.mjs`; add a check there if you find a new kind of slip worth catching.
