@@ -1057,6 +1057,10 @@ body:has(.intro-overlay.show) { overflow: hidden; }
 .complete-btn.primary:hover { opacity: .9; }
 .complete-btn.secondary { color: var(--ink); background: transparent; border: 1px solid var(--border); }
 .complete-btn.secondary:hover { border-color: var(--accent); }
+/* Share (📤): Today's Challenge now, Endless results later. Accent-tinted like "Show me", so it stands
+   out from Home / Level select without competing with the solid primary button */
+.complete-btn.share-btn { color: var(--accent); background: var(--accent-tint); border: 1.5px solid var(--accent); }
+.complete-btn.share-btn:hover { color: var(--on-accent); background: var(--accent); }
 
 /* ---------- Mixed Review summary (inside the complete card) ---------- */
 /* Up to 5 topic rows + nudge can make the card tall — let it scroll on short screens */
