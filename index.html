@@ -60,6 +60,7 @@
     <p class="complete-explanation" id="completeExplanation" hidden></p>
     <div class="complete-actions">
       <button class="complete-btn primary" id="completePrimaryBtn"></button>
+      <button class="complete-btn share-btn" id="completeShareBtn" data-i18n-aria="shareAria" hidden></button>
       <div class="complete-secondary">
         <button class="complete-btn secondary" id="completeRetryBtn"></button>
         <button class="complete-btn secondary" id="completeLevelsBtn"></button>
@@ -474,6 +475,7 @@
   import { BUDDY_SVG, CHALKY_IDLES, buddyLine, makeBuddy } from "./chalky.js";
   import { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors, practiceKinds, isLongChoice } from "./choices.js";
   import { initFloatingSymbols, burstGrandConfetti } from "./effects.js";
+  import { dailyShareText, makeDailyCard, shareCard } from "./share.js";
 
   // ---------- i18n ----------
   // Redoes everything a language switch doesn't reach through data-i18n.
@@ -610,6 +612,7 @@
   const $replayTryBtn = document.getElementById("replayTryBtn");
   const $replayLevelsBtn = document.getElementById("replayLevelsBtn");
   const $completeWatchBtn = document.getElementById("completeWatchBtn");
+  const $completeShareBtn = document.getElementById("completeShareBtn");
   const $trickyCard = document.getElementById("trickyCard");
   const $trickyRows = document.getElementById("trickyRows");
   const $trickyBanner = document.getElementById("trickyBanner");
@@ -1749,6 +1752,10 @@
   }
 
   let completeActions = {};
+  // 📤 Share card picture: drawn when the complete card opens, so it's ready before the tap
+  let shareJob = 0;          // goes up each time the card opens, so a slow drawing for an older card is dropped
+  let shareBlob = null;      // the ready PNG for the card that's open
+  let sharePending = null;   // its drawing, in case Share is tapped before it's finished
 
   function showCompleteOverlay(r) {
     if (location.hash !== r.hash) return; // player already navigated away
@@ -1816,6 +1823,19 @@
     $completeRetryBtn.parentElement.hidden = $completeRetryBtn.hidden && $completeLevelsBtn.hidden;
     $completeWatchBtn.textContent = t("completeWatchBtn") || "See how it's solved";
     $completeWatchBtn.hidden = r.daily;
+    // 📤 Share: Today's Challenge only for now (Endless results will reuse share.js).
+    // The text is built at tap time, so it follows a language switch and today's streak.
+    $completeShareBtn.textContent = t("shareBtn") || "📤 Share";
+    $completeShareBtn.hidden = !r.daily;
+    completeActions.shareText = r.daily
+      ? () => dailyShareText({ topicName: t(TOPIC_LABEL_KEYS[r.level.topic]), streak: dailyStreak })
+      : null;
+    const job = ++shareJob;
+    shareBlob = null;
+    sharePending = r.daily
+      ? makeDailyCard({ equation: r.level.equation, topicName: t(TOPIC_LABEL_KEYS[r.level.topic]), tierName, streak: dailyStreak })
+          .then(blob => { if (job === shareJob) shareBlob = blob; return blob; }, () => null)
+      : null;
 
     // Press Start 2P has no Japanese glyphs — use it only for ASCII titles.
     $completeKicker.classList.toggle("pixel", /^[\x20-\x7E]*$/.test($completeKicker.textContent));
@@ -1837,12 +1857,25 @@
     else if (r.streakBonus) sfx.streak();   // the fanfare already covers the big moments
   }
 
-  function hideCompleteOverlay() { $completeOverlay.hidden = true; completeBuddy.stop(); clearSystemGraph(); clearNumberLine(); }
+  // Also hides 📤, so the Mixed Review / Tricky spots summaries (always opened via a route) never show it
+  function hideCompleteOverlay() { $completeOverlay.hidden = true; $completeShareBtn.hidden = true; completeBuddy.stop(); clearSystemGraph(); clearNumberLine(); }
 
   $completePrimaryBtn.addEventListener("click", () => completeActions.primary && completeActions.primary());
   $completeRetryBtn.addEventListener("click", () => completeActions.retry && completeActions.retry());
   $completeLevelsBtn.addEventListener("click", () => completeActions.levels && completeActions.levels());
   $completeWatchBtn.addEventListener("click", () => completeActions.watch && completeActions.watch());
+  // Uses the picture drawn when the card opened, with no await before shareCard(), so the share sheet / clipboard
+  // still count as part of the tap. Only if the picture isn't ready yet does it wait (rare; on a phone that wait can
+  // cost the tap, and shareCard() then falls back to the text). Closing the share sheet gets no reaction from Chalky.
+  const SHARE_LINES = { shared: "chalkyShared", copiedImage: "chalkyImageCopied", saved: "chalkySaved", copied: "chalkyCopied", failed: "chalkyShareFailed" };
+  $completeShareBtn.addEventListener("click", async () => {
+    if (!completeActions.shareText) return;
+    const job = shareJob;
+    const blob = shareBlob || (sharePending ? await sharePending : null);
+    const outcome = await shareCard({ blob, text: completeActions.shareText() });
+    if (outcome === "cancelled" || $completeOverlay.hidden || job !== shareJob) return;
+    completeChalky(outcome === "failed" ? "oops" : "happy", SHARE_LINES[outcome]);
+  });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !$completeOverlay.hidden && completeActions.escape) completeActions.escape();
   });
