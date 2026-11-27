@@ -1576,6 +1576,158 @@ body:has(.settings-overlay:not([hidden])) { overflow: hidden; }
   .tricky-btn { transition: none !important; }
 }
 
+/* ---------- Endless (Chalky's Lair) ----------
+   The volcanic Home card, the red session banner with the pixel hearts, and the hearts breaking.
+   Fixed lava colours instead of theme variables, so the lair looks the same in light and dark. */
+.tricky-card.endless-card:not([hidden]) {
+  position: relative; overflow: hidden; isolation: isolate;
+  background: linear-gradient(160deg, #240808 0%, #4a1010 55%, #7a200c 100%);
+  border: 1.5px solid #ff6a2b;
+  box-shadow: 0 0 0 1px rgba(255, 106, 43, .2), 0 0 16px rgba(255, 90, 30, .3);
+  animation: lairGlow 2.4s ease-in-out infinite alternate;
+}
+/* Embers drifting up (two layers at different speeds) and lava glowing along the bottom edge */
+.endless-card::before,
+.endless-card::after { content: ""; position: absolute; left: 0; right: 0; pointer-events: none; z-index: -1; }
+.endless-card::before {
+  top: 0; bottom: 0;
+  background-image:
+    radial-gradient(circle, #ffb347 0 1.5px, transparent 2px),
+    radial-gradient(circle, #ff6a2b 0 1px, transparent 1.5px);
+  background-size: 90px 120px, 140px 170px;
+  background-position: 10px 0, 60px 30px;
+  opacity: .7;
+  animation: lairEmbers 6s linear infinite;
+}
+.endless-card::after {
+  bottom: 0; height: 45%;
+  background: linear-gradient(to top, rgba(255, 90, 20, .4), transparent);
+  animation: lairLava 1.6s ease-in-out infinite alternate;
+}
+.endless-card .daily-card-title { color: #ffe2c2; }
+.endless-card .daily-card-status { color: #f0a98a; }
+.endless-card .tricky-row { border-top-color: rgba(255, 140, 90, .25); }
+.endless-card .tricky-row-label { color: #ffe2c2; }
+.endless-card .tricky-row-count { color: #f0a98a; }
+.endless-card .tricky-btn { color: #ffd9b0; border-color: rgba(255, 140, 90, .55); }
+.endless-card .tricky-btn:hover:not(:disabled) { border-color: #ff8a4a; background: rgba(255, 106, 43, .15); }
+/* "Take on Chalky" is the hot button */
+.endless-card .tricky-btn.top { color: #2a0a0a; background: #ff5a1f; border-color: #ff8a4a; }
+.endless-card .tricky-btn.top:hover:not(:disabled) { color: #2a0a0a; background: #ff7a3a; }
+.endless-card .tricky-btn:disabled { color: rgba(255, 217, 176, .55); background: transparent; border-color: rgba(255, 140, 90, .35); }
+@keyframes lairGlow {
+  from { box-shadow: 0 0 0 1px rgba(255, 106, 43, .2), 0 0 10px rgba(255, 90, 30, .2); }
+  to   { box-shadow: 0 0 0 1px rgba(255, 106, 43, .35), 0 0 22px rgba(255, 90, 30, .45); }
+}
+@keyframes lairEmbers {
+  from { background-position: 10px 0, 60px 30px; }
+  to   { background-position: 10px -120px, 60px -140px; }
+}
+@keyframes lairLava { from { opacity: .6; } to { opacity: 1; } }
+
+/* Session banner in Endless: same spot as the tricky banner, lava-red, with the hearts in a row */
+.replay-banner.endless-banner:not([hidden]) {
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 10px;
+  color: #ffd9b0; background: linear-gradient(90deg, #3a0d0d, #5c1410, #3a0d0d);
+  border: 1.5px solid #ff6a2b;
+}
+
+/* Pixel hearts. Each heart is a faint outline, two halves, and a crack.
+   .breaking (added by index.html for about 0.8s): the crack shows, the heart shakes and the halves fall apart.
+   .lost: only the faint outline is left. */
+.endless-hearts { display: inline-flex; align-items: center; gap: 4px; }
+.px-heart { display: inline-block; width: 24px; height: 22px; color: #ffd9b0; }
+.px-heart svg { display: block; width: 100%; height: 100%; overflow: visible; shape-rendering: crispEdges; }
+.ph-ghost { fill: currentColor; opacity: .25; }
+.ph-half { fill: #e8344a; transform-box: fill-box; }
+.ph-l { transform-origin: right bottom; }
+.ph-r { transform-origin: left bottom; }
+.ph-shine { fill: #ff9aa8; }
+.ph-crack { fill: #3a0a10; opacity: 0; }
+.px-heart.breaking svg { animation: phShake .1s steps(2) 3; }
+.px-heart.breaking .ph-crack { animation: phCrack .8s steps(4) forwards; }
+.px-heart.breaking .ph-l { animation: phFallL .6s .2s steps(6) forwards; }
+.px-heart.breaking .ph-r { animation: phFallR .6s .2s steps(6) forwards; }
+.px-heart.lost .ph-half,
+.px-heart.lost .ph-crack { display: none; }
+/* Endless game-over title: heart red instead of the "correct" green (reads well on the light and dark card) */
+.complete-kicker.endless-over { color: #e8344a; }
+@keyframes phShake { 0% { transform: translateX(-1px); } 100% { transform: translateX(1px); } }
+@keyframes phCrack { 0% { opacity: 0; } 25%, 75% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes phFallL { to { transform: translate(-3px, 8px) rotate(-30deg); opacity: 0; } }
+@keyframes phFallR { to { transform: translate(3px, 8px) rotate(30deg); opacity: 0; } }
+
+@media (max-width: 420px) {
+  .px-heart { width: 20px; height: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tricky-card.endless-card:not([hidden]),
+  .endless-card::before,
+  .endless-card::after { animation: none !important; }
+  /* No shake or falling halves: the heart just empties */
+  .px-heart.breaking svg,
+  .px-heart.breaking .ph-crack { animation: none !important; }
+  .px-heart.breaking .ph-half,
+  .px-heart.breaking .ph-crack { display: none; }
+}
+
+/* ---------- Endless: the lair background ----------
+   index.html puts .in-lair on <body> while the play screen is in Endless (showScreen()).
+   The page switches to a lava palette (dark in both themes, like the Home card), the floating
+   symbols glow like embers, sparks drift up and lava glows along the bottom of the screen. */
+body.in-lair {
+  --bg: #140707;
+  --surface: #1f0d0e;
+  --ink: #f6e6dc;
+  --muted: #b48c80;
+  --border: #4a2220;
+  --accent: #ff7a3a;
+  --accent-tint: #3a1710;
+  --on-accent: #1a0806;
+  --correct: #7fc9a3;
+  --correct-tint: #16281f;
+  --wrong: #ff7a3a;
+  --graph-grid: #2e1614;
+  --graph-line2: #7fb4e2;
+  --logo-invert: 1;
+  color-scheme: dark;
+  background:
+    radial-gradient(120% 55% at 50% 115%, rgba(255, 90, 20, .28), transparent 65%),
+    radial-gradient(90% 40% at 50% -10%, rgba(120, 20, 10, .35), transparent 70%),
+    var(--bg);
+  background-attachment: fixed;
+}
+body.in-lair .floating-symbol { color: #ff8a4a; opacity: .3; text-shadow: 0 0 8px rgba(255, 100, 40, .7); }
+body.in-lair .floating-symbols-layer::before,
+body.in-lair .floating-symbols-layer::after { content: ""; position: absolute; left: 0; right: 0; pointer-events: none; }
+/* Sparks: five layers of dots at different sizes, each drifting up by whole tile heights so the loop is seamless */
+body.in-lair .floating-symbols-layer::before {
+  top: 0; bottom: 0;
+  background-image:
+    radial-gradient(circle, #ffb347 0 1.5px, transparent 2px),
+    radial-gradient(circle, #ff6a2b 0 1px, transparent 1.5px),
+    radial-gradient(circle, #ffd34d 0 1px, transparent 1.5px),
+    radial-gradient(circle, #ff8a4a 0 1.5px, transparent 2px),
+    radial-gradient(circle, #ffb347 0 1px, transparent 1.5px);
+  background-size: 137px 173px, 211px 257px, 97px 139px, 163px 199px, 251px 293px;
+  background-position: 20px 0, 90px 40px, 50px 70px, 130px 110px, 10px 150px;
+  opacity: .45;
+  animation: lairSparks 12s linear infinite;
+}
+@keyframes lairSparks {
+  from { background-position: 20px 0, 90px 40px, 50px 70px, 130px 110px, 10px 150px; }
+  to   { background-position: 20px -173px, 90px -217px, 50px -208px, 130px -288px, 10px -143px; }
+}
+body.in-lair .floating-symbols-layer::after {
+  bottom: 0; height: 30vh;
+  background: linear-gradient(to top, rgba(255, 80, 20, .22), transparent);
+  animation: lairLava 2s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.in-lair .floating-symbols-layer::before,
+  body.in-lair .floating-symbols-layer::after { animation: none !important; }
+}
+
 /* ---------- Completing the square Hard: quadratic formula panel ---------- */
 /* Under the card from "Read off a, b and c" on. The letters flip to their numbers (b, then a, then c),
    and a step's `focus` lights up the part it uses. a, b and c keep one colour each, here and on the card. */

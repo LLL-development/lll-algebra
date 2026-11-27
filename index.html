@@ -247,6 +247,18 @@
       </div>
     </button>
 
+    <!-- Endless: questions keep coming until the 3 lives run out (#endless/cleared · #endless/full) -->
+    <div class="tricky-card endless-card" id="endlessCard">
+      <div class="tricky-head">
+        <span class="daily-card-icon">🔥</span>
+        <div class="daily-card-text">
+          <div class="daily-card-title" id="endlessCardTitle">Endless</div>
+          <div class="daily-card-status" id="endlessCardStatus"></div>
+        </div>
+      </div>
+      <div class="tricky-rows" id="endlessRows"></div>
+    </div>
+
     <div class="tricky-card" id="trickyCard" hidden>
       <div class="tricky-head">
         <span class="daily-card-icon">🎯</span>
@@ -468,14 +480,14 @@
 <script type="module">
   import { LEVELS, LEVELS_BY_TOPIC_AND_DIFFICULTY, ACHIEVEMENTS, TIER_TIPS } from "./levels.js";
   import { STRINGS } from "./strings.js";
-  import { sfx, isSoundOn, setSoundOn } from "./sound.js";
+  import { sfx, isSoundOn, setSoundOn, startMusic, stopMusic } from "./sound.js";
   import { showSystemGraph, showLineGraph, clearSystemGraph, showNumberLine, clearNumberLine, afterGraphDrawn, showPlayGraph } from "./graph.js";
   import { setMathText, appendWithPowers, makePow, eqUnits, eqLineLen } from "./mathtext.js";
   import { TOPIC_FORMULAS, formulaText, hasFormulas } from "./formulas.js";
   import { BUDDY_SVG, CHALKY_IDLES, buddyLine, makeBuddy } from "./chalky.js";
   import { CHOICE_PROMPT_KEYS, actionLabel, makeDistractors, practiceKinds, isLongChoice } from "./choices.js";
   import { initFloatingSymbols, burstGrandConfetti } from "./effects.js";
-  import { dailyShareText, makeDailyCard, shareCard } from "./share.js";
+  import { dailyShareText, endlessShareText, makeDailyCard, makeEndlessCard, shareCard } from "./share.js";
 
   // ---------- i18n ----------
   // Redoes everything a language switch doesn't reach through data-i18n.
@@ -486,6 +498,7 @@
     updateReviewCard();
     updateHomeCards();
     updateTrickyCard();
+    updateEndlessCard();
     if (!$settingsOverlay.hidden) fillSettings(true);   // only open when the change came from Settings, so the pill slides
     if (!$screenHome.hidden) homeSay(false);
     if (!$screenLevels.hidden) renderLevelSelect(location.hash.split("/")[1]);
@@ -544,6 +557,7 @@
   let inReviewMode = false;
   let review = null;        // { levels, index, score, results: [{ topic, clean }] } — current Mixed Review session
   let reviewBest = 0;       // best Mixed Review session score
+  let endlessBest = { cleared: 0, full: 0 };   // best Endless run (questions solved) per mode
   let newAchievements = new Set();   // unlocked but not yet seen in the panel (lights the 🏆 dot)
   let wrongThisStep = 0;        // wrong taps on the current step (2 → "Show me" appears)
   let wrongStepKey = null;      // "level id:step" the counter belongs to, so a re-render doesn't reset it
@@ -576,6 +590,10 @@
   const $dailyCardStatus = document.getElementById("dailyCardStatus");
   const $reviewCard = document.getElementById("reviewCard");
   const $reviewCardStatus = document.getElementById("reviewCardStatus");
+  const $endlessCard = document.getElementById("endlessCard");
+  const $endlessCardTitle = document.getElementById("endlessCardTitle");
+  const $endlessCardStatus = document.getElementById("endlessCardStatus");
+  const $endlessRows = document.getElementById("endlessRows");
   const $introOverlay = document.getElementById("introOverlay");
   const $howtoBtn = document.getElementById("howtoBtn");
   const $equationCard = document.getElementById("equationCard");
@@ -634,7 +652,7 @@
         stepIndex: reg.stepIndex, hintUsedThisLevel: reg.hintUsedThisLevel, wrongThisLevel: reg.wrongThisLevel,
         levelProgress,
         unlockedAchievements: [...unlockedAchievements], totalSolves,
-        dailyStreak, lastDailySolvedDate, reviewBest,
+        dailyStreak, lastDailySolvedDate, reviewBest, endlessBest,
         newAchievements: [...newAchievements],
         watchedLevelId,
         mistakes, totalSlips
@@ -662,6 +680,9 @@
         dailyStreak = saved.dailyStreak || 0;
         lastDailySolvedDate = saved.lastDailySolvedDate || null;
         reviewBest = saved.reviewBest || 0;
+        if (saved.endlessBest && typeof saved.endlessBest === "object") {
+          endlessBest = { cleared: saved.endlessBest.cleared || 0, full: saved.endlessBest.full || 0 };
+        }
         newAchievements = new Set(saved.newAchievements || []);
         watchedLevelId = saved.watchedLevelId || null;
         mistakes = (saved.mistakes && typeof saved.mistakes === "object") ? saved.mistakes : {};
@@ -771,16 +792,40 @@
   const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   // The play-screen buddy (beside the Hint button)
-  // Dozes (with a "try a hint" bubble) after ~10 s with no tap; the next reaction wakes him
+  // Normal modes: the waiting nudges below come first, and he dozes ~45 s after his last reaction.
+  // Endless: boss Chalky taunts after ~8 s instead. The next reaction wakes him either way.
   const playBuddy = makeBuddy(document.getElementById("buddySprite"), document.getElementById("buddyBubble"), {
     idles: {
-      delay: () => 10000,
-      pick: () => CHALKY_IDLES.dozeNudge,
+      delay: () => isEndless() ? 8000 : 45000,
+      pick: () => isEndless() ? CHALKY_IDLES.bossTaunt : CHALKY_IDLES.dozeNudge,   // no hints in Endless, so no hint nudge
       canPlay: () => !$screenPlay.hidden && $completeOverlay.hidden && $tipOverlay.hidden && $formulaOverlay.hidden && !replaying && !document.hidden
     }
   });
   function buddyIdle() { playBuddy.idle(); }
   function buddyReact(mood, opts) { playBuddy.react(mood, opts); }
+
+  // Waiting nudges (normal modes only): calm at ~12 s, a nudge that never gives the answer at ~25 s, and the
+  // Hint button at ~45 s (once per step, only if it's there and unused). render() starts them for each step,
+  // and any tap clears them. Endless has no hints, so boss Chalky's taunts take over there.
+  const WAIT_STAGES = [[12000, "buddyWaitCalm"], [25000, "buddyWaitLook"], [45000, "buddyWaitHint"]];
+  let waitTimers = [];
+  let hintNudgedKey = null;
+  function clearWaitNudges() { waitTimers.forEach(clearTimeout); waitTimers = []; }
+  function scheduleWaitNudges() {
+    clearWaitNudges();
+    if (isEndless() || replaying) return;
+    const key = `${currentLevel().id}:${stepIndex}`;
+    WAIT_STAGES.forEach(([ms, lineKey]) => waitTimers.push(setTimeout(() => {
+      if (isEndless() || replaying || document.hidden || $screenPlay.hidden) return;
+      if (!$completeOverlay.hidden || !$tipOverlay.hidden || !$formulaOverlay.hidden) return;
+      if (`${currentLevel().id}:${stepIndex}` !== key) return;   // already on another step
+      if (lineKey === "buddyWaitHint") {
+        if ($hintBtn.hidden || hintUsedThisStep || hintNudgedKey === key) return;
+        hintNudgedKey = key;
+      }
+      buddyReact("thinking", { line: buddyLine(lineKey), ms: 3500 });
+    }, ms)));
+  }
 
   // Toasts queue up, so two achievements unlocked by the same solve (e.g. Tier Cleared +
   // a topic Warm-up) show one after the other instead of the second overwriting the first.
@@ -1336,16 +1381,23 @@
     setEquationText(currentEquationText);
     $hudLevel.textContent = inDailyMode
       ? (LLL_I18N.t("dailyTitle") || "Today's Challenge")
-      : inReviewMode
-        ? `${review.index + 1} / ${review.levels.length}`
-        : `${levelIndex + 1} / ${activeLevels.length}`;
+      : isEndless()
+        ? `#${review.endless.solved + 1}`
+        : inReviewMode
+          ? `${review.index + 1} / ${review.levels.length}`
+          : `${levelIndex + 1} / ${activeLevels.length}`;
     fillPlayLevelLabel();
     $hudScore.textContent = inReviewMode ? review.score : score;
     const practice = inReviewMode && review.practice;
-    $trickyBanner.hidden = !practice || replaying;
+    const endless = isEndless();
+    $trickyBanner.hidden = !(practice || endless) || replaying;
+    $trickyBanner.classList.toggle("endless-banner", !!endless);   // lava red, with the pixel hearts
     if (practice) {
       $trickyBanner.textContent = `🎯 ${LLL_I18N.t("trickyTitleShort") || "Tricky spots"} · ${trickyLabel(practice.kind)} · ${review.index + 1} / ${review.levels.length}`;
     }
+    if (endless) setEndlessBanner();
+    $hintBtn.hidden = replaying || !!endless;   // no hints in Endless
+    playBuddy.setSkin(endless ? "boss" : null);   // boss Chalky (fire aura, horns, red eyes) in Endless only
     // A flip partway through a level (double inequalities, Hard 11–15) keeps its "Both signs flipped" message
     // up while the next step is chosen; everywhere else a new step starts with the hint line cleared
     const justFlipped = stepIndex > 0 && level.steps[stepIndex - 1].flip;
@@ -1397,11 +1449,13 @@
     if (stepIndex === 0) buddyIdle();   // new level → calm; mid-level steps keep their reaction
     hintUsedThisStep = false;
     updateShowMeBtn();
+    scheduleWaitNudges();
   }
 
   function handleChoice(choice, btn, correctStep) {
     const isCorrect = choice.action === correctStep.action && choice.value === correctStep.value;
     [...$choices.children].forEach(b => b.disabled = true);
+    clearWaitNudges();
 
     if (isCorrect) {
       btn.classList.add("correct");
@@ -1439,8 +1493,10 @@
       const justSolved = stepIndex >= totalSteps;
       if (justSolved) sfx.solve(); else sfx.step(stepIndex);
       // Always reacts; only sometimes speaks on a normal correct step, so it doesn't get noisy
-      if (justSolved) buddyReact("celebrating", { line: buddyLine("buddySolved"), stay: true });
-      else buddyReact("happy", { line: Math.random() < 0.35 ? buddyLine("buddyCorrect") : "", ms: 1400 });
+      // Endless flips it: boss Chalky grumbles when the player gets it right (his annoyed face)
+      const endless = isEndless();
+      if (justSolved) buddyReact("celebrating", { line: buddyLine(endless ? "endlessGrumble" : "buddySolved"), stay: true });
+      else buddyReact("happy", { line: Math.random() < 0.35 ? buddyLine(endless ? "endlessGrumble" : "buddyCorrect") : "", ms: 1400 });
       updateStepDots(stepIndex, totalSteps, justSolved);
       if (justSolved) {
         $equationCard.classList.add("solved");
@@ -1508,15 +1564,18 @@
       recordSlip(slipKind);
       // Practice summary: ✗ only for a slip of the kind being practised
       if (inReviewMode && review.practice && slipKind === review.practice.kind) review.slipped.add(review.index);
-      sfx.wrong();
+      if (isEndless() && loseEndlessLife()) return;   // last life gone: game over takes it from here
+      if (isEndless()) sfx.evilLaugh(); else sfx.wrong();
       $eq.classList.remove("wrong-shake");
       void $eq.offsetWidth; // restart animation
       $eq.classList.add("wrong-shake");
       // Chalky says what went wrong (not the answer), so a hint already on screen isn't overwritten
-      buddyReact("oops", { line: mistakeLine(choice, correctStep), ms: MISTAKE_MS });
+      // Endless: boss Chalky laughs at the slip instead of explaining it
+      buddyReact("oops", { line: isEndless() ? buddyLine("endlessLaugh") : mistakeLine(choice, correctStep), ms: MISTAKE_MS });
       setTimeout(() => {
         if (replaying) return;   // "Show me" was tapped meanwhile; its buttons stay locked
         [...$choices.children].forEach(b => { b.disabled = false; b.classList.remove("wrong"); });
+        scheduleWaitNudges();   // still on the same step, so the waiting nudges start again
       }, 700);
     }
   }
@@ -1546,6 +1605,7 @@
     const hint = hints[stepIndex] || hints[hints.length - 1];
     setMathText($hintText, hint);
     buddyReact("thinking", { line: buddyLine("buddyHint"), ms: 2800 });
+    clearWaitNudges();   // they've got a hint now, so no more nudges on this step
     hintUsedThisLevel = true;
     if (!hintUsedThisStep) {
       if (inReviewMode) review.score = Math.max(0, review.score - 2);
@@ -1569,7 +1629,7 @@
   function clearReplayTimers() { replayTimers.forEach(clearTimeout); replayTimers = []; }
 
   function updateShowMeBtn() {
-    $showMeBtn.hidden = inDailyMode || replaying || wrongThisStep < 2;
+    $showMeBtn.hidden = inDailyMode || isEndless() || replaying || wrongThisStep < 2;
   }
 
   function fillReplayText() {
@@ -1823,7 +1883,7 @@
     $completeRetryBtn.parentElement.hidden = $completeRetryBtn.hidden && $completeLevelsBtn.hidden;
     $completeWatchBtn.textContent = t("completeWatchBtn") || "See how it's solved";
     $completeWatchBtn.hidden = r.daily;
-    // 📤 Share: Today's Challenge only for now (Endless results will reuse share.js).
+    // 📤 Share: Today's Challenge here; Endless sets up its own in showEndlessSummary().
     // The text is built at tap time, so it follows a language switch and today's streak.
     $completeShareBtn.textContent = t("shareBtn") || "📤 Share";
     $completeShareBtn.hidden = !r.daily;
@@ -1858,7 +1918,7 @@
   }
 
   // Also hides 📤, so the Mixed Review / Tricky spots summaries (always opened via a route) never show it
-  function hideCompleteOverlay() { $completeOverlay.hidden = true; $completeShareBtn.hidden = true; completeBuddy.stop(); clearSystemGraph(); clearNumberLine(); }
+  function hideCompleteOverlay() { $completeOverlay.hidden = true; $completeShareBtn.hidden = true; completeBuddy.stop(); completeBuddy.setSkin(null); $completeKicker.classList.remove("endless-over"); clearSystemGraph(); clearNumberLine(); }
 
   $completePrimaryBtn.addEventListener("click", () => completeActions.primary && completeActions.primary());
   $completeRetryBtn.addEventListener("click", () => completeActions.retry && completeActions.retry());
@@ -1984,6 +2044,7 @@
 
   // Runs when the last step of a review level is solved. Stars, streak and achievements are left alone.
   function finishReviewLevel(correctStep) {
+    if (isEndless()) return finishEndlessLevel(correctStep);
     const level = currentLevel();
     review.score += level.basePoints;
     review.results.push({ topic: level.topic, clean: !hintUsedThisLevel && wrongThisLevel === 0 });
@@ -2134,6 +2195,201 @@
     completeChalky(allClean ? "celebrating" : "happy", allClean ? "chalkyTrickyClean" : "chalkyTricky");
     if (allClean) burstGrandConfetti();
   }
+
+  // ---------- Endless ----------
+  // A Mixed Review session with an `endless` field: questions keep coming until the 3 lives run out.
+  // Every wrong tap costs a life; no hint or "Show me" (📐 formulas still work). Difficulty ramps up:
+  // Q1–5 Easy, Q6–15 Medium, then Hard, random topic each time. "cleared" picks from cleared levels only
+  // (unlocks with Mixed Review), "full" from all 400. Stars and achievements are left alone; slips still
+  // count for Tricky spots. Best run (questions solved) is saved per mode in endlessBest.
+  const ENDLESS_LIVES = 3;
+  const ENDLESS_MODES = ["full"];
+
+  function isEndless() { return !!(inReviewMode && review && review.endless); }
+  function endlessPool(mode) { return mode === "full" ? LEVELS : clearedLevels(); }
+  function endlessUnlocked(mode) { return mode === "full" || clearedLevels().length >= REVIEW_UNLOCK; }
+  function endlessTier(solved) { return solved < 5 ? "easy" : solved < 15 ? "medium" : "hard"; }
+
+  // Next question: the ramp's tier, not played yet this run. Falls back to repeats, then to any tier
+  // (a "cleared" pool may have no Hard levels yet).
+  function pickEndlessLevel() {
+    const e = review.endless;
+    const pool = endlessPool(e.mode);
+    const tier = endlessTier(e.solved);
+    const fresh = l => !e.used.has(l.id);
+    const options = [
+      pool.filter(l => l.difficulty === tier && fresh(l)),
+      pool.filter(l => l.difficulty === tier),
+      pool.filter(fresh),
+      pool
+    ].find(list => list.length);
+    const level = options[Math.floor(Math.random() * options.length)];
+    e.used.add(level.id);
+    return level;
+  }
+
+  function startEndless(mode) {
+    review = {
+      levels: [], index: 0, score: 0, results: [],
+      endless: { mode, lives: ENDLESS_LIVES, solved: 0, used: new Set(), over: false }
+    };
+    review.levels.push(pickEndlessLevel());
+    stepIndex = 0;
+    render();
+    startMusic();   // boss music (sound.js); the run always starts from a tap, so browsers allow it
+    buddyReact("oops", { line: LLL_I18N.t("endlessStartLine") || "Welcome to my lair! Three lives. No hints. Mwahaha!", ms: 3200 });   // "oops" = his laugh in boss skin
+  }
+
+  function endlessModeName(mode) {
+    return mode === "full"
+      ? (LLL_I18N.t("endlessFull") || "Full challenge")
+      : (LLL_I18N.t("endlessCleared") || "Cleared levels");
+  }
+
+  // One pixel heart (11×10): a faint outline, a left and right half split down a jagged crack, and the crack
+  // itself. brand.css shows it full, .breaking (cracks, shakes, halves fall) or .lost (outline only).
+  const HEART_SVG = (() => {
+    const rows = ["..XXX.XXX..", ".XXXXXXXXX.", "XXXXXXXXXXX", "XXXXXXXXXXX", "XXXXXXXXXXX",
+                  ".XXXXXXXXX.", "..XXXXXXX..", "...XXXXX...", "....XXX....", ".....X....."];
+    const split = [5, 5, 6, 5, 4, 5, 6, 5, 5, 6];   // first column of the right half, row by row
+    const shine = ["2,1", "3,1", "1,2", "1,3"];
+    const rect = (x, y, cls = "") => `<rect x="${x}" y="${y}" width="1" height="1"${cls}/>`;
+    let ghost = "", left = "", right = "", crack = "";
+    rows.forEach((row, y) => [...row].forEach((c, x) => {
+      if (c !== "X") return;
+      ghost += rect(x, y);
+      if (shine.includes(`${x},${y}`)) left += rect(x, y, ' class="ph-shine"');
+      else if (x < split[y]) left += rect(x, y);
+      else right += rect(x, y);
+    }));
+    for (let y = 1; y <= 8; y++) crack += rect(y % 2 ? split[y] - 1 : split[y], y);
+    return `<svg viewBox="0 0 11 10" aria-hidden="true"><g class="ph-ghost">${ghost}</g>` +
+      `<g class="ph-half ph-l">${left}</g><g class="ph-half ph-r">${right}</g><g class="ph-crack">${crack}</g></svg>`;
+  })();
+
+  // "🔥 Chalky's Lair · Take on Chalky" plus the hearts, above the step dots.
+  // breaking: the index of the heart that was just lost, so it breaks instead of simply being empty.
+  function setEndlessBanner(breaking = -1) {
+    const e = review.endless;
+    const hearts = Array.from({ length: ENDLESS_LIVES }, (_, i) => {
+      const state = i === breaking ? " breaking" : i >= e.lives ? " lost" : "";
+      return `<span class="px-heart${state}">${HEART_SVG}</span>`;
+    }).join("");
+    $trickyBanner.innerHTML = `<span>🔥 ${LLL_I18N.t("endlessLair") || "Chalky's Lair"} · ${endlessModeName(e.mode)}</span>` +
+      `<span class="endless-hearts" role="img" aria-label="♥ ${e.lives} / ${ENDLESS_LIVES}">${hearts}</span>`;
+  }
+
+  // A wrong tap: one life gone. Returns true when it was the last one (game over).
+  function loseEndlessLife() {
+    const e = review.endless;
+    e.lives--;
+    setEndlessBanner(e.lives);   // the heart just lost cracks and falls apart
+    if (e.lives > 0) return false;
+    e.over = true;
+    stopMusic();
+    sfx.evilLaugh();
+    $eq.classList.remove("wrong-shake");
+    void $eq.offsetWidth;
+    $eq.classList.add("wrong-shake");
+    buddyReact("oops", { line: LLL_I18N.t("endlessOutLine") || "Out of lives!", stay: true });
+    const session = review;
+    setTimeout(() => { if (review === session) showEndlessSummary(); }, 1400);
+    return true;
+  }
+
+  function finishEndlessLevel(correctStep) {
+    const e = review.endless;
+    e.solved++;
+    review.score = e.solved;
+    $hudScore.textContent = review.score;
+    const session = review;
+    setTimeout(() => {
+      if (review !== session) return;   // player left or restarted in the meantime
+      review.levels.push(pickEndlessLevel());
+      review.index++;
+      stepIndex = 0;
+      render();
+    }, correctStep.flip ? 1500 : 900);
+  }
+
+  function showEndlessSummary() {
+    const t = (k, fb) => LLL_I18N.t(k) || fb;
+    const { mode, solved } = review.endless;
+    const newBest = solved > 0 && solved > (endlessBest[mode] || 0);
+    if (newBest) { endlessBest[mode] = solved; saveProgress(); }
+
+    $completeKicker.textContent = t("endlessOver", "Game over!");
+    $completeKicker.classList.add("endless-over");
+    $completeSub.textContent = `${t("endlessTitle", "Endless")} · ${endlessModeName(mode)}`;
+    $completeStars.hidden = true;
+    $completeBest.hidden = !newBest;
+    $completeBest.textContent = t("newBest", "New best!");
+    $completePoints.textContent = t("endlessSolved", "{n} solved").split("{n}").join(solved);
+    $completeBonus.hidden = true;
+    $completeExplanation.hidden = true;
+    clearSystemGraph();
+    clearNumberLine();
+    $completeReview.innerHTML = endlessBest[mode]
+      ? `<p class="review-flawless">${t("endlessBest", "Best: {n}").split("{n}").join(endlessBest[mode])}</p>`
+      : "";
+    $completeReview.hidden = !endlessBest[mode];   // no "Best: 0" before a first record
+
+    completeActions = { primary: () => go(`#endless/${mode}`), levels: () => go("#home"), escape: () => go("#home") };
+    // 📤 Share (from 1 solved up, so nobody is dared to "beat 0"). The caption is built at tap time;
+    // the picture is drawn now, so it's ready before the tap (same as Today's Challenge)
+    $completeShareBtn.textContent = t("shareBtn", "📤 Share");
+    $completeShareBtn.hidden = solved === 0;
+    completeActions.shareText = solved ? () => endlessShareText({ solved }) : null;
+    const job = ++shareJob;
+    shareBlob = null;
+    sharePending = solved
+      ? makeEndlessCard({ solved, best: endlessBest[mode], newBest, modeName: endlessModeName(mode) })
+          .then(blob => { if (job === shareJob) shareBlob = blob; return blob; }, () => null)
+      : null;
+    $completePrimaryBtn.textContent = t("reviewAgainBtn", "Play again");
+    $completeRetryBtn.hidden = true;
+    $completeLevelsBtn.hidden = false;
+    $completeLevelsBtn.textContent = t("homeBtn", "Home");
+    $completeRetryBtn.parentElement.hidden = false;
+    $completeWatchBtn.hidden = true;
+
+    $completeKicker.classList.toggle("pixel", /^[\x20-\x7E]*$/.test($completeKicker.textContent));
+    $completeOverlay.hidden = false;
+    $completePrimaryBtn.focus({ preventScroll: true });
+    // buddyLine() picks one of the "a|b" options (LLL_I18N.t() would show them all, pipe included)
+    const lineKey = newBest ? "endlessNewBestLine" : solved === 0 ? "endlessZeroLine" : "endlessDoneLine";
+    const line = buddyLine(lineKey).split("{n}").join(solved);
+    // Boss Chalky on the card too: annoyed by a new record, laughing at anything less
+    completeBuddy.setSkin("boss");
+    completeBuddy.react(newBest ? "celebrating" : "oops", { line, stay: true });
+    if (newBest) burstGrandConfetti();
+  }
+
+  function updateEndlessCard() {
+    const t = (k, fb) => LLL_I18N.t(k) || fb;
+    $endlessCardTitle.textContent = t("endlessTitle", "Endless");
+    $endlessCardStatus.textContent = t("endlessSub", "Keep going until your 3 lives run out");
+    const cleared = clearedLevels().length;
+    $endlessRows.innerHTML = ENDLESS_MODES.map(mode => {
+      const open = endlessUnlocked(mode);
+      const best = endlessBest[mode]
+        ? ` · ${t("endlessBest", "Best: {n}").split("{n}").join(endlessBest[mode])}`
+        : "";
+      const btnText = open
+        ? t("endlessPlayBtn", "Play")
+        : t("endlessLocked", "🔒 {n} more").split("{n}").join(REVIEW_UNLOCK - cleared);
+      return `
+        <div class="tricky-row">
+          <span class="tricky-row-label">${endlessModeName(mode)}<span class="tricky-row-count">${best}</span></span>
+          <button class="tricky-btn${mode === "full" ? " top" : ""}" data-mode="${mode}"${open ? "" : " disabled"}>${btnText}</button>
+        </div>`;
+    }).join("");
+  }
+
+  $endlessRows.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tricky-btn");
+    if (btn && !btn.disabled) go(`#endless/${btn.dataset.mode}`);
+  });
 
   // ---------- level select ----------
   const TIERS = ["easy", "medium", "hard"];
@@ -2295,6 +2551,7 @@
 
   function showScreen(name) {
     Object.entries(SCREENS).forEach(([key, el]) => { el.hidden = key !== name; });
+    document.body.classList.toggle("in-lair", name === "play" && isEndless());   // the volcanic background (brand.css)
     window.scrollTo(0, 0);
   }
 
@@ -2335,6 +2592,7 @@
   function onRoute() {
     cancelReplay();
     hideCompleteOverlay();
+    stopMusic();   // boss music only plays during an Endless run; startEndless() starts it again for "Play again"
     if (!$tipOverlay.hidden) closeTierTip(false);   // left before reading it, so it shows again next time
     closeFormulaSheet(false);
     closeSettings(false);
@@ -2373,6 +2631,13 @@
       startReview();   // always a fresh session, including "Play again" and a page refresh
       setBackLabel("backHome", "Home");
       showScreen("play");
+    } else if (screen === "endless" && ENDLESS_MODES.includes(arg) && endlessUnlocked(arg)) {
+      leaveDaily();
+      if (!inReviewMode) regularLevelState = { stepIndex, hintUsedThisLevel, wrongThisLevel };
+      inReviewMode = true;
+      startEndless(arg);   // always a fresh run, including "Play again" and a page refresh
+      setBackLabel("backHome", "Home");
+      showScreen("play");
     } else if (screen === "tricky" && practicePool(arg).length >= PRACTICE_MIN) {
       leaveDaily();
       if (!inReviewMode) regularLevelState = { stepIndex, hintUsedThisLevel, wrongThisLevel };
@@ -2387,6 +2652,7 @@
       updateDailyCard();
       updateReviewCard();
       updateHomeCards();
+      updateEndlessCard();
       updateTrickyCard();   // before homeSay(), so Chalky can announce it the first time
       showScreen("home");
       homeSay(false);
@@ -2453,6 +2719,7 @@
       return `<div class="intro-mode-list">
         <div class="intro-mode"><span aria-hidden="true">📅</span>${t("dailyTitle")}</div>
         <div class="intro-mode"><span aria-hidden="true">🔀</span>${t("reviewTitle")}</div>
+        <div class="intro-mode"><span aria-hidden="true">🔥</span>${t("endlessTitle")}</div>
       </div>`;
     }
     if (key === "introReady") return `<div class="intro-big-icon" aria-hidden="true">🏆</div>`;

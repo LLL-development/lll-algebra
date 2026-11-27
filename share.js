@@ -1,11 +1,11 @@
-// LLL Algebra — sharing a result (Today's Challenge now, Endless later)
-// Text: buildShareText() / dailyShareText(), sent by shareResult().
-// Image: makeDailyCard() draws a 1080×1080 PNG card on a canvas; shareCard() sends it:
+// LLL Algebra — sharing a result (Today's Challenge and Endless)
+// Text: buildShareText() / dailyShareText() / endlessShareText(), sent by shareResult().
+// Image: makeDailyCard() / makeEndlessCard() draw a 1080×1080 PNG card on a canvas; shareCard() sends it:
 //   phones → the share sheet with the picture (text as the caption)
 //   desktop → the picture copied to the clipboard (Chrome / Edge), else downloaded (Firefox)
 //   anything that can't take a picture → the text version
 
-import { BUDDY_SVG } from "./chalky.js";
+import { BUDDY_SVG, BOSS_SVG } from "./chalky.js";
 import { eqUnits } from "./mathtext.js";
 
 const SHARE_URL = "https://lll-algebra.pages.dev";
@@ -45,6 +45,11 @@ function buildShareText({ title, details = [], url = SHARE_URL }) {
 function dailyShareText({ streak = 0 }) {
   const line = streak >= 2 ? fmt(LLL_I18N.t("shareInviteStreak"), { n: streak }) : LLL_I18N.t("shareInvite");
   return `${line}\n${SHARE_URL}`;
+}
+
+// Endless caption: how many the player solved in Chalky's Lair, a dare to beat it, then the link
+function endlessShareText({ solved }) {
+  return `${fmt(LLL_I18N.t("shareEndlessInvite"), { n: solved })}\n${SHARE_URL}`;
 }
 
 // Clipboard API first; the old textarea trick covers http:// and older browsers
@@ -99,10 +104,10 @@ function fontsReady() {
     .map(f => document.fonts.load(f).catch(() => {}))).then(() => {});
 }
 
-// Chalky's celebrating sprite as an <img>. var(--buddy-line) means nothing outside the page,
+// A Chalky sprite as an <img> (celebrating by default). var(--buddy-line) means nothing outside the page,
 // so his outline gets the dark theme's colour; xmlns is needed for an SVG loaded as an image.
-function loadChalky(size) {
-  const svg = BUDDY_SVG.celebrating
+function loadChalky(size, sprite = BUDDY_SVG.celebrating) {
+  const svg = sprite
     .replace("<svg ", `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" `)
     .replace(/var\(--buddy-line\)/g, C.buddyLine);
   return new Promise((resolve, reject) => {
@@ -287,6 +292,125 @@ async function makeDailyCard(opts) {
   return new Promise((resolve, reject) => canvas.toBlob(b => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png"));
 }
 
+// ---------- Endless card ----------
+// Always the lair's lava colours (same as brand.css's body.in-lair), whatever the player's theme.
+const L = {
+  bg: "#140707", surface: "#1f0d0e", ink: "#f6e6dc", muted: "#b48c80", border: "#4a2220",
+  ember: "#ff7a3a", glow: "rgba(255, 90, 20, 0.35)", sparks: ["#ffb347", "#ff6a2b", "#ffd34d"]
+};
+
+// Endless card, 1080×1080: how many were solved, the best (or "New best!"), and boss Chalky laughing
+// with a dare for whoever sees it.
+async function drawEndlessCard({ solved, best = 0, newBest = false, modeName = "" }) {
+  const t = k => LLL_I18N.t(k) || "";
+  const W = 1080;
+  const [, boss] = await Promise.all([fontsReady(), loadChalky(260, BOSS_SVG.laugh[0])]);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = W;
+  const ctx = canvas.getContext("2d");
+
+  // Lava background: dark red-black, a glow rising from the bottom, and a scatter of sparks
+  ctx.fillStyle = L.bg;
+  ctx.fillRect(0, 0, W, W);
+  const glow = ctx.createRadialGradient(W / 2, W * 1.15, 50, W / 2, W * 1.15, W * 0.85);
+  glow.addColorStop(0, L.glow);
+  glow.addColorStop(1, "rgba(255, 90, 20, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, W);
+  let seed = 7;   // fixed seed, so every card has the same sparks
+  const rand = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 70; i++) {
+    ctx.fillStyle = L.sparks[i % L.sparks.length];
+    ctx.globalAlpha = 0.25 + rand() * 0.45;
+    const r = 2 + rand() * 3;
+    ctx.fillRect(Math.round(rand() * W), Math.round(rand() * W), r, r);
+  }
+  ctx.globalAlpha = 1;
+
+  // Header: brand on the left, date on the right
+  ctx.textBaseline = "alphabetic";
+  ctx.textAlign = "left";
+  ctx.fillStyle = L.ink;
+  ctx.font = `700 52px ${SANS}`;
+  ctx.fillText(t("brand") || "LLL Algebra", 80, 120);
+  ctx.textAlign = "right";
+  ctx.fillStyle = L.muted;
+  ctx.font = `600 34px ${MONO}`;
+  ctx.fillText(shareDate(), 1000, 118);
+
+  // "Chalky's Lair" in ember
+  ctx.textAlign = "left";
+  ctx.fillStyle = L.ember;
+  fitFont(ctx, t("endlessLair") || "Chalky's Lair", 700, 46, SANS, 920);
+  ctx.fillText(t("endlessLair") || "Chalky's Lair", 80, 200);
+
+  // The score on a pixel card with an ember shadow: mode line, the big number, "solved", then the best
+  const card = { x: 80, y: 250, w: 908, h: 360 };
+  ctx.fillStyle = L.ember;   notchedPath(ctx, card.x + 12, card.y + 12, card.w, card.h, 16); ctx.fill();
+  ctx.fillStyle = L.ink;     notchedPath(ctx, card.x, card.y, card.w, card.h, 16); ctx.fill();
+  ctx.fillStyle = L.surface; notchedPath(ctx, card.x + 8, card.y + 8, card.w - 16, card.h - 16, 8); ctx.fill();
+  const cx = card.x + card.w / 2;
+  ctx.textAlign = "center";
+  ctx.fillStyle = L.muted;
+  const modeLine = [t("endlessTitle"), modeName].filter(Boolean).join(t("shareSep"));
+  fitFont(ctx, modeLine, 600, 32, SANS, card.w - 80);
+  ctx.fillText(modeLine, cx, card.y + 72);
+  ctx.fillStyle = L.ink;
+  ctx.textBaseline = "middle";
+  ctx.font = `140px ${PIXEL}`;
+  ctx.fillText(String(solved), cx, card.y + 178);
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = L.muted;
+  ctx.font = `600 36px ${SANS}`;
+  ctx.fillText(fmt(t("endlessSolved") || "{n} solved", { n: "" }).trim(), cx, card.y + 282);   // "solved" / "問クリア"
+  ctx.fillStyle = newBest ? L.ember : L.muted;
+  ctx.font = `700 30px ${MONO}`;
+  ctx.fillText(newBest ? t("newBest") : fmt(t("endlessBest") || "Best: {n}", { n: best }), cx, card.y + 330);
+
+  // Boss Chalky laughing, with a speech bubble: "Can you beat 12?" and his dare
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(boss, 70, 650, 260, 260);
+  const b = { x: 370, y: 680, w: 630, h: 200 };
+  const tailY = b.y + b.h / 2;
+  ctx.fillStyle = L.surface;
+  ctx.strokeStyle = L.border;
+  ctx.lineWidth = 4;
+  ctx.beginPath();   // tail pointing back at Chalky
+  ctx.moveTo(b.x + 2, tailY - 22); ctx.lineTo(b.x - 26, tailY); ctx.lineTo(b.x + 2, tailY + 22);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  roundRectPath(ctx, b.x, b.y, b.w, b.h, 24);
+  ctx.fill(); ctx.stroke();
+  ctx.fillRect(b.x - 2, tailY - 19, 6, 38);   // join the tail to the bubble (hides the border between them)
+
+  const headline = fmt(t("shareEndlessCta") || "Can you beat {n}?", { n: solved });
+  const dare = t("shareEndlessDare") || "Three lives. No hints. Mwahaha!";
+  ctx.textAlign = "left";
+  ctx.fillStyle = L.ink;
+  fitFont(ctx, headline, 700, 56, SANS, b.w - 80);
+  ctx.fillText(headline, b.x + 40, b.y + 88);
+  ctx.fillStyle = L.muted;
+  fitFont(ctx, dare, 500, 40, SANS, b.w - 80);
+  ctx.fillText(dare, b.x + 40, b.y + 152);
+
+  // Footer: a rule and the link
+  ctx.fillStyle = L.border;
+  ctx.fillRect(80, 950, 920, 3);
+  ctx.textAlign = "center";
+  ctx.fillStyle = L.ember;
+  ctx.font = `600 36px ${MONO}`;
+  ctx.fillText(SHARE_URL.replace(/^https:\/\//, ""), W / 2, 1018);
+
+  return canvas;
+}
+
+// → Promise<Blob> (PNG). Call it when the game-over card opens, so the picture is ready before the tap.
+async function makeEndlessCard(opts) {
+  const canvas = await drawEndlessCard(opts);
+  return new Promise((resolve, reject) => canvas.toBlob(b => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png"));
+}
+
 function downloadBlob(blob, filename) {
   try {
     const url = URL.createObjectURL(blob);
@@ -332,4 +456,4 @@ async function shareCard({ blob, text }) {
   return shareResult(text);
 }
 
-export { SHARE_URL, buildShareText, dailyShareText, shareResult, makeDailyCard, shareCard };
+export { SHARE_URL, buildShareText, dailyShareText, endlessShareText, shareResult, makeDailyCard, makeEndlessCard, shareCard };
