@@ -12,7 +12,11 @@ const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia("(prefers-reduc
 // E (eyes, mouth) stays dark because it always sits on the white chalk.
 // B/P = book cover/page, D/F = chalkboard/frame, Y = chalk dust (used by the idle animations)
 const BUDDY_PAL = { K: "var(--buddy-line)", E: "#2C2C2A", W: "#F4F1EA", S: "#D3D1C7", R: "#C2562F", G: "#E8B44A", C: "#F0997B", L: "#85B7EB", T: "#D85A30",
-                    B: "#4A78B5", P: "#FFFFFF", D: "#2F4A3A", F: "#8A5A33", Y: "#B4B2A9" };
+                    B: "#4A78B5", P: "#FFFFFF", D: "#2F4A3A", F: "#8A5A33", Y: "#B4B2A9",
+                    // Boss look (Endless): Q/U = red-tinted chalk + shade, N = dark band, O = glowing eyes,
+                    // H/I/J/M = fire from the base up to the tips
+                    Q: "#F5C4B5", U: "#E09A88", N: "#5A0F18", O: "#FF3B30",
+                    H: "#8E1B2C", I: "#D9432B", J: "#F28C28", M: "#FFD34D" };
 // Faces are 10×5 blocks placed at (7, 6). `x` = extras drawn around (18, 3): sparkle, sweat drop, thinking dots.
 const BUDDY_FACES = {
   idle:        { f: ["..........", "..E....E..", "..E....E..", ".C......C.", "....EE...."] },
@@ -24,7 +28,31 @@ const BUDDY_FACES = {
   celebrating: { f: ["..E....E..", ".E.E..E.E.", "..........", "..EEEEEE..", "...ETTE..."], arms: true }
 };
 
-// spec: a face name ("happy"), or an idle-animation frame { face?, px?: [[x, y, colour]], noCheeks? }
+// ---------- Boss look (Endless) ----------
+// Red-tinted chalk, little horns and a fire aura behind him. The fire has 4 frames: FIRE_TOPS gives how high
+// the flame reaches in each column (x = 1..22, lower = taller); makeBuddy cycles them so it flickers.
+const FIRE_TOPS = [
+  [16, 11, 13, 8, 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 6, 9, 12, 15],
+  [14, 13, 9, 6, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 4, 8, 13, 14],
+  [17, 10, 11, 7, 4, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 7, 7, 10, 16],
+  [15, 12, 8, 9, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 10, 11, 13]
+];
+const FIRE_FRAMES = FIRE_TOPS.length;
+
+function drawBossExtras(g, put, fire) {
+  FIRE_TOPS[fire % FIRE_FRAMES].forEach((top, i) => {
+    const x = i + 1;
+    if (x >= 8 && x <= 15) top = Math.max(top, 3);   // keep the space above his head clear for the horns
+    for (let y = top; y <= 21; y++) {
+      if (g[y][x]) continue;                          // behind him: only empty cells
+      const d = y - top;
+      g[y][x] = d < 1 ? "M" : d < 3 ? "J" : d < 6 ? "I" : "H";
+    }
+  });
+  [[8, 0], [8, 1], [9, 1], [15, 0], [15, 1], [14, 1]].forEach(([x, y]) => put(x, y, "E"));   // horns
+}
+
+// spec: a face name ("happy"), or an idle-animation frame { face?, px?: [[x, y, colour]], noCheeks?, boss?, fire? }
 function buildBuddySvg(spec) {
   const frame = typeof spec === "string" ? { face: spec } : spec;
   const N = 24;
@@ -32,7 +60,9 @@ function buildBuddySvg(spec) {
   const put = (x, y, c) => { if (g[y] && x >= 0 && x < N) g[y][x] = c; };
   // Body: chalk stick with a shaded right edge and a rust paper band
   for (let y = 3; y <= 18; y++) {
-    for (let x = 7; x <= 16; x++) g[y][x] = (y >= 14 && y <= 16) ? "R" : (x >= 15 ? "S" : "W");
+    for (let x = 7; x <= 16; x++) {
+      g[y][x] = (y >= 14 && y <= 16) ? (frame.boss ? "N" : "R") : (x >= 15 ? (frame.boss ? "U" : "S") : (frame.boss ? "Q" : "W"));
+    }
   }
   [[7, 3], [16, 3], [7, 18], [16, 18]].forEach(([x, y]) => { g[y][x] = null; });   // rounded corners
   // Outline: every empty cell touching the body
@@ -41,6 +71,7 @@ function buildBuddySvg(spec) {
     if (!body[y][x] && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => (body[y + dy] || [])[x + dx])) g[y][x] = "K";
   }
   [9, 10, 13, 14].forEach(x => put(x, 20, "K"));   // feet
+  if (frame.boss) drawBossExtras(g, put, frame.fire || 0);   // fire behind him + horns
   if (frame.face) {
     const face = BUDDY_FACES[frame.face];
     face.f.forEach((row, dy) => [...row].forEach((c, dx) => { if (c !== ".") put(7 + dx, 6 + dy, c); }));
@@ -162,18 +193,69 @@ const CHALKY_IDLES = (() => {
     { face: "idle", ms: 400, motion: "bob" }
   ];
 
+  // Boss glare (Endless, while the player thinks): brows down, eyes narrowed, arms folded;
+  // a glance aside, then back with a smirk. Loops until the next tap.
+  const BROWS = px("E", [[8, 5], [9, 6], [15, 5], [14, 6]]);
+  const EYES_NARROW = px("E", [[9, 8], [10, 8], [13, 8], [14, 8]]);
+  const EYES_ASIDE = px("E", [[8, 8], [9, 8], [12, 8], [13, 8]]);
+  const SMIRK = px("E", [[10, 11], [11, 11], [12, 11], [13, 10]]);
+  const ARMS_FOLDED = [...fill(6, 12, 17, 12, "K"), [5, 11, "K"], [18, 11, "K"]];
+  const glare = (eyes, mouth, ms, motion) => ({ noCheeks: true, ms, motion, px: [...BROWS, ...eyes, ...mouth, ...ARMS_FOLDED] });
+  const BOSS_GLARE = [
+    glare(EYES_NARROW, MOUTH, 1600, "bob"),
+    glare(EYES_ASIDE, MOUTH, 900, "bob"),
+    glare(EYES_NARROW, SMIRK, 1400, "nod"),
+    glare(EYES_NARROW, MOUTH, 1200, "bob")
+  ];
+  const TAUNTS_EN = ["Tick tock…", "Take your time. I'm not going anywhere.", "Hmm… scared?", "I can wait all day."];
+
   // Mastery hat: a graduation cap with a gold tassel
   const HAT = [...fill(4, 1, 19, 1, "E"), ...fill(8, 2, 15, 2, "E"), [11, 0, "G"], [12, 0, "G"], [19, 2, "G"], [19, 3, "G"], [19, 4, "G"]];
 
   const home = [READING, SIPPING, WRITING, DOZING, DUSTING].map(frames => ({ frames }));
   const dozeNudge = { frames: [...DOZE_START, ...DOZE_LOOP], loopFrom: DOZE_START.length, line: () => buddyLine("buddyDoze") };
-  [...home, dozeNudge].forEach(a => a.frames.forEach(f => { f.svg = f.svg || buildBuddySvg(f); }));   // build each SVG once
-  return { home, dozeNudge, hat: HAT, reading: home[0], writing: home[2] };   // reading/writing: the formula sheet
+  const bossTaunt = {
+    frames: BOSS_GLARE, loopFrom: 0,
+    line: () => buddyLine("endlessTaunt") || TAUNTS_EN[Math.floor(Math.random() * TAUNTS_EN.length)]
+  };
+  [...home, dozeNudge, bossTaunt].forEach(a => a.frames.forEach(f => { f.svg = f.svg || buildBuddySvg(f); }));   // build each SVG once
+  return { home, dozeNudge, bossTaunt, hat: HAT, reading: home[0], writing: home[2] };   // reading/writing: the formula sheet
 })();
 // The hat only appears on the topic-mastered card (a design change, so it's kept to that one moment)
 BUDDY_SVG.celebratingHat = buildBuddySvg({ face: "celebrating", px: CHALKY_IDLES.hat });
 // Glasses on, book open: the play-screen Chalky holds this while the formula sheet is open
 BUDDY_SVG.reading = CHALKY_IDLES.reading.frames[0].svg;
+
+// Boss faces (Endless). Each is built once per fire frame, so the aura can flicker behind any face.
+const BOSS_SVG = (() => {
+  const px = (c, pts) => pts.map(([x, y]) => [x, y, c]);
+  const BROWS = px("E", [[8, 5], [9, 6], [15, 5], [14, 6]]);
+  const RED_EYES = px("O", [[9, 8], [10, 8], [13, 8], [14, 8]]);
+  const FLAT = px("E", [[11, 10], [12, 10]]);
+  const faces = {
+    idle:    [...BROWS, ...RED_EYES, ...FLAT],
+    blink:   [...BROWS, ...px("E", [[9, 8], [10, 8], [13, 8], [14, 8]]), ...FLAT],
+    smirk:   [...BROWS, ...RED_EYES, ...px("E", [[10, 11], [11, 11], [12, 11], [13, 10]])],
+    annoyed: [...BROWS, ...RED_EYES, ...px("E", [[10, 11], [11, 10], [12, 11], [13, 10]]),
+              ...px("Y", [[19, 1], [20, 0], [21, 1], [20, 2]])],   // a puff of steam
+    laugh:   [...px("E", [[8, 8], [9, 7], [10, 8], [13, 8], [14, 7], [15, 8]]),
+              ...px("E", [[10, 10], [11, 10], [12, 10], [13, 10], [10, 11], [13, 11], [11, 12], [12, 12]]),
+              ...px("O", [[11, 11], [12, 11]]),
+              ...px("K", [[5, 10], [4, 9], [3, 8], [18, 10], [19, 9], [20, 8]])]   // arms up
+  };
+  const out = {};
+  Object.entries(faces).forEach(([name, pts]) => {
+    out[name] = Array.from({ length: FIRE_FRAMES }, (_, fire) => buildBuddySvg({ boss: true, fire, noCheeks: true, px: pts }));
+  });
+  return out;
+})();
+// The mood names index.html already uses, mapped onto boss faces. In Endless the reactions flip:
+// a right answer annoys him, a slip makes him laugh.
+const BOSS_LOOK = { idle: "idle", blink: "blink", talk: "idle", thinking: "smirk", happy: "annoyed", celebrating: "annoyed", oops: "laugh" };
+// The Endless taunt loop, redrawn in boss colours (one SVG per fire frame)
+CHALKY_IDLES.bossTaunt.frames.forEach(f => {
+  f.bossSvgs = Array.from({ length: FIRE_FRAMES }, (_, fire) => buildBuddySvg({ ...f, boss: true, fire }));
+});
 
 // Random line from a "a|b|c" string in STRINGS
 function buddyLine(key) {
@@ -189,7 +271,23 @@ function makeBuddy($sprite, $bubble, { keepBubble = false, idles = null } = {}) 
   let timers = [];
   const later = (fn, ms) => timers.push(setTimeout(fn, ms));
   const stop = () => { timers.forEach(clearTimeout); timers = []; };   // clearTimeout also clears intervals
-  const face = expr => { $sprite.innerHTML = BUDDY_SVG[expr]; };
+  // Boss skin (Endless): the fire flickers on its own timer, outside `timers`, so reactions don't stop it.
+  // paint = whatever is drawn right now, so each flicker redraws the same face with the next fire frame.
+  let skin = null, fireFrame = 0, fireTimer = null, paint = null;
+  const show = draw => { paint = draw; draw(); };
+  const face = expr => show(() => {
+    $sprite.innerHTML = skin ? BOSS_SVG[BOSS_LOOK[expr] || "idle"][fireFrame] : BUDDY_SVG[expr];
+  });
+  function setSkin(name) {
+    if ((name || null) === skin) return;
+    skin = name || null;
+    clearInterval(fireTimer);
+    fireTimer = null;
+    if (skin && !REDUCED_MOTION) {
+      fireTimer = setInterval(() => { fireFrame = (fireFrame + 1) % FIRE_FRAMES; if (paint) paint(); }, 150);
+    }
+    if (paint) paint();
+  }
   const animate = cls => {
     $sprite.classList.remove(...BUDDY_MOODS);
     void $sprite.offsetWidth;   // restart the animation
@@ -222,7 +320,7 @@ function makeBuddy($sprite, $bubble, { keepBubble = false, idles = null } = {}) 
     let i = 0, lastCls = null;
     const step = () => {
       const f = anim.frames[i++];
-      $sprite.innerHTML = f.svg;
+      show(() => { $sprite.innerHTML = skin && f.bossSvgs ? f.bossSvgs[fireFrame] : f.svg; });
       const cls = IDLE_MOTION[f.motion];
       if (cls !== lastCls) { animate(cls); lastCls = cls; }   // don't restart a looping motion (nod) every frame
       later(() => {
@@ -266,7 +364,7 @@ function makeBuddy($sprite, $bubble, { keepBubble = false, idles = null } = {}) 
     }, 30));
   }
 
-  return { idle, react, talk, stop };
+  return { idle, react, talk, stop, setSkin };
 }
 
-export { BUDDY_SVG, CHALKY_IDLES, buddyLine, makeBuddy };
+export { BUDDY_SVG, BOSS_SVG, CHALKY_IDLES, buddyLine, makeBuddy };   // BOSS_SVG: the Endless share card (share.js)
